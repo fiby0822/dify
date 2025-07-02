@@ -1,34 +1,40 @@
-ケース1: web_search_6096.yml のエラー原因分析
+# NewsSearch_4732.yml エラー原因分析
 
-■エラー概要
-Tavily Searchツールノードの構造定義エラーにより、実行時バリデーションエラーが発生
+## エラー内容
+モデルの最大コンテキスト長（8192トークン）を超過
+- 要求トークン数：8389トークン
+- 内訳：メッセージ6889トークン + 出力設定1500トークン
 
-■具体的なエラー内容
-1. 必須フィールドの欠落
-   - provider_name フィールドが未定義
-   - tool_label フィールドが未定義
+## エラー原因の詳細分析
 
-2. tool_parametersの型不一致
-   - search_depth、topic、max_results等のパラメータが直接値（string、int、bool）として設定されている
-   - 期待される形式：ToolInputオブジェクト（type、value等のプロパティを持つ辞書形式）
+### 1. 根本原因
+LLMノード（summarize_node）に入力される内容が長すぎる
+- web_search_nodeからの検索結果全体が無加工でsummarize_nodeに渡されている
+- max_tokens: 1500の出力設定と合わせてトークン上限を超過
 
-■エラー発生箇所
-lines 110-148: toolノードの定義部分
-特にlines 119-136のtool_parameters定義部分
+### 2. 設計上の問題点
+**検索クエリの最適化プロセスが欠如**
+- start_nodeから直接sys.queryをweb検索に使用している
+- 成功例では、query_analyzer_nodeで検索クエリを最適化してから検索を実行
 
-■正常動作ファイルとの比較
-正常ファイル（検索テスト.yml）では：
-- provider_nameフィールドが存在（line 512）
-- tool_labelフィールドが存在（line 526）
-- tool_parametersには最小限の設定のみ（queryのみ、line 528-531）
-- 詳細なパラメータはparamSchemasで定義（lines 129-497）
+### 3. 構成の違い（成功例との比較）
+**ケース1（エラー）の構成：**
+```
+start_node → web_search_node → summarize_node → answer_node
+```
 
-■根本原因
-Difyの最新のツールノード仕様では、tool_parametersには動的な値（queryなど）のみを設定し、
-その他の固定パラメータはtool_configurationsで設定する必要があるが、
-このYMLでは両方にパラメータを設定しており、かつtool_parametersの形式が不正。
+**成功例（検証yml_3629.yml）の構成：**
+```
+start_node → query_analyzer_node → web_search_node → result_analyzer_node → answer_node
+```
 
-■修正方針
-1. provider_nameとtool_labelフィールドを追加
-2. tool_parametersを最小限に変更（queryのみ）
-3. その他のパラメータはtool_configurationsに統一
+### 4. 具体的な問題箇所
+- web_search_nodeで取得した検索結果の全文をそのまま次のLLMノードに渡している
+- 検索結果の前処理や要約が行われていない
+- ニュース検索（topic: news）は一般検索より長い結果を返す可能性がある
+
+## 解決策の提案
+1. 検索クエリ最適化ノードの追加
+2. 検索結果の中間処理（トークン数削減）
+3. max_resultsの調整（必要に応じて削減）
+4. include_raw_contentが0でも検索結果が長い場合の対策

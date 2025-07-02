@@ -1,0 +1,231 @@
+app:
+  description: 最新の技術動向に関する質問を受け付け、Web検索を通じて最新情報を調査・分析して分かりやすく回答するアシスタント
+  icon: 🔍
+  icon_background: "#FFEAD5"
+  mode: advanced-chat
+  name: 最新技術動向検索アシスタント
+  use_icon_as_answer_icon: false
+
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/tavily:0.0.5@langgenius%2Ftavily
+
+kind: app
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      こんにちは！最新技術動向検索アシスタントです。
+      
+      技術に関する質問をしていただければ、最新の情報を検索して分かりやすくお答えします。
+      
+      例えば以下のような質問にお答えできます：
+      ・最新のAI技術の動向
+      ・プログラミング言語の最新バージョンの機能
+      ・新しい開発フレームワークやツール
+      ・技術的なベストプラクティス
+      
+      どのような技術について知りたいですか？
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "最新のAI技術の動向について教えてください"
+      - "React 19の新機能について教えてください"
+      - "最近注目されているプログラミング言語は何ですか？"
+      - "クラウドネイティブ開発の最新トレンドを教えてください"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: tool
+        id: start-search-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: web_search_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: tool
+          targetType: llm
+        id: search-llm-edge
+        selected: false
+        source: web_search_node
+        sourceHandle: source
+        target: analysis_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: llm-answer-edge
+        selected: false
+        source: analysis_llm_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: ユーザーからの技術関連の質問を受け取る
+          selected: false
+          title: 開始
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: Tavily Searchを使用して最新技術情報を検索
+          is_team_authorization: true
+          provider_id: langgenius/tavily/tavily
+          provider_name: langgenius/tavily/tavily
+          provider_type: builtin
+          selected: false
+          title: WEB検索
+          tool_label: Tavily Search
+          tool_name: tavily_search
+          tool_parameters:
+            query:
+              type: mixed
+              value: '{{#sys.query#}}'
+          tool_configurations:
+            search_depth: advanced
+            topic: general
+            time_range: month
+            max_results: 10
+            include_answer: 1
+            include_images: 0
+            include_raw_content: 0
+          type: tool
+        height: 98
+        id: web_search_node
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: 検索結果を分析して分かりやすく回答を生成
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-prompt-1
+              role: system
+              text: |
+                あなたは最新技術動向の専門アナリストです。
+                Web検索の結果を基に、以下の方針で回答してください：
+                
+                1. 正確性：検索結果の情報を正確に伝える
+                2. 最新性：特に最新の情報や更新に注目する
+                3. 分かりやすさ：技術的な内容を初心者にも理解できるように説明
+                4. 構造化：情報を整理して見やすく提示
+                5. 実用性：実際の活用方法や注意点も含める
+                
+                回答形式：
+                - 概要説明
+                - 主要なポイント（箇条書き）
+                - 最新の動向や更新情報
+                - 実践的な活用方法（該当する場合）
+                - 参考情報源（信頼できるソースがある場合）
+            - id: user-prompt-1
+              role: user
+              text: |
+                ユーザーの質問：
+                {{#sys.query#}}
+                
+                検索結果：
+                {{#web_search_node.text#}}
+                
+                上記の検索結果を基に、ユーザーの質問に対して分かりやすく回答してください。
+          completion_params:
+            temperature: 0.7
+            max_tokens: 2000
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          selected: false
+          title: 回答生成
+          type: llm
+        height: 98
+        id: analysis_llm_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#analysis_llm_node.text#}}"
+          desc: 分析結果をユーザーに表示
+          selected: false
+          title: 回答
+          type: answer
+          variables: []
+        height: 107
+        id: answer_node
+        position:
+          x: 950
+          y: 200
+        positionAbsolute:
+          x: 950
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

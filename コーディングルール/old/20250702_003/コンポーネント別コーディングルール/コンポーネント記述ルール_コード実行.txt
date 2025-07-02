@@ -1,0 +1,220 @@
+コンポーネント記述ルール: コード実行（Code）
+
+■ブロック概要
+Pythonコードを実行して、データ処理や計算、変換などを行うノード。カスタムロジックの実装に使用。
+
+■必須パラメータ（ノードレベル）
+- id: 意味のある名前（例: "data_processing_node", "calculation_node"）
+- type: "custom"（外側のtype属性。固定値）
+- position: x, y座標
+- positionAbsolute: positionと同じ値を設定
+- selected: false（固定値）
+- sourcePosition: "right"（推奨）
+- targetPosition: "left"（推奨）
+- height: 数値（通常54）
+- width: 数値（通常244）
+- data:
+  - type: "code"（データ内のtype属性。固定値）
+  - code: Pythonコード本体（main関数を含む）
+  - code_language: "python3"（固定値）
+  - outputs: 出力変数の定義
+    - 変数名:
+      - type: データ型（"string", "number", "object", "array[string]"等）
+      - children: null（通常）
+  - inputs: 入力変数のマッピング（オプション）
+  - selected: false（必須）
+  - title: ノードタイトル（必須）
+  - desc: ノードの説明（推奨）
+
+
+■オプションパラメータ
+- inputs: 他ノードからの変数を受け取る設定
+  - 変数名: 
+    - value_selector: 参照元の配列形式パス
+    - type: データ型
+
+■入力
+inputsで定義した変数を通じて他ノードからのデータを受け取る
+
+■出力
+outputsで定義した変数を他ノードで参照可能
+
+■コメントに関する最重要注意事項（クラッシュ防止）
+
+⚠️ Pythonコード内にコメントを含めないでください ⚠️
+
+YAMLファイル内のPythonコードブロックにコメント（#で始まる行）を含めると、
+インポート成功後にアプリケーションがクラッシュします。
+
+【絶対にやってはいけないこと】
+```yaml
+# ❌ 間違い（クラッシュの原因）
+code: |
+  def main(user_input):
+      # 変数を初期化  ← このコメントでクラッシュ
+      result = 0
+      # 計算を実行    ← このコメントでクラッシュ
+      result = int(user_input) * 2
+      return {"output": result}
+```
+
+【正しい書き方】
+```yaml
+# ✅ 正解
+code: |
+  def main(user_input):
+      result = 0
+      result = int(user_input) * 2
+      return {"output": result}
+```
+
+【コード内での説明が必要な場合の対処法】
+1. 変数名を分かりやすくする（self-documenting code）
+   - `x` → `user_score`
+   - `tmp` → `formatted_result`
+2. ノードのdescフィールドに説明を記載
+3. 複雑なロジックは複数のノードに分割
+
+■使用例（完全版）
+```yaml
+- data:
+    type: code  # data内のtype
+    code: |
+      def main(score_text, threshold):
+          try:
+              score = int(score_text)
+              threshold_value = int(threshold)
+              
+              if score >= threshold_value:
+                  status = "合格"
+                  message = f"おめでとうございます！スコア{score}点で合格です。"
+              else:
+                  status = "不合格"
+                  message = f"スコア{score}点で不合格です。合格ラインは{threshold_value}点です。"
+              
+              return {
+                  "status": status,
+                  "message": message,
+                  "score": score
+              }
+          except ValueError:
+              return {
+                  "status": "エラー",
+                  "message": "無効な入力値です",
+                  "score": 0
+              }
+    code_language: python3  # 必須
+    outputs:
+      status:
+        type: string
+        children: null
+      message:
+        type: string
+        children: null
+      score:
+        type: number
+        children: null
+    inputs:
+      score_text:
+        value_selector:
+          - validation_node
+          - extracted_score
+        type: string
+      threshold:
+        value_selector:
+          - config_node
+          - pass_threshold
+        type: number
+    desc: "スコア判定処理"
+    selected: false  # 必須
+    title: "合否判定"  # 必須
+  height: 54  # 必須
+  id: score_check_node
+  position:
+    x: 650
+    y: 200
+  positionAbsolute:  # 必須
+    x: 650
+    y: 200
+  selected: false  # 必須
+  sourcePosition: right  # 必須
+  targetPosition: left  # 必須
+  type: custom  # 必須：外側は"custom"
+  width: 244  # 必須
+```
+
+
+■注意事項
+- main関数は必須（def main(...):の形式）
+- returnで辞書形式のデータを返す
+- outputsで定義したキーとreturnの辞書のキーを一致させる
+- エラーハンドリングを適切に実装
+- **Pythonコード内にコメントを一切含めない**
+
+■よくある間違い（エラーの原因）
+1. ★最頻出エラー★ Pythonコード内にコメントを含める
+   - 症状: インポート成功後にクラッシュ
+   - 原因: YAMLパーサーがPythonコメントを誤解釈
+   - 対策: コメントを完全に削除
+2. main関数を定義しない
+3. returnで辞書以外の値を返す
+4. outputsとreturnのキーが不一致
+5. code_languageを省略する
+6. 外側のtype属性を"code"にする（正しくは"custom"）
+
+■ベストプラクティス
+- エラーハンドリングを必ず実装
+- 入力値の型チェックを行う
+- 意味のある変数名を使用（コメントの代替）
+- 複雑な処理は関数に分割
+- descフィールドで処理内容を説明
+- テスト可能な小さな単位で実装
+- ログ出力は避ける（パフォーマンスへの影響）
+
+■データ型の対応
+| Python型 | outputs定義 | 例 |
+|---------|------------|----||
+| str | string | "テキスト" |
+| int/float | number | 123, 45.6 |
+| dict | object | {"key": "value"} |
+| list | array[型] | ["a", "b", "c"] |
+| bool | boolean | True/False |
+
+■推奨パターン
+1. エラーハンドリング付き処理
+```yaml
+code: |
+  def main(input_data):
+      try:
+          processed_data = process_input(input_data)
+          return {"result": processed_data, "error": None}
+      except Exception as e:
+          return {"result": None, "error": str(e)}
+```
+
+2. 複数入力の処理
+```yaml
+code: |
+  def main(text1, text2, separator):
+      combined = f"{text1}{separator}{text2}"
+      return {"combined_text": combined}
+```
+
+3. 条件分岐を含む処理
+```yaml
+code: |
+  def main(value):
+      if value > 100:
+          category = "high"
+      elif value > 50:
+          category = "medium"
+      else:
+          category = "low"
+      return {"category": category}
+```
+
+■セキュリティ上の注意
+- exec()やeval()の使用は避ける
+- 外部ライブラリのインポートは最小限に
+- ファイルシステムへの直接アクセスは避ける
+- ネットワーク通信は行わない

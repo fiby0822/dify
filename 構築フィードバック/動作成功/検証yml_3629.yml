@@ -1,0 +1,280 @@
+app:
+  description: "ユーザーの質問に対して最新のWEB情報を検索し、分析・要約して回答するワークフローアプリケーションです。"
+  icon: "🔍"
+  icon_background: "#E0F7FA"
+  mode: advanced-chat
+  name: "WEB検索アシスタント"
+  use_icon_as_answer_icon: false
+  
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/tavily:0.0.5@e84320b86e87db7a8252baec9de3e41e91ccf1c69a1cc37c6eabec264eefa86e
+
+kind: app
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      こんにちは！WEB検索アシスタントです。
+      最新の情報を検索してお答えします。
+      何について調べましょうか？
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "最新のAI技術トレンドについて教えて"
+      - "今日の天気予報を教えて"
+      - "最近のニュースを要約して"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-query_analyzer-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: query_analyzer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: tool
+        id: query_analyzer-web_search-edge
+        selected: false
+        source: query_analyzer_node
+        sourceHandle: source
+        target: web_search_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: tool
+          targetType: llm
+        id: web_search-result_analyzer-edge
+        selected: false
+        source: web_search_node
+        sourceHandle: source
+        target: result_analyzer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: result_analyzer-answer-edge
+        selected: false
+        source: result_analyzer_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "ユーザーからの質問を受け取る"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 300
+        positionAbsolute:
+          x: 50
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "ユーザーの質問を分析して検索クエリを生成"
+          selected: false
+          title: "検索クエリ生成"
+          type: llm
+          model:
+            provider: openai
+            name: gpt-4
+            mode: chat
+            completion_params:
+              temperature: 0.3
+              max_tokens: 200
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          prompt_template:
+            - id: system-prompt-analyzer
+              role: system
+              text: |
+                あなたはWEB検索クエリの生成専門家です。
+                ユーザーの質問を分析し、効果的な検索クエリを生成してください。
+                
+                ルール：
+                1. 簡潔で検索しやすいキーワードを抽出
+                2. 日本語と英語を適切に使い分ける
+                3. 最新情報が必要な場合は年月を含める
+                4. 専門用語は正確に使用する
+            - id: user-prompt-analyzer
+              role: user
+              text: |
+                以下の質問に対する最適な検索クエリを生成してください：
+                
+                {{#sys.query#}}
+                
+                検索クエリ：
+        height: 98
+        id: query_analyzer_node
+        position:
+          x: 350
+          y: 300
+        positionAbsolute:
+          x: 350
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "Tavily SearchでWEB検索を実行"
+          selected: false
+          title: "WEB検索実行"
+          type: tool
+          provider_id: langgenius/tavily/tavily
+          provider_type: builtin
+          tool_name: tavily_search
+          provider_name: langgenius/tavily/tavily
+          tool_label: Tavily Search
+          is_team_authorization: true
+          tool_parameters:
+            query:
+              type: mixed
+              value: '{{#query_analyzer_node.text#}}'
+          tool_configurations:
+            search_depth: basic
+            topic: general
+            max_results: 10
+            include_answer: 1
+            include_images: 0
+            include_raw_content: 0
+            time_range: not_specified
+        height: 98
+        id: web_search_node
+        position:
+          x: 650
+          y: 300
+        positionAbsolute:
+          x: 650
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "検索結果を分析・要約して回答を生成"
+          selected: false
+          title: "検索結果分析"
+          type: llm
+          model:
+            provider: openai
+            name: gpt-4
+            mode: chat
+            completion_params:
+              temperature: 0.5
+              max_tokens: 1500
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          prompt_template:
+            - id: system-prompt-analyzer-2
+              role: system
+              text: |
+                あなたは検索結果を分析し、ユーザーの質問に的確に回答する専門家です。
+                
+                ルール：
+                1. 検索結果から最も関連性の高い情報を抽出
+                2. 正確で信頼できる情報のみを使用
+                3. 情報源を明確に示す
+                4. わかりやすく構造化された回答を作成
+                5. 最新の情報を優先的に使用
+            - id: user-prompt-analyzer-2
+              role: user
+              text: |
+                ユーザーの質問：
+                {{#sys.query#}}
+                
+                検索結果：
+                {{#web_search_node.text#}}
+                
+                上記の検索結果を基に、ユーザーの質問に対する包括的な回答を作成してください。
+                情報源となるURLも含めて回答してください。
+        height: 98
+        id: result_analyzer_node
+        position:
+          x: 950
+          y: 300
+        positionAbsolute:
+          x: 950
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#result_analyzer_node.text#}}"
+          desc: "最終的な回答を表示"
+          selected: false
+          title: "回答"
+          type: answer
+          variables: []
+        height: 107
+        id: answer_node
+        position:
+          x: 1250
+          y: 300
+        positionAbsolute:
+          x: 1250
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

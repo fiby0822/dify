@@ -1,0 +1,235 @@
+app:
+  description: "製品名を入力すると、WEB検索で最新のレビューや評価情報を取得し、総合評価、良い点、改善点、購入時の注意点を整理して表示します。"
+  icon: "🔍"
+  icon_background: "#FFEAD5"
+  mode: advanced-chat
+  name: "製品レビュー調査ツール"
+  use_icon_as_answer_icon: false
+
+dependencies:
+- type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/tavily:0.0.5@d14b87f7a28b47d973e16b029f42c72dcb19d96cf4e5c8b0e4ac87f91a3a9eb1
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      製品レビュー調査ツールへようこそ！
+      
+      調査したい製品名を入力してください。
+      最新のレビューや評価情報をWEB検索で取得し、以下の観点で整理してお伝えします：
+      
+      ✅ 総合評価
+      ✅ 主な良い点（ポジティブな意見）
+      ✅ 主な改善点（ネガティブな意見）
+      ✅ 購入を検討する際の注意点
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "iPhone 15 Pro"
+      - "ソニー WH-1000XM5"
+      - "ダイソン V15 Detect"
+      - "Nintendo Switch"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: tool
+        id: start-web_search-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: web_search_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: tool
+          targetType: llm
+        id: web_search-analysis-edge
+        selected: false
+        source: web_search_node
+        sourceHandle: source
+        target: analysis_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: analysis-answer-edge
+        selected: false
+        source: analysis_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "ユーザーが入力した製品名を受け取る"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "製品レビューをWEB検索で取得"
+          provider_id: langgenius/tavily/tavily
+          provider_type: builtin
+          tool_name: tavily_search
+          provider_name: langgenius/tavily/tavily
+          tool_label: Tavily Search
+          is_team_authorization: true
+          selected: false
+          title: "製品レビュー検索"
+          type: tool
+          tool_parameters:
+            query:
+              type: mixed
+              value: '{{#sys.query#}} レビュー 評価 口コミ'
+          tool_configurations:
+            search_depth: basic
+            topic: general
+            max_results: 10
+            include_answer: 1
+            include_images: 0
+            include_raw_content: 0
+            time_range: month
+        height: 98
+        id: web_search_node
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "検索結果を分析して整理"
+          selected: false
+          title: "レビュー分析"
+          type: llm
+          model:
+            provider: openai
+            name: gpt-4
+            mode: chat
+            completion_params:
+              temperature: 0.3
+              max_tokens: 2000
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          prompt_template:
+            - id: system-prompt
+              role: system
+              text: |
+                あなたは製品レビュー分析の専門家です。
+                WEB検索で取得した製品レビュー情報を分析し、ユーザーにとって有益な形で整理して提示することが役割です。
+                
+                以下の観点で情報を整理してください：
+                1. 総合評価：全体的な評価の傾向
+                2. 主な良い点：ポジティブな意見の要約
+                3. 主な改善点：ネガティブな意見の要約
+                4. 購入検討時の注意点：購入前に知っておくべき重要事項
+                
+                客観的で中立的な立場から分析を行い、偏りのない情報提供を心がけてください。
+            - id: user-prompt
+              role: user
+              text: |
+                製品名：{{#sys.query#}}
+                
+                検索結果：
+                {{#web_search_node.text#}}
+                
+                上記の検索結果を基に、この製品のレビュー情報を分析し、以下の形式で整理してください：
+                
+                📊 総合評価
+                [全体的な評価の傾向を記載]
+                
+                ✅ 主な良い点
+                - [ポジティブな意見を箇条書きで]
+                
+                ⚠️ 主な改善点
+                - [ネガティブな意見を箇条書きで]
+                
+                💡 購入検討時の注意点
+                - [購入前に知っておくべき重要事項を箇条書きで]
+        height: 98
+        id: analysis_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#analysis_node.text#}}"
+          desc: "分析結果を表示"
+          selected: false
+          title: "回答"
+          type: answer
+          variables: []
+        height: 107
+        id: answer_node
+        position:
+          x: 950
+          y: 200
+        positionAbsolute:
+          x: 950
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

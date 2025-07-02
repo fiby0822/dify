@@ -3,14 +3,13 @@
 内容：動作エラー
 対象：
 /Users/tatsuya/Documents/01_fiby/09_ゼット/構築フィードバック/動作上のエラー/ケース1
-/Users/tatsuya/Documents/01_fiby/09_ゼット/構築フィードバック/動作上のエラー/ケース2
-/Users/tatsuya/Documents/01_fiby/09_ゼット/構築フィードバック/動作上のエラー/ケース3
-/Users/tatsuya/Documents/01_fiby/09_ゼット/構築フィードバック/動作上のエラー/ケース4
 
 内容：正常実行可能
 対象：
 /Users/tatsuya/Documents/01_fiby/09_ゼット/ymlサンプル/検索テスト.yml
-
+/Users/tatsuya/Documents/01_fiby/09_ゼット/構築フィードバック/動作成功/製品レビュー調査ツール_3067.yml
+/Users/tatsuya/Documents/01_fiby/09_ゼット/構築フィードバック/動作成功/検証yml_3629.yml
+/Users/tatsuya/Documents/01_fiby/09_ゼット/構築フィードバック/動作成功/最新技術動向検索アシスタント_6900.yml
 
 当該yamlは下記の依頼文を参考に、生成AIであるClaudeによって開発されたDifyのymlファイルです。
 /Users/tatsuya/Documents/01_fiby/09_ゼット/開発依頼/Dify_YML作成依頼プロンプト_テンプレート.txt
