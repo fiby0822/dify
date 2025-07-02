@@ -1,0 +1,298 @@
+app:
+  description: "最新のAI技術トレンドについてリアルタイムで情報を収集し、ユーザーの質問に対して最新の情報を基に回答するワークフロー"
+  icon: "🔍"
+  icon_background: "#F8F8FF"
+  mode: advanced-chat
+  name: "AI技術トレンド検索アシスタント"
+  use_icon_as_answer_icon: false
+
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/tavily:0.0.5@fb0de3354dc1c8cf39f8b23038b088ba3e43c73f0e56bb4cf2ef88b983bfc8e9
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      こんにちは！AI技術トレンド検索アシスタントです。
+      最新のAI技術に関する情報をリアルタイムで検索してお答えします。
+      どのようなAI技術について知りたいですか？
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "生成AIの最新トレンドを教えて"
+      - "大規模言語モデルの最新動向は？"
+      - "AI規制に関する最新ニュースを知りたい"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: tool
+        id: start-search-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: web_search_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: tool
+          targetType: if-else
+        id: search-condition-edge
+        selected: false
+        source: web_search_node
+        sourceHandle: source
+        target: condition_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: condition-llm-edge
+        selected: false
+        source: condition_node
+        sourceHandle: case_1
+        target: llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: condition-error-edge
+        selected: false
+        source: condition_node
+        sourceHandle: "false"
+        target: error_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: llm-answer-edge
+        selected: false
+        source: llm_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "ユーザーからの質問を受け付ける"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "Tavily Searchで最新情報を検索"
+          provider_id: langgenius/tavily/tavily
+          provider_type: builtin
+          tool_name: tavily_search
+          is_team_authorization: true
+          tool_parameters:
+            query:
+              type: mixed
+              value: '{{#sys.query#}}'
+            search_depth: basic
+            topic: general
+            time_range: week
+            max_results: 5
+            include_answer: false
+            include_images: false
+            include_raw_content: false
+          tool_configurations:
+            search_depth: basic
+            topic: general
+            time_range: week
+            max_results: 5
+            include_answer: 0
+            include_images: 0
+            include_raw_content: 0
+          selected: false
+          title: "WEB検索"
+          type: tool
+        height: 90
+        id: web_search_node
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "検索結果の有無を確認"
+          selected: false
+          title: "検索結果確認"
+          type: if-else
+          cases:
+            - id: case_1
+              case_id: case_1
+              conditions:
+                - variable_selector:
+                    - web_search_node
+                    - text
+                  comparison_operator: not empty
+              logical_operator: and
+        height: 154
+        id: condition_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "検索結果を分析して回答生成"
+          model:
+            provider: openai
+            name: gpt-4
+            mode: chat
+            completion_params:
+              temperature: 0.7
+              max_tokens: 1500
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          prompt_template:
+            - id: system-prompt
+              role: system
+              text: |
+                あなたはAI技術の専門家です。ユーザーの質問に対して、最新の検索結果を基に、正確で分かりやすい回答を提供してください。
+                
+                以下の点に注意してください：
+                1. 検索結果から得られた最新の情報を活用する
+                2. 技術的な内容は分かりやすく説明する
+                3. 必要に応じて具体例を挙げる
+                4. 情報の出典や時期を明確にする
+            - id: user-prompt
+              role: user
+              text: |
+                ユーザーの質問：{{#sys.query#}}
+                
+                検索結果：
+                {{#web_search_node.text#}}
+                
+                上記の検索結果を基に、ユーザーの質問に対して詳しく回答してください。
+          selected: false
+          title: "回答生成"
+          type: llm
+        height: 98
+        id: llm_node
+        position:
+          x: 950
+          y: 150
+        positionAbsolute:
+          x: 950
+          y: 150
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#llm_node.text#}}"
+          desc: "AIが生成した回答を表示"
+          selected: false
+          title: "回答"
+          type: answer
+          variables: []
+        height: 107
+        id: answer_node
+        position:
+          x: 1250
+          y: 150
+        positionAbsolute:
+          x: 1250
+          y: 150
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            申し訳ございません。お探しの情報について検索結果が見つかりませんでした。
+            
+            以下の点をご確認いただけますか：
+            - より具体的なキーワードで質問してみてください
+            - 別の表現で質問を言い換えてみてください
+            - より一般的な用語を使用してみてください
+            
+            AI技術に関する他の質問がございましたら、お気軽にお尋ねください。
+          desc: "検索結果がない場合のエラーメッセージ"
+          selected: false
+          title: "エラー回答"
+          type: answer
+          variables: []
+        height: 240
+        id: error_answer_node
+        position:
+          x: 950
+          y: 300
+        positionAbsolute:
+          x: 950
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

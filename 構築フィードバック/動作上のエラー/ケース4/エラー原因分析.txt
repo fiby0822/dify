@@ -1,39 +1,38 @@
-# エラー原因分析: ケース4
+ケース4: ai_trend_search_2935.yml のエラー原因分析
 
-## エラー内容
-LLMNodeDataのバリデーションエラー（1件）
-- memory.windowフィールドが必須だが欠落している
+■エラー概要
+Tavily Searchツールノードの構造定義エラーにより、実行時バリデーションエラーが発生
 
-## エラーの根本原因
-memoryフィールドを使用する場合、windowサブフィールドを含む完全な構造が必須であることが理解されていない
+■具体的なエラー内容
+1. 必須フィールドの欠落
+   - provider_name フィールドが未定義
+   - tool_label フィールドが未定義
 
-## 具体的な問題点
-1. **不完全なmemory設定**
-   - 現在の記述: `memory: {'enabled': False}`（簡略形）
-   - 必須構造: windowフィールドを含む完全な形式
+2. tool_parametersの型不一致
+   - search_depth、topic、time_range、max_results等のパラメータが直接値として設定
+   - 期待される形式：ToolInputオブジェクト
 
-2. **必須サブフィールドの欠落**
-   - memory.windowが必須
-   - window内にもenabledとsizeが必須
+■エラー発生箇所
+lines 127-167: toolノードの定義部分
+特にlines 133-143のtool_parameters定義部分
 
-## 正しい記述例
-```yaml
-memory:
-  enabled: false
-  window:
-    enabled: false
-    size: 10
-```
+■特記事項
+- IF-ELSEノードを含む複雑なワークフロー構造
+- エラー処理用の別answerノードを用意（lines 267-294）
+- tool_configurationsが存在し、boolean値が数値で設定（正しい）
 
-## 推奨される解決方法
-1. **方法1（推奨）**: memory機能を使用しない場合
-   - memoryフィールド自体を完全に省略する
-   
-2. **方法2**: memory機能を使用する場合
-   - 完全な構造で記述する（上記の正しい記述例参照）
+■正常動作ファイルとの比較
+正常ファイルでは：
+- provider_name、tool_labelが必須フィールドとして存在
+- tool_parametersは動的値（query）のみ
+- その他の固定パラメータはtool_configurationsで管理
 
-## 正しいアプローチ
-1. memory機能が不要な場合は、フィールド自体を省略
-2. 必要な場合のみ、完全な構造で記述
-3. 簡略記法（`memory: {enabled: false}`）は使用禁止
-4. コーディングルールでmemory設定の扱いを明確化
+■根本原因
+1. ツールノードの必須フィールド不足
+2. tool_parametersの構造誤り
+3. ワークフロー構造自体は問題ないが、ツールノードの定義が不完全
+
+■修正方針
+1. provider_name、tool_labelフィールドを追加
+2. tool_parametersを最小限に変更（queryのみ）
+3. 他のパラメータはtool_configurationsに統一

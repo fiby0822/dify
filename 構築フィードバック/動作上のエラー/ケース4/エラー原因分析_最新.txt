@@ -1,0 +1,44 @@
+エラー原因分析（ケース4: ai_trend_search_2935.yml）
+
+■エラー内容
+toolノードの検証エラーで、以下の必須フィールドが欠落および形式エラー：
+1. provider_name
+2. tool_label
+3. tool_parametersの各値の形式が不正（辞書形式が必要）
+
+■原因分析
+正常動作する検索テスト.ymlと比較して、以下の重要な差異を確認：
+
+1. **provider_nameフィールドの欠落**
+   - エラーファイル：provider_nameフィールドが存在しない
+   - 正常ファイル：provider_name: langgenius/tavily/tavily
+
+2. **tool_labelフィールドの欠落**
+   - エラーファイル：tool_labelフィールドが存在しない
+   - 正常ファイル：tool_label: Tavily Search
+
+3. **tool_parametersの形式の違い**
+   - エラーファイル：各パラメータが直接値として設定
+     例：search_depth: basic
+         topic: general
+         time_range: week
+         max_results: 5
+   - 正常ファイル：queryのみ辞書形式で設定
+
+4. **パラメータ設定の分離**
+   - エラーファイル：tool_parametersとtool_configurationsに重複設定
+   - 正常ファイル：
+     - tool_parameters：queryのみ（動的値）
+     - tool_configurations：その他の静的設定
+
+5. **paramSchemasセクションの欠落**
+   - エラーファイル：存在しない
+   - 正常ファイル：各パラメータの詳細スキーマ定義が含まれる
+
+■結論
+このケースは私が本日作成したYMLファイルのエラーです。
+コーディングルールに以下の重要な情報が欠けていたことが判明：
+- provider_nameとtool_labelの必須性
+- tool_parametersは動的値のみ（辞書形式）
+- 静的設定はtool_configurationsに分離
+- paramSchemasセクションの必要性（場合による）

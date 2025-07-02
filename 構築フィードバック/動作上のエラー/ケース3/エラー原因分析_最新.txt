@@ -1,0 +1,44 @@
+エラー原因分析（ケース3: ai_news_search_2000.yml）
+
+■エラー内容
+toolノードの検証エラーで、以下の必須フィールドが欠落および形式エラー：
+1. provider_name
+2. tool_label
+3. tool_parametersの各値の形式が不正（辞書形式が必要）
+
+■原因分析
+正常動作する検索テスト.ymlと比較して、以下の重要な差異を確認：
+
+1. **provider_nameフィールドの欠落**
+   - エラーファイル：provider_nameフィールドが存在しない
+   - 正常ファイル：provider_name: langgenius/tavily/tavily
+
+2. **tool_labelフィールドの欠落**
+   - エラーファイル：tool_labelフィールドが存在しない
+   - 正常ファイル：tool_label: Tavily Search
+
+3. **tool_parametersの形式の違い**
+   - エラーファイル：各パラメータが直接値として設定
+     例：search_depth: 'advanced'
+         topic: 'news'
+         days: 7
+         max_results: 5
+         include_answer: True
+   - 正常ファイル：queryのみ辞書形式で設定、その他はtool_configurationsに設定
+
+4. **パラメータ設定場所の誤り**
+   - エラーファイル：すべてのパラメータをtool_parametersに設定
+   - 正常ファイル：
+     - tool_parameters：動的値（query）のみ
+     - tool_configurations：静的設定値
+
+5. **tool_configurationsセクションの構造**
+   - エラーファイル：存在するがboolean値の形式が異なる
+   - 正常ファイル：boolean値を0/1で表現
+
+■結論
+toolノードでは：
+- provider_nameとtool_labelは必須フィールド
+- tool_parametersは動的パラメータ用（辞書形式必須）
+- tool_configurationsは静的設定値用
+- boolean値の表現方法に注意（tool_configurationsでは0/1を使用）

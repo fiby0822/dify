@@ -1,0 +1,38 @@
+ケース3: ai_news_search_2000.yml のエラー原因分析
+
+■エラー概要
+Tavily Searchツールノードの構造定義エラーにより、実行時バリデーションエラーが発生
+
+■具体的なエラー内容
+1. 必須フィールドの欠落
+   - provider_name フィールドが未定義
+   - tool_label フィールドが未定義
+
+2. tool_parametersの型不一致
+   - search_depth、topic、days、max_results、include_answer、include_raw_contentが直接値として設定
+   - 期待される形式：ToolInputオブジェクト
+
+■エラー発生箇所
+lines 103-142: toolノードの定義部分
+特にlines 108-117のtool_parameters定義部分
+
+■特記事項
+- tool_configurationsは存在するが、boolean値が数値（0/1）で設定されている（lines 118-126）
+- これは正常ファイルでも同様の設定方法のため、tool_configurations自体は問題ない
+- include_answerがtool_parametersとtool_configurationsの両方に設定されている
+
+■正常動作ファイルとの比較
+正常ファイルでは：
+- provider_name、tool_labelが存在
+- tool_parametersにはqueryのみ設定
+- 固定パラメータはtool_configurationsで管理
+
+■根本原因
+1. toolノードの必須フィールド不足
+2. tool_parametersに固定値パラメータを含めている
+3. パラメータの重複設定（tool_parametersとtool_configurationsの両方）
+
+■修正方針
+1. provider_name、tool_labelフィールドを追加
+2. tool_parametersからquery以外を削除
+3. include_answerなどの設定はtool_configurationsに統一

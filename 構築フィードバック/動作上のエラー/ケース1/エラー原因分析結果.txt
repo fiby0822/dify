@@ -1,0 +1,28 @@
+エラー原因分析結果 - ケース1
+
+ファイル: web_search_6096.yml
+エラー内容: ToolNodeDataのバリデーションエラー
+
+【エラー原因】
+toolノード（tavily_search_node）の構造に問題があります。
+
+1. 必須フィールドの欠如:
+   - provider_name フィールドが存在しない
+   - tool_label フィールドが存在しない
+
+2. tool_parametersの値の形式が不正:
+   - search_depth、topic、max_results、include_answer、include_images、include_raw_content が直接値として設定されている
+   - 正しくは、これらのパラメータは type と value を持つオブジェクト形式である必要がある
+
+【正常ファイルとの差異】
+正常ファイル（検索テスト.yml）では、toolノードに以下の必須フィールドが含まれています：
+- provider_name: 'langgenius/tavily/tavily'
+- tool_label: 'Tavily Search'
+- 詳細なparamSchemas配列（各パラメータの詳細定義）
+
+また、tool_configurationsフィールドも正常ファイルには存在します。
+
+【解決方法】
+1. provider_nameとtool_labelフィールドを追加
+2. tool_parametersの各パラメータを正しいオブジェクト形式に修正（type: "mixed"/"fixed", value: 値）
+3. 必要に応じてparamSchemasとtool_configurationsを追加

@@ -1,0 +1,228 @@
+app:
+  description: "最新情報検索アシスタントは、Tavily Searchを使用してWEB上の最新情報を検索し、AIが要約・分析して分かりやすい形でユーザーに回答を提供します。"
+  icon: "🔍"
+  icon_background: "#E1F5FE"
+  mode: advanced-chat
+  name: "最新情報検索アシスタント"
+  use_icon_as_answer_icon: false
+
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/tavily:0.0.5
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      最新情報検索アシスタントへようこそ！ 🔍
+      
+      私は、インターネット上の最新情報を検索し、要約・分析してお答えすることができます。
+      
+      使い方：
+      - 検索したいキーワードや質問を入力してください
+      - より具体的な質問をいただくと、より正確な情報をお届けできます
+      - 最大5件の検索結果を基に回答を生成します
+      
+      どんな情報をお探しですか？
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "最新のAI技術のトレンドについて教えてください"
+      - "今週の主要なニュースをまとめてください"
+      - "人気のプログラミング言語ランキング2024年版を教えてください"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: tool
+        id: start-tavily-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: tavily_search_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: tool
+          targetType: llm
+        id: tavily-llm-edge
+        selected: false
+        source: tavily_search_node
+        sourceHandle: source
+        target: summary_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: llm-answer-edge
+        selected: false
+        source: summary_llm_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "ユーザーからの検索クエリを受け付ける"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "Tavily Searchを使用してWEB検索を実行"
+          selected: false
+          title: "WEB検索"
+          type: tool
+          provider_id: langgenius/tavily/tavily
+          provider_type: builtin
+          tool_name: tavily_search
+          is_team_authorization: true
+          tool_parameters:
+            query:
+              type: mixed
+              value: '{{#sys.query#}}'
+            search_depth: basic
+            topic: general
+            max_results: 5
+            include_answer: false
+            include_images: false
+            include_raw_content: false
+          tool_configurations:
+            search_depth: basic
+            topic: general
+            max_results: 5
+            include_answer: false
+            include_images: false
+            include_raw_content: false
+        height: 98
+        id: tavily_search_node
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "検索結果を要約・分析"
+          selected: false
+          title: "情報要約"
+          type: llm
+          model:
+            provider: openai
+            name: gpt-4
+            mode: chat
+          prompt_template:
+            - id: system-prompt-1
+              role: system
+              text: |
+                あなたは優秀な情報分析アシスタントです。
+                WEB検索結果を基に、ユーザーの質問に対して正確で分かりやすい回答を提供してください。
+                
+                以下のルールに従ってください：
+                1. 検索結果の重要な情報を要約して提示
+                2. 信頼性の高い情報源を優先的に参照
+                3. 日本語で分かりやすく説明
+                4. 必要に応じて箇条書きや番号付きリストを使用
+                5. 情報の出典を明記（可能な場合）
+                6. 検索結果に含まれない情報は推測せず、その旨を明記
+            - id: user-prompt-1
+              role: user
+              text: |
+                ユーザーの質問：
+                {{#sys.query#}}
+                
+                検索結果：
+                {{#tavily_search_node.text#}}
+                
+                上記の検索結果を基に、ユーザーの質問に対して包括的で分かりやすい回答を作成してください。
+          completion_params:
+            temperature: 0.7
+            max_tokens: 1500
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+        height: 98
+        id: summary_llm_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: '{{#summary_llm_node.text#}}'
+          desc: "要約された情報を回答"
+          selected: false
+          title: "回答"
+          type: answer
+          variables: []
+        height: 107
+        id: answer_node
+        position:
+          x: 950
+          y: 200
+        positionAbsolute:
+          x: 950
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

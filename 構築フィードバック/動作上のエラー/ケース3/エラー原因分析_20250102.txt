@@ -1,0 +1,37 @@
+# ケース3（ai_news_search_2000.yml）のエラー原因分析
+
+## エラー概要
+Toolノードの必須フィールド欠落とパラメータ形式の誤り
+
+## 具体的なエラー原因
+
+### 1. 必須フィールドの欠落
+- `provider_name`フィールドが存在しない（必須）
+- `tool_label`フィールドが存在しない（必須）
+
+### 2. tool_parametersの形式エラー
+現在の記述：
+```yaml
+tool_parameters:
+  query:
+    type: mixed
+    value: '{{#sys.query#}}'
+  search_depth: advanced # ❌ 文字列直接指定
+  topic: news           # ❌ 文字列直接指定
+  days: 7               # ❌ 数値直接指定
+  max_results: 5        # ❌ 数値直接指定
+  include_answer: true  # ❌ 真偽値直接指定
+  include_raw_content: false # ❌ 真偽値直接指定
+```
+
+### 3. tool_configurationsセクションの存在
+このファイルにはtool_configurationsセクションが存在する可能性があるが、boolean値の形式が問題の可能性：
+- true/falseではなく0/1形式が必要な場合がある
+
+### 4. 共通パターン
+すべてのケースで同じエラーパターンが発生：
+- provider_name、tool_labelの欠落
+- tool_parametersの直接値指定
+
+## 結論
+ツールノードの記述形式が統一されておらず、実行環境が要求する形式と一致していない。

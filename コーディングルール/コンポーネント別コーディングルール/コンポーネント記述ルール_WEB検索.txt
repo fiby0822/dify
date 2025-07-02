@@ -1,0 +1,259 @@
+コンポーネント記述ルール: WEB検索（tool: Tavily Search）
+
+■ブロック概要
+WEB検索は、toolノードでTavily Search（langgenius/tavily）を使用して実装します。
+リアルタイムの検索結果を取得し、AIエージェントに最新の情報を提供する機能です。
+
+■ノードタイプ
+type: tool
+
+■必須パラメータ
+
+1. provider_id: "langgenius/tavily/tavily"
+   - 固定値として必須
+
+2. provider_type: "builtin"
+   - 固定値として必須
+
+3. tool_name: "tavily_search"
+   - 固定値として必須
+
+4. provider_name: "langgenius/tavily/tavily"
+   - 固定値として必須
+   - ツールプロバイダの完全識別子
+
+5. tool_label: "Tavily Search"
+   - 固定値として必須
+   - UIに表示されるツール名
+
+6. tool_parameters.query:
+   - type: "mixed"
+   - value: 検索クエリ（通常は {{#sys.query#}} などの変数参照）
+   - 必須パラメータ
+   - 動的値として辞書形式で指定
+
+7. is_team_authorization: true
+   - チーム認証が必要
+
+■paramSchemas（パラメータスキーマ定義）
+
+toolノードには、使用可能なパラメータとその制約を定義するparamSchemasセクションが含まれます。
+各パラメータのtype、options、default値などが定義されており、これに従って値を設定する必要があります。
+
+■オプションパラメータ
+
+1. search_depth:
+   - type: "select"
+   - options: ["basic", "advanced"]
+   - default: "basic"
+   - 説明: 検索の深さ。"advanced"でより包括的な結果を取得
+
+2. topic:
+   - type: "select"
+   - options: ["general", "news", "finance"]
+   - default: "general"
+   - 説明: 検索カテゴリの指定
+
+3. days:
+   - type: "number"
+   - min: 1
+   - default: 3
+   - 説明: ニュース検索時の日数範囲（topicが"news"の場合のみ有効）
+
+4. time_range:
+   - type: "select"
+   - options: ["not_specified", "day", "week", "month", "year"]
+   - default: "not_specified"
+   - 説明: 検索結果のフィルタリング期間
+
+5. max_results:
+   - type: "number"
+   - min: 1
+   - max: 20
+   - default: 5
+   - 説明: 返される検索結果の最大数
+
+6. include_images:
+   - type: "boolean"
+   - default: false
+   - 説明: クエリ関連画像のリストを含めるか
+
+7. include_image_descriptions:
+   - type: "boolean"
+   - default: false
+   - 説明: 画像の説明テキストを含めるか（include_imagesがtrueの場合のみ有効）
+
+8. include_answer:
+   - type: "boolean"
+   - default: false
+   - 説明: 元のクエリに対する短い回答を含めるか
+
+9. include_raw_content:
+   - type: "boolean"
+   - default: false
+   - 説明: 各検索結果のクリーニング済みHTML内容を含めるか
+
+10. include_domains:
+    - type: "string"
+    - 説明: 検索結果に含めるドメインのカンマ区切りリスト
+
+11. exclude_domains:
+    - type: "string"
+    - 説明: 検索結果から除外するドメインのカンマ区切りリスト
+
+■入力
+toolノードは自動的にtool_parametersで指定された入力を処理します。
+通常はsys.queryなどのシステム変数や、前のノードからの出力を参照します。
+
+■出力
+検索結果は以下の形式で出力されます：
+- text: 検索結果のテキスト
+- files: 関連ファイル（該当する場合）
+- json: 構造化された検索結果データ
+
+■使用例
+
+```yaml
+# 正しい実装例
+- data:
+    provider_id: langgenius/tavily/tavily
+    provider_type: builtin
+    tool_name: tavily_search
+    provider_name: langgenius/tavily/tavily  # 必須
+    tool_label: Tavily Search                # 必須
+    is_team_authorization: true
+    tool_parameters:  # 動的値のみ（辞書形式）
+      query:
+        type: mixed
+        value: '{{#sys.query#}}'
+    tool_configurations:  # 静的設定値
+      search_depth: basic
+      topic: general
+      max_results: 5
+      include_answer: 0      # boolean値は0/1
+      include_images: 0      # boolean値は0/1
+      include_raw_content: 0 # boolean値は0/1
+    type: tool
+    title: Tavily Search
+
+# 間違った実装例
+- data:
+    provider_id: langgenius/tavily/tavily
+    provider_type: builtin
+    tool_name: tavily_search
+    # provider_nameとtool_labelが欠落 ❌
+    is_team_authorization: true
+    tool_parameters:
+      query: '{{#sys.query#}}'  # ❌ 辞書形式でない
+      search_depth: basic       # ❌ 静的値が混在
+      max_results: 5           # ❌ 静的値が混在
+    tool_configurations:
+      # 静的設定値が不足 ❌
+    type: tool
+    title: Tavily Search
+```
+
+■注意事項
+
+1. **マーケットプレイス依存関係**
+   - dependenciesセクションでTavilyプラグインの依存関係を定義する必要があります：
+   ```yaml
+   dependencies:
+   - type: marketplace
+     value:
+       marketplace_plugin_unique_identifier: langgenius/tavily:0.0.5@...
+   ```
+
+2. **クォータ制限**
+   - Tavily APIにはリクエスト制限があるため、max_resultsは必要最小限に設定
+
+3. **エラーハンドリング**
+   - 検索結果が空の場合の処理を後続ノードで考慮する必要があります
+   - ネットワークエラーや API エラーの可能性も考慮
+
+4. **パフォーマンス考慮**
+   - search_depthを"advanced"にすると検索時間が長くなる
+   - include_raw_contentを有効にすると出力サイズが大きくなる
+
+5. **tool_configurationsとtool_parametersの使い分け**
+   - **tool_parameters**: 動的値（実行時に変わる値）のみを含む
+     - 必ず辞書形式で指定（type/valueの構造）
+     - 例: query（検索クエリ）など、実行時に変わる値
+   - **tool_configurations**: 静的設定値（固定値）を含む
+     - boolean値は0/1形式で指定
+     - 例: max_results、include_imagesなど、設定として固定される値
+   - 同じパラメータを両方に設定しないこと（動的か静的かで使い分ける）
+
+■ベストプラクティス
+
+1. **クエリの最適化**
+   - 明確で具体的な検索クエリを使用
+   - 複数の検索意図がある場合は、複数のtoolノードに分割
+
+2. **結果の処理**
+   - 検索結果はLLMノードで要約・分析することを推奨
+   - 生の検索結果をそのまま表示するより、コンテキストに応じた処理を行う
+
+3. **ドメインフィルタリング**
+   - 信頼できるソースのみを含めたい場合はinclude_domainsを使用
+   - スパムサイトや不適切なサイトはexclude_domainsで除外
+
+4. **時間範囲の活用**
+   - 最新情報が必要な場合はtime_rangeを"day"や"week"に設定
+   - ニュース検索では topicを"news"にし、daysパラメータを活用
+
+5. **出力形式の選択**
+   - シンプルな回答が必要な場合：include_answer: true
+   - 詳細な調査が必要な場合：include_raw_content: true
+   - ビジュアル要素が重要な場合：include_images: true
+
+■よくある間違い
+
+1. **tool_parametersに直接値を設定するエラー**
+   ```yaml
+   # 間違い：直接値を設定
+   tool_parameters:
+     query: '{{#sys.query#}}'  # ❌ エラー
+     max_results: 5           # ❌ エラー
+   
+   # 正しい：辞書形式で設定
+   tool_parameters:
+     query:
+       type: mixed
+       value: '{{#sys.query#}}'  # ✓ 正しい
+   ```
+
+2. **静的値をtool_parametersに入れるエラー**
+   ```yaml
+   # 間違い：静的値をtool_parametersに
+   tool_parameters:
+     max_results:
+       type: number
+       value: 5  # ❌ 静的値は不適切
+   
+   # 正しい：静的値はtool_configurationsに
+   tool_configurations:
+     max_results: 5  # ✓ 正しい
+   ```
+
+■トラブルシューティング
+
+1. **「Tool not found」エラー**
+   - provider_id、provider_type、tool_name、provider_name、tool_labelが正確に設定されているか確認
+   - dependenciesセクションでTavilyプラグインが定義されているか確認
+
+2. **検索結果が空**
+   - クエリが具体的すぎないか確認
+   - time_rangeやdomainフィルタが厳しすぎないか確認
+
+3. **タイムアウトエラー**
+   - search_depthを"basic"に変更
+   - max_resultsを減らす
+
+4. **出力が大きすぎる**
+   - include_raw_contentを無効化
+   - max_resultsを減らす
+
+5. **パラメータエラー**
+   - tool_parametersとtool_configurationsの値の型が一致しているか確認
+   - boolean値の0/1変換が必要な場合がある
