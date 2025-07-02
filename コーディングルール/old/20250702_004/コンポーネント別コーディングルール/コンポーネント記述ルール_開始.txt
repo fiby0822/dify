@@ -1,9 +1,5 @@
 コンポーネント記述ルール: 開始
 
-■⚠️ 重要警告
-advanced-chatモードでstartノードにvariables定義を行うと「sys.query is required in input form」エラーが発生します。
-必ず以下のルールを厳守してください。
-
 ■ブロック概要
 ワークフローの開始地点となるノード。ユーザーからの入力を受け取り、後続のノードに渡す役割を持つ。すべてのワークフローに必須のコンポーネント。
 
@@ -153,12 +149,11 @@ variables:
 ■よくある間違い
 1. type: "text"を使用する（正しくは"text-input"） **← 検証エラーの原因**
 2. advanced-chatモードでvariablesに変数を定義する **← 実行時エラーの原因**
-3. sys.queryをstartノードの変数として定義する **← "sys.query is required in input form"エラー**
-4. 変数定義のフィールド順序を間違える
-5. 変数名にキャメルケースやハイフンを使用
-6. positionAbsoluteを省略する
-7. 外側のtypeを"start"にする（正しくは"custom"）
-8. ファイル拡張子を小文字で指定（大文字推奨）
-9. max_lengthを設定し忘れる
-10. 必須/任意の設定を忘れる
-11. data.selectedを省略する
+3. 変数定義のフィールド順序を間違える
+4. 変数名にキャメルケースやハイフンを使用
+5. positionAbsoluteを省略する
+6. 外側のtypeを"start"にする（正しくは"custom"）
+7. ファイル拡張子を小文字で指定（大文字推奨）
+8. max_lengthを設定し忘れる
+9. 必須/任意の設定を忘れる
+10. data.selectedを省略する
