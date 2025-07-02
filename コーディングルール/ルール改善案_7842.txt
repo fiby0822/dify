@@ -1,0 +1,320 @@
+# Dify WEB検索コンポーネント コーディングルール改善案
+
+## 概要
+このドキュメントは、検索テスト.ymlの分析に基づき、WEB検索（Tavily Search等のツール）に関するコーディングルールの改善案をまとめたものです。
+
+## 1. 分析結果
+
+### 1.1 検索テスト.ymlの構成
+- Tavily Searchツールを使用したWEB検索ワークフロー
+- ノードタイプ: "tool"（カスタムノードではなくツールノード）
+- マーケットプレイスプラグインとして実装
+- 豊富なパラメータ設定が可能（query, search_depth, topic, time_range等）
+
+### 1.2 既存ルールの問題点
+- コンポーネント記述ルール_検索.txtの内容が誤っている（ループのテンプレートが記載）
+- WEB検索ツールに関する具体的なルールが不足
+- toolノードタイプに関するガイドラインが不明確
+
+## 2. ルール改善案
+
+### 2.1 コンポーネント記述ルール_検索.txtの更新案
+
+```
+コンポーネント記述ルール: WEB検索（ツール）
+
+■ブロック概要
+外部のWEB検索API（Tavily Search等）を使用してインターネット上の情報を検索・取得するツールノード。リアルタイムの情報取得、ニュース検索、特定ドメインの検索などに使用。
+
+■必須パラメータ
+- id: 意味のある名前（例: "web_search_node", "tavily_search"）
+- type: "custom"（ノード全体のtype - 固定）
+- position:
+  - x: 任意の値
+  - y: 任意の値
+- positionAbsolute:（positionと同値で設定）
+  - x: 任意の値
+  - y: 任意の値
+- width: 244（推奨値）
+- height: 246（toolノードの推奨値）
+- sourcePosition: right
+- targetPosition: left
+- selected: false（固定値）
+- data:
+  - type: "tool"（data内のtype - 固定）
+  - provider_id: 使用するプロバイダーID（例: "langgenius/tavily/tavily"）
+  - provider_type: "builtin"または"marketplace"
+  - tool_name: ツール名（例: "tavily_search"）
+  - tool_parameters: 検索パラメータ
+    - query: 検索クエリの変数参照
+  - desc: ''（空文字列でも必須）
+  - selected: false（固定値）
+  - title: ノードのタイトル
+
+■Tavily Search固有のパラメータ
+- tool_parameters:
+  - query: 検索クエリ（必須）
+    - type: "mixed"
+    - value: '{{#sys.query#}}' または変数参照
+  - search_depth: 検索の深さ（オプション）
+    - value: "basic"（標準）または"advanced"（詳細）
+  - topic: 検索カテゴリ（オプション）
+    - value: "general", "news", "finance"
+  - time_range: 時間範囲フィルタ（オプション）
+    - value: "not_specified", "day", "week", "month", "year"
+  - days: ニュース検索時の日数指定（1以上）
+  - max_results: 最大結果数（1-20、デフォルト: 5）
+  - include_images: 画像を含めるか（boolean）
+  - include_image_descriptions: 画像説明を含めるか（boolean）
+  - include_answer: 簡潔な回答を含めるか（boolean）
+  - include_raw_content: HTMLコンテンツを含めるか（boolean）
+  - include_domains: 含めるドメインリスト（カンマ区切り）
+  - exclude_domains: 除外するドメインリスト（カンマ区切り）
+
+■tool_configurationsセクション
+- max_results: 5（デフォルト値）
+- include_answer: 0（boolean値は0/1で指定）
+- include_images: 0
+- include_image_descriptions: 0
+- include_raw_content: 0
+- include_domains: null（未指定時）
+- exclude_domains: null（未指定時）
+
+■エッジ接続
+- 入力エッジ（前のノードから接続）:
+  - targetHandle: target
+  - targetType: tool
+- 出力エッジ（次のノードへ接続）:
+  - sourceHandle: source
+  - sourceType: tool
+
+■入力
+- query変数（sys.queryまたは他ノードからの変数参照）
+
+■出力
+- text: 検索結果のテキスト
+- json: 構造化された検索結果（設定による）
+- files: 画像ファイル（include_images有効時）
+
+■使用例
+```yaml
+- data:
+    desc: ''
+    is_team_authorization: true
+    provider_id: langgenius/tavily/tavily
+    provider_name: langgenius/tavily/tavily
+    provider_type: builtin
+    selected: false
+    title: Tavily Search
+    tool_configurations:
+      max_results: 5
+      include_answer: 0
+      include_images: 0
+      include_raw_content: 0
+    tool_name: tavily_search
+    tool_parameters:
+      query:
+        type: mixed
+        value: '{{#sys.query#}}'
+      search_depth: 'basic'
+      topic: 'general'
+      time_range: 'not_specified'
+      max_results: 5
+    type: tool
+  height: 246
+  id: web_search_node
+  position:
+    x: 380
+    y: 282
+  positionAbsolute:
+    x: 380
+    y: 282
+  selected: false
+  sourcePosition: right
+  targetPosition: left
+  type: custom
+  width: 244
+```
+
+■エッジ接続例
+```yaml
+# スタートノードから検索ツールへ
+- data:
+    isInLoop: false
+    sourceType: start
+    targetType: tool
+  id: start-to-search-edge
+  source: start_node
+  sourceHandle: source
+  target: web_search_node
+  targetHandle: target
+  type: custom
+  zIndex: 0
+
+# 検索ツールからアンサーノードへ
+- data:
+    isInLoop: false
+    sourceType: tool
+    targetType: answer
+  id: search-to-answer-edge
+  source: web_search_node
+  sourceHandle: source
+  target: answer_node
+  targetHandle: target
+  type: custom
+  zIndex: 0
+```
+
+■注意事項
+- マーケットプレイスツールの場合、dependenciesセクションへの記載が必須
+- APIキーやアクセス権限の設定が必要な場合がある
+- 検索結果が空の場合のエラーハンドリングを考慮
+- time_rangeとdaysパラメータは組み合わせて使用可能
+- include_raw_contentを有効にすると大量のデータが返る可能性がある
+- selected: falseは必須（trueにするとエラーの可能性）
+
+■ベストプラクティス
+- 検索クエリは前処理で最適化（不要な記号の除去等）
+- max_resultsは用途に応じて調整（多すぎると処理が重い）
+- ニュース検索時はtopic: "news"とtime_rangeを組み合わせる
+- 特定サイトからの情報のみ必要な場合はinclude_domainsを使用
+- 信頼性の低いサイトを除外する場合はexclude_domainsを使用
+- include_answerを有効にすると簡潔な回答が得られるが、詳細が必要な場合は無効化
+- 画像検索が必要な場合のみinclude_imagesを有効化（パフォーマンスへの影響を考慮）
+
+■version 0.3.0準拠の注意点
+- 必ずversion: 0.3.0のYAMLで使用すること
+- positionAbsoluteは必須（positionと同値で設定）
+- typeは"custom"で固定（ノード全体のtype）
+- data内のtypeは"tool"で固定
+- dependenciesセクションでツールの依存関係を明記
+
+■トラブルシューティング
+1. 「ツールが見つからない」エラー
+   - dependenciesセクションの記載を確認
+   - provider_idとtool_nameの一致を確認
+   
+2. 検索結果が返らない
+   - APIキーの設定を確認
+   - queryパラメータの変数参照が正しいか確認
+   - ネットワーク接続を確認
+
+3. パラメータエラー
+   - boolean値は0/1で指定（true/falseではない）
+   - max_resultsの範囲（1-20）を確認
+   - time_rangeの値が正しいか確認
+```
+
+### 2.2 全体コーディングルール.mdへの追加案
+
+以下の内容を「12. エラー別トラブルシューティング」セクションに追加：
+
+```markdown
+### 12.10 ツールノード関連のエラー
+
+#### 症状
+- 「ツールが見つかりません」エラー
+- 「プロバイダーが利用できません」エラー
+- ツールの実行結果が返らない
+
+#### 原因と対処法
+1. **dependenciesセクションの記載漏れ**
+   ```yaml
+   # ✅ 正解：マーケットプレイスツールの依存関係を記載
+   dependencies:
+   - current_identifier: null
+     type: marketplace
+     value:
+       marketplace_plugin_unique_identifier: langgenius/tavily:0.0.5@...
+   ```
+
+2. **provider_idとtool_nameの不一致**
+   - provider_idとtool_nameが正確に一致しているか確認
+   - 大文字小文字の違いにも注意
+
+3. **tool_parametersの型エラー**
+   - boolean値は0/1で指定（tool_configurationsセクション）
+   - 文字列パラメータは適切にクォート
+```
+
+### 2.3 品質チェックリスト.mdへの追加案
+
+「6. ツールノード関連」セクションを新規追加：
+
+```markdown
+## 6. ツールノード関連
+
+### 6.1 基本設定確認
+- [ ] data.typeが"tool"に設定されている
+- [ ] provider_idが正しく設定されている
+- [ ] tool_nameがプロバイダーと一致している
+- [ ] dependenciesセクションに必要な依存関係が記載されている
+
+### 6.2 パラメータ設定確認
+- [ ] 必須パラメータ（query等）が設定されている
+- [ ] boolean値が0/1形式で設定されている（tool_configurationsセクション）
+- [ ] 数値パラメータが適切な範囲内（例：max_results: 1-20）
+- [ ] 変数参照が正しい形式（{{#node.field#}}）
+
+### 6.3 WEB検索ツール固有の確認
+- [ ] search_depthがbasic/advancedのいずれか
+- [ ] topicがgeneral/news/financeのいずれか
+- [ ] time_rangeが有効な値
+- [ ] include/exclude_domainsがカンマ区切り形式（使用時）
+```
+
+### 2.4 クラッシュ事項チェックリスト.mdへの追加案
+
+「13. ツールノード関連のクラッシュ防止」セクションを新規追加：
+
+```markdown
+## 13. ツールノード関連のクラッシュ防止
+
+### 13.1 依存関係の確認
+- [ ] **マーケットプレイスツールの場合、dependenciesが必須**
+- [ ] **marketplace_plugin_unique_identifierが完全一致**
+- [ ] **バージョン情報を含む完全な識別子を使用**
+
+### 13.2 パラメータ型の確認
+- [ ] **tool_configurationsのboolean値は0/1形式（true/falseは使用禁止）**
+- [ ] **数値パラメータは数値型で指定（文字列型は使用禁止）**
+- [ ] **必須パラメータの欠落がない**
+
+### 13.3 エッジ接続の確認
+- [ ] **targetType: "tool"が正しく設定されている**
+- [ ] **sourceType: "tool"が正しく設定されている（出力側）**
+- [ ] **isInLoopがfalseに設定されている（isInIterationではない）**
+
+### 13.4 WEB検索固有のクラッシュ要因
+- [ ] **空のqueryパラメータを渡していない**
+- [ ] **max_resultsが1-20の範囲内**
+- [ ] **topicとtime_rangeの組み合わせが適切**
+- [ ] **ドメインリストの形式が正しい（スペースなし、カンマ区切り）**
+```
+
+## 3. 実装推奨事項
+
+### 3.1 コンポーネント記述ルール_検索.txtの更新
+- 現在の誤った内容を完全に置き換える
+- WEB検索ツール専用のルールとして整備
+- Tavily Search以外のツールにも適用可能な汎用的な記述
+
+### 3.2 新規ドキュメントの作成検討
+- 「ツールノード全般のコーディングルール」の作成
+- 各種ツール（HTTPリクエスト、データベース接続等）の統一的なガイドライン
+
+### 3.3 既存ルールの更新優先度
+1. **最優先**: コンポーネント記述ルール_検索.txtの修正
+2. **高**: クラッシュ事項チェックリストへのツールノード関連追加
+3. **中**: 品質チェックリストへのツールノード関連追加
+4. **低**: 全体コーディングルールへのトラブルシューティング追加
+
+## 4. 検証項目
+
+改善案実装後、以下を検証：
+1. 検索テスト.ymlが新ルールに準拠しているか
+2. 他のツールノードにも適用可能か
+3. エラー防止効果があるか
+4. 開発者の理解しやすさ
+
+以上が、WEB検索コンポーネントに関するコーディングルール改善案です。
