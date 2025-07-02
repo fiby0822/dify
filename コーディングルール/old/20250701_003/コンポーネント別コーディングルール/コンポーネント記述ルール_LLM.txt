@@ -1,0 +1,153 @@
+コンポーネント記述ルール: LLM
+
+■ブロック概要
+大規模言語モデル（LLM）を使用して、入力に対する応答を生成するノード。プロンプトエンジニアリングにより、様々なタスクを実行できる最も汎用的なコンポーネント。
+
+■必須パラメータ（詳細）
+- id: 意味のある名前（例: "factual_llm_node", "analysis_llm_node"）
+- type: "custom"（外側のtype属性。固定値）
+- data.type: "llm"（データ内のtype属性。固定値）
+- position: x, y座標
+- positionAbsolute: positionと同じ値を設定
+- selected: false（固定値）
+- sourcePosition: "right"（推奨）
+- targetPosition: "left"（推奨）
+- height: 数値（通常98）
+- width: 数値（通常244）
+- data:
+  - model: モデル設定
+    - provider: プロバイダー名（例: "openai"）（推奨：シンプルな形式）
+    - name: モデル名（例: "gpt-4o"）
+    - mode: 動作モード（"chat"推奨）
+  - prompt_template: プロンプトテンプレート
+    - id: ユニークID（必須）
+    - role: ロール（"system"または"user"）
+    - text: プロンプト内容
+  - structured_output_enabled: false（必須、デフォルトfalse）
+  - vision:
+    - enabled: false（必須、デフォルトfalse）
+  - variables: []（オプション、使用しない場合は省略可）
+  - context:（推奨、一部の環境で必要）
+    - enabled: false
+    - variable_selector: []
+
+
+■オプションパラメータ
+- completion_params: 生成パラメータ
+  - temperature: 温度（0-1、デフォルト0.7）
+  - max_tokens: 最大トークン数
+  - top_p: 多様性パラメータ
+- memory: 会話履歴の保持設定
+  - enabled: false（デフォルト）
+
+■入力
+プロンプト内で変数参照を通じて他ノードからのデータを受け取る：
+- {{#node_id.variable_name#}}形式での参照
+
+
+■出力
+- text: 生成されたテキスト出力
+- usage: トークン使用量情報（オプション）
+
+■使用例（完全版）
+```yaml
+- data:
+    model:
+      provider: openai
+      name: gpt-4o
+      mode: chat
+    prompt_template:
+      - id: system-prompt-1   # 必須：ユニークID
+        role: system
+        text: |
+          あなたは優秀なカスタマーサポート担当者です。
+          以下のルールに従って回答してください：
+          1. 丁寧で分かりやすい言葉使い
+          2. 具体的な解決策の提示
+          3. 必要に応じて追加情報の確認
+      - id: user-prompt-1     # 必須：ユニークID
+        role: user
+        text: |
+          お問い合わせ内容：
+          {{#start_node.user_query#}}
+          
+          添付ファイル内容：
+          {{#document_extractor.text#}}
+    completion_params:
+      temperature: 0.7
+      max_tokens: 1000
+    structured_output_enabled: false  # 必須
+    vision:
+      enabled: false                  # 必須
+    variables: []                     # オプション
+    context:                          # 推奨
+      enabled: false
+      variable_selector: []
+    memory:                           # オプション
+      enabled: false
+    # 共通設定
+    desc: "ノードの説明"
+    selected: false
+    title: "ノードタイトル"
+    type: llm                         # data内にtype定義
+  # ノードレベルの設定
+  height: 98              # 必須
+  id: llm_node_id
+  position:
+    x: 350
+    y: 200
+  positionAbsolute:       # 必須
+    x: 350
+    y: 200
+  selected: false         # 必須
+  sourcePosition: right   # 必須
+  targetPosition: left    # 必須
+  type: custom            # 必須（"custom"固定）
+  width: 244              # 必須
+```
+
+
+■注意事項
+- プロンプトテンプレートは配列形式で記述
+- systemロールとuserロールの両方を適切に使用
+- 変数参照の形式を正確に（{{#node_id.variable#}}）
+- temperatureはタスクに応じて調整（事実ベース：0.0-0.3、創造的：0.7-1.0）
+
+■ベストプラクティス
+- systemロールでAIの役割と制約を明確に定義
+- 出力形式を具体的に指定（JSON、マークダウンなど）
+- エラーケースの指示も含める
+- プロンプトは簡潔で明確に
+- 必要に応じてFew-shot例を含める
+- 出力の品質を上げるための指示を含める
+
+■プロバイダー設定の注意
+- provider: "openai"（推奨：シンプルな形式）
+- provider: "anthropic"（Claudeを使用する場合）
+- 詳細なパス（"langgenius/openai/openai"など）は使用しない
+
+■使用上の注意
+1. アプリケーションモードの選択
+   - 通常は`app.mode: advanced-chat`を使用
+   - `workflow`モードは特殊な要件がある場合のみ使用
+
+2. 複数プロバイダーの使用
+   - 同一ファイル内で異なるプロバイダー（openai、anthropic等）を混在させることは可能
+   - ただし、各プロバイダーの制約事項に注意
+
+3. メモリ機能の使用
+   - memory.enabled: trueは慎重に使用（パフォーマンスへの影響あり）
+   - 通常はfalseで十分
+
+■よくある間違い
+1. 外側のtype属性をdata.typeと同じにする（正しくは"custom"固定）
+2. positionAbsoluteを省略する
+3. height/widthを省略する
+4. prompt_templateのid属性を省略する
+5. structured_output_enabledやvision.enabledを省略する（false必須）
+6. contextフィールドを省略する（一部環境では必要）
+7. providerに詳細なパスを使用（例："langgenius/openai/openai"）
+8. YAMLコメントをノード定義内に挿入する（クラッシュの原因）
+9. provider名に詳細パスを使用する際の注意点
+   - 基本的にシンプルな形式（"openai"）を推奨
+   - 詳細パスが必要な場合のみ使用し、動作確認を必須とする

@@ -1,0 +1,94 @@
+コンポーネント記述ルール: IF/ELSE
+
+■ブロック概要
+条件分岐を実現するノード。変数の値や状態に基づいて、ワークフローの処理経路を分岐させる。複雑な条件ロジックの実装に使用。
+
+■必須パラメータ
+- id: 意味のある名前（例: "condition_check", "validation_node"）
+- type: "if-else"（固定）
+- position:
+  - x: 任意の値
+  - y: 任意の値
+- data:
+  - cases: 条件ケースの配列
+    - id: ケースID（例: "case_1"）
+    - conditions: 条件配列
+      - variable_selector: 変数の参照パス
+      - comparison_operator: 比較演算子
+      - value: 比較値
+    - logical_operator: 論理演算子（"and"または"or"）
+
+
+■オプションパラメータ
+- default_case: デフォルトケースの設定
+
+■入力
+variable_selectorで指定された変数の値
+
+
+■出力
+条件にマッチしたケースのエッジへ分岐
+
+■使用例
+```yaml
+id: condition_check_node
+type: if-else
+position:
+  x: 650
+  y: 200
+data:
+  cases:
+    # ファイル存在チェック
+    - id: file_exists_case
+      conditions:
+        - variable_selector:
+            - file_check_node
+            - file_exists
+          comparison_operator: is
+          value: "true"
+      logical_operator: and
+    
+    # 複数条件の例
+    - id: valid_data_case
+      conditions:
+        - variable_selector:
+            - validation_node
+            - score
+          comparison_operator: ">"
+          value: 80
+        - variable_selector:
+            - validation_node
+            - status
+          comparison_operator: is
+          value: "approved"
+      logical_operator: and
+    
+    # 文字列の部分一致
+    - id: contains_keyword
+      conditions:
+        - variable_selector:
+            - analysis_node
+            - category
+          comparison_operator: contains
+          value: "緊急"
+      logical_operator: and
+```
+
+
+■注意事項
+- 各ケースにidはユニークである必要がある
+- 比較演算子の種類：
+  - is: 完全一致
+  - is not: 不一致
+  - contains: 部分一致
+  - not contains: 部分不一致
+  - >, <, >=, <=: 数値比較
+- 論理演算子はand/orのみ
+- エッジ接続で分岐先を正しく設定する必要がある
+
+■ベストプラクティス
+- 条件は明確で理解しやすく記述
+- 複雑な条件は複数のif-elseノードに分割
+- デフォルトケースを考慮
+- ケースIDは意味が分かる名前に
+- エッジのsourceHandleで分岐先を明確に

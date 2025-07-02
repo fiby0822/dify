@@ -1,0 +1,202 @@
+コンポーネント記述ルール: CODE
+
+■ブロック概要
+Pythonコードを実行するノード。データ処理、計算、文字列操作、条件分岐などのプログラマブルな処理を実現。
+
+■必須パラメータ（ノードレベル）
+- id: 意味のある名前（例: "data_processing_node"）
+- type: "custom"（外側のtype属性。固定値）
+- position: x, y座標
+- positionAbsolute: positionと同じ値を設定
+- selected: false（固定値）
+- sourcePosition: "right"（推奨）
+- targetPosition: "left"（推奨）
+- height: 数値（通常54-98、コード量に応じて調整）
+- width: 数値（通常244）
+- data:
+  - type: "code"（データ内のtype属性。固定値）
+  - code: 実行するPythonコード（文字列）
+  - outputs: 出力変数の定義（必須）
+    - value_selector: 参照する変数のパス（配列形式）
+    - variable: 出力変数名
+  - selected: false（必須）
+  - title: ノードタイトル（必須）
+  - desc: ノードの説明（推奨）
+
+■オプションパラメータ
+- isInIteration: イテレーション内での実行フラグ
+
+■入力
+variables内で定義された変数
+
+■出力
+outputs内で定義された変数
+
+■コード内での変数参照
+```python
+# 他のノードからの入力を参照
+user_input = {{#start_node.user_query#}}
+ocr_result = {{#ocr_node.text#}}
+
+# システム変数
+query = {{#sys.query#}}  # advanced-chatモードでのユーザー入力
+```
+
+■出力変数の定義（最重要）
+### 正しい形式：
+```yaml
+outputs:
+  - value_selector:
+    - analysis_node
+    - text
+  variable: analysis_result
+```
+
+### 誤った形式（クラッシュの原因）：
+```yaml
+# ❌ descriptionフィールドの追加
+outputs:
+  result:
+    type: string
+    description: "結果"  # 絶対NG
+
+# ❌ 辞書形式
+outputs:
+  analysis_result: "{{#analysis_node.text#}}"
+
+# ❌ value_selectorの形式エラー
+outputs:
+  - value_selector: "analysis_node.text"  # 文字列は不可、配列必須
+    variable: analysis_result
+```
+
+■許可されるoutputsのフィールド
+outputs内の各要素には以下のフィールドのみ使用可能：
+- type: 出力の型（string|number|object|array）
+- その他のフィールド（description等）は絶対に含めない
+
+■Pythonコードの記述ルール
+
+### 1. インポート禁止
+```python
+# ❌ 間違い
+import json
+import re
+
+# ✅ 正解：組み込み関数のみを使用
+```
+
+### 2. コメントの禁止（最重要）
+```python
+# ❌ 間違い（クラッシュの原因）
+# 変数を初期化
+result = 0
+# 計算を実行
+result = x + y
+
+# ✅ 正解
+result = 0
+result = x + y
+```
+
+### 3. print文の削除（リリース前必須）
+```python
+# 開発時のみ許可
+print(f"Debug: value = {value}")  # リリース前に削除
+
+# 本番環境
+# print文なし
+```
+
+### 4. エラーハンドリング
+```python
+try:
+    result = int(value)
+except:
+    result = 0
+```
+
+■使用例（完全版）
+```yaml
+- data:
+    type: code  # data内のtype
+    code: |
+      user_input = {{#start_node.query#}}
+      
+      try:
+          parts = user_input.split(":")
+          if len(parts) >= 2:
+              command = parts[0].strip()
+              value = parts[1].strip()
+          else:
+              command = "unknown"
+              value = user_input
+      except:
+          command = "error"
+          value = ""
+      
+      result = {
+          "command": command,
+          "value": value
+      }
+    outputs:
+      - value_selector:
+        - code_node
+        - result
+      variable: parsed_data
+    desc: "ユーザー入力を解析"
+    selected: false  # 必須
+    title: "入力解析"  # 必須
+  height: 98  # 必須
+  id: parse_input_node
+  position:
+    x: 350
+    y: 200
+  positionAbsolute:  # 必須
+    x: 350
+    y: 200
+  selected: false  # 必須
+  sourcePosition: right  # 必須
+  targetPosition: left  # 必須
+  type: custom  # 必須：外側は"custom"
+  width: 244  # 必須
+```
+
+■よくある間違い（エラーの原因）
+1. ★最頻出エラー★ outputsにdescriptionフィールドを追加
+   - 症状: インポート成功後にクラッシュ
+   - 原因: outputs内にdescriptionフィールドが含まれる
+   - 対策: typeフィールドのみを使用
+2. コード内にコメントを含める（クラッシュの原因）
+3. import文の使用（エラー）
+4. print文の残存（本番環境で問題）
+5. outputsフィールドの欠落
+6. 外側のtype属性を"code"にする（正しくは"custom"）
+
+■ベストプラクティス
+- 変数名は分かりやすく（self-documenting code）
+- 複雑なロジックは複数のcodeノードに分割
+- エラーハンドリングを必ず実装
+- デバッグ用のprint文は本番環境で削除
+- 説明が必要な場合はdescフィールドを活用
+- コメントは一切使用しない
+- outputs定義は必須（空でも配列として定義）
+
+■制限事項
+- 外部ライブラリのインポート不可
+- ファイルシステムへのアクセス不可
+- ネットワーク通信不可
+- 無限ループの禁止
+- 実行時間制限あり
+
+■デバッグテクニック
+1. 開発時のみprint文を使用
+2. try-except で予期しないエラーをキャッチ
+3. デフォルト値を設定して安全性を確保
+4. descフィールドに処理内容を詳細に記載
+
+■パフォーマンス考慮事項
+- 重い処理は避ける
+- 大量のデータ処理は分割
+- 不要な変数は作成しない
+- メモリ効率を意識したコーディング

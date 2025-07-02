@@ -1,0 +1,81 @@
+コンポーネント記述ルール: 知識検索
+
+■ブロック概要
+事前に登録されたナレッジベース（知識データベース）から関連情報を検索・取得するノード。FAQ、マニュアル、技術文書などの検索に使用。
+
+■必須パラメータ
+- id: 意味のある名前（例: "knowledge_search_node", "faq_retrieval"）
+- type: "knowledge-retrieval"（固定）
+- position:
+  - x: 任意の値
+  - y: 任意の値
+- data:
+  - query: 検索クエリ
+    - variable_selector: クエリテキストの参照元
+  - datasets: 検索対象データセット
+    - id: データセットID
+
+
+■オプションパラメータ
+- retrieval_mode: 検索モード（"single"または"multiple"、デフォルト"single"）
+- top_k: 取得する結果の最大数（デフォルト3）
+- score_threshold: 関連度スコアの闾値
+
+■入力
+- query: 検索クエリテキスト（変数参照）
+
+
+■出力
+- result: 検索結果のテキスト
+- metadata: 検索結果のメタ情報（オプション）
+
+■使用例
+```yaml
+id: knowledge_search_node
+type: knowledge-retrieval
+position:
+  x: 350
+  y: 200
+data:
+  query:
+    variable_selector:
+      - start_node
+      - user_query
+  datasets:
+    - id: "faq_dataset_001"
+  retrieval_mode: single
+  top_k: 3
+
+# 複数データセットからの検索例
+id: multi_knowledge_search
+type: knowledge-retrieval
+position:
+  x: 450
+  y: 300
+data:
+  query:
+    variable_selector:
+      - llm_node
+      - refined_query
+  datasets:
+    - id: "technical_manual_001"
+    - id: "product_specs_002"
+    - id: "troubleshooting_003"
+  retrieval_mode: multiple
+  top_k: 5
+  score_threshold: 0.7
+```
+
+
+■注意事項
+- データセットIDは事前にDifyで作成されたものを指定
+- 検索精度はデータセットの品質に大きく依存
+- top_kの値が大きすぎると関連度の低い結果も含まれる
+- 検索結果がない場合の処理を考慮
+
+■ベストプラクティス
+- 適切なtop_k値の設定（3-5推奨）
+- クエリの前処理で検索精度向上
+- 検索結果の後処理を考慮
+- 複数データセットを使う場合は関連性を考慮
+- スコア闾値で低品質な結果をフィルタリング

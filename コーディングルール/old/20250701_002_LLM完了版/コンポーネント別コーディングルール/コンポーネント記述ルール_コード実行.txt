@@ -1,0 +1,130 @@
+コンポーネント記述ルール: コード実行
+
+■ブロック概要
+カスタムコード（主にPython）を実行するノード。複雑なデータ処理、計算、変換処理などを実装できる。LLMでは処理しきれない厳密なロジックや計算処理に使用。
+
+■必須パラメータ
+- id: 意味のある名前（例: "processing_node", "calculation_code"）
+- type: "code"（固定）
+- position:
+  - x: 任意の値
+  - y: 任意の値
+- data:
+  - code_language: プログラミング言語（"python3"推奨）
+  - code: 実行するコード（main関数必須）
+  - outputs: 出力変数の定義
+    - type: データ型（string/number/array[string]/object）
+    - name: 変数名
+  - variables: 入力変数のマッピング
+    - value_selector: 参照元ノードと変数の配列
+    - variable: コード内での変数名
+
+
+■オプションパラメータ
+- error_strategy: エラー時の挙動
+  - error_type: "fail_branch"（エラー時は別ブランチへ）
+
+■入力
+variablesで定義された変数マッピングを通じて他ノードからデータを受け取る
+
+
+■出力
+outputsで定義された変数を返す（辞書形式）
+
+■使用例
+```yaml
+id: csv_processing_node
+type: code
+position:
+  x: 450
+  y: 200
+data:
+  code_language: python3
+  outputs:
+    - type: string
+      name: csv_content
+    - type: number
+      name: total_amount
+    - type: array[string]
+      name: error_items
+  variables:
+    - value_selector:
+        - document_extractor
+        - text
+      variable: ocr_text
+    - value_selector:
+        - start_node
+        - date_format
+      variable: date_format
+  code: |
+    import csv
+    import io
+    from datetime import datetime
+    
+    def main(ocr_text, date_format):
+        # CSVデータの初期化
+        csv_data = []
+        total_amount = 0
+        error_items = []
+        
+        try:
+            # OCRテキストを行ごとに分割
+            lines = ocr_text.strip().split('\n')
+            
+            # CSVヘッダー
+            headers = ['日付', '項目', '金額']
+            csv_data.append(headers)
+            
+            # 各行を処理
+            for line in lines:
+                try:
+                    # データの解析
+                    parts = line.split()
+                    if len(parts) >= 3:
+                        date_str = parts[0]
+                        item = parts[1]
+                        amount = float(parts[2].replace(',', ''))
+                        
+                        # 日付フォーマットの検証
+                        datetime.strptime(date_str, date_format)
+                        
+                        csv_data.append([date_str, item, str(amount)])
+                        total_amount += amount
+                except Exception as e:
+                    error_items.append(f"エラー行: {line}")
+            
+            # CSV文字列に変換
+            output = io.StringIO()
+            writer = csv.writer(output)
+            writer.writerows(csv_data)
+            csv_content = output.getvalue()
+            
+            return {
+                "csv_content": csv_content,
+                "total_amount": total_amount,
+                "error_items": error_items
+            }
+            
+        except Exception as e:
+            return {
+                "csv_content": "",
+                "total_amount": 0,
+                "error_items": [f"処理エラー: {str(e)}"]
+            }
+```
+
+
+■注意事項
+- main関数は必須（エントリポイント）
+- 返り値は辞書形式で、outputsで定義した変数名をキーとする
+- Python3の標準ライブラリのみ使用可能
+- 外部APIへのアクセスは不可
+- 実行時間に制限がある可能性
+
+■ベストプラクティス
+- 適切な例外処理を実装
+- 複雑な処理はヘルパー関数に分割
+- 入力データの検証を実施
+- エラー時でも適切なデフォルト値を返す
+- コメントで処理内容を説明
+- パフォーマンスを考慮した実装

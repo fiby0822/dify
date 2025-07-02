@@ -1,0 +1,63 @@
+コンポーネント記述ルール: テキスト抽出
+
+■ブロック概要
+アップロードされたドキュメント（PDF、Word、画像など）からテキストを抽出するノード。OCR機能も含まれており、画像内のテキストも認識可能。
+
+■必須パラメータ
+- id: 意味のある名前（例: "doc_extract_node", "ocr_node"）
+- type: "document-extractor"（固定）
+- position:
+  - x: 任意の値（通常350以降）
+  - y: 任意の値
+- data:
+  - variable_selector: ファイル入力元の変数パス（配列形式）
+
+
+■オプションパラメータ
+なし
+
+■入力
+- ファイルアップロードノード（start_node等）からのファイルデータ
+
+
+■出力
+- text: 抽出されたテキスト内容
+- metadata: ファイル情報（オプション）
+
+■使用例
+```yaml
+id: document_extractor_node
+type: document-extractor
+position:
+  x: 350
+  y: 200
+data:
+  variable_selector:
+    - start_node
+    - file_upload
+
+# OCR用の例
+id: ocr_analysis_node
+type: document-extractor
+position:
+  x: 350
+  y: 400
+data:
+  variable_selector:
+    - start_node
+    - receipt_image
+```
+
+
+■注意事項
+- 対応ファイル形式：PDF、Word、テキスト、画像（JPG、PNG等）
+- 画像ファイルの場合、OCR処理が自動的に実行される
+- 大きなファイルは処理時間がかかる可能性
+- ファイルが存在しない場合のエラー処理が必要
+
+■ベストプラクティス
+- 前段でファイル存在チェックを実施
+- 抽出後のテキスト処理を考慮
+- エラー時の代替処理を用意
+- OCR精度を考慮し、後続処理で検証を実施
+- ファイルサイズ制限をworkflow.features.file_uploadで設定

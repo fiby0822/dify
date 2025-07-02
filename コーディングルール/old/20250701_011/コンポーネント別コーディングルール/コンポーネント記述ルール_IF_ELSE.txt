@@ -1,0 +1,465 @@
+コンポーネント記述ルール: IF/ELSE
+
+■ブロック概要
+条件分岐を実現するノード。変数の値や状態に基づいて、ワークフローの処理経路を分岐させる。複雑な条件ロジックの実装に使用。
+
+■必須パラメータ（ノードレベル）
+- id: 意味のある名前（例: "condition_check_node"）
+- type: "custom"（外側のtype属性。固定値）
+- position: x, y座標
+- positionAbsolute: positionと同じ値を設定
+- selected: false（固定値）
+- sourcePosition: "right"（推奨）
+- targetPosition: "left"（推奨）
+- height: 数値（通常154-250、条件数に応じて調整）
+- width: 数値（通常244）
+- data:
+  - type: "if-else"（データ内のtype属性。固定値）
+  - cases: 条件ケースの配列
+    - id: ケースID（例: "case_1"）※sourceHandleとして使用
+    - case_id: ケースID（idと同じ値を設定）※必須
+    - conditions: 条件配列
+      - id: 条件ID（必須：一意なIDを設定、例: "condition_1"）
+      - variable_selector: 変数の参照パス（配列形式）
+      - comparison_operator: 比較演算子
+      - value: 比較値
+      - varType: 変数タイプ（オプション、例: "file"）
+    - logical_operator: 論理演算子（"and"または"or"）
+  - selected: false（必須）
+  - title: ノードタイトル（必須）
+  - desc: ノードの説明（推奨）
+
+
+■オプションパラメータ
+- default_case: デフォルトケースの設定
+
+■入力
+variable_selectorで指定された変数の値
+
+
+■出力
+条件にマッチしたケースのエッジへ分岐
+
+■比較演算子の種類（正確な値）
+文字列比較:
+- "contains": 部分一致
+- "not contains": 部分不一致
+- "start with": 前方一致
+- "end with": 後方一致
+- "is": 完全一致
+- "is not": 不一致
+- "in": リスト内存在
+- "not in": リスト内非存在
+- "all of": すべて含む
+
+数値比較:
+- "=": 等しい
+- "!=": 等しくない（ASCII推奨）
+- ">": より大きい
+- "<": より小さい
+- ">=": 以上（ASCII推奨）
+- "<=": 以下（ASCII推奨）
+※注意：Unicode文字（≥、≤、≠）はクラッシュの原因となる可能性があるため、ASCII文字の使用を推奨
+
+NULL/存在チェック:
+- "empty": 空
+- "not empty": 空でない
+- "null": NULL
+- "not null": NULLでない
+- "exists": 存在する
+- "not exists": 存在しない
+
+■比較演算子の使用に関する重要な注意
+ASCII文字の使用を推奨します：
+- ">=": 以上（推奨）
+- "<=": 以下（推奨）
+- "!=": 等しくない（推奨）
+
+以下の演算子はサポートされていません：
+- "gte", "lte", "ne": 動作しない代替案
+- "empty": 存在しない演算子（空値チェックで推奨する演算子を参照）
+
+■条件の記述方法（重要）
+条件は必ず以下の構造で記述します：
+
+1. 正しい条件の構造：
+```yaml
+conditions:
+  - variable_selector: [ノード名, 変数名]
+    comparison_operator: "演算子"
+    value: 比較値
+```
+
+2. 絶対にやってはいけないこと：
+- conditionsフィールドに直接文字列を記述
+- 条件式を一つの文字列で表現
+- JavaScriptやPythonの式を記述
+
+3. 複数条件の記述例：
+```yaml
+# AND条件（すべてを満たす）
+conditions:
+  - variable_selector: [node1, var1]
+    comparison_operator: ">"
+    value: 10
+  - variable_selector: [node1, var2]
+    comparison_operator: "is"
+    value: "active"
+logical_operator: and
+
+# OR条件（いずれかを満たす）
+conditions:
+  - variable_selector: [node1, status]
+    comparison_operator: "is"
+    value: "error"
+  - variable_selector: [node1, timeout]
+    comparison_operator: ">"
+    value: 30
+logical_operator: or
+```
+
+■使用例（完全版）
+```yaml
+- data:
+    type: if-else  # data内のtype
+    cases:
+      # ファイル存在チェック
+      - id: file_exists_case
+        case_id: file_exists_case  # 必須：idと同じ値
+        conditions:
+          - id: file_check_condition  # 必須：一意なID
+            variable_selector:
+              - file_check_node
+              - file_exists
+            comparison_operator: is
+            value: true  # boolean型の場合は引用符なし
+            varType: file  # オプション
+        logical_operator: and
+      
+      # 数値比較の例（ASCII推奨）
+      - id: high_score_case
+        case_id: high_score_case  # 必須：idと同じ値
+        conditions:
+          - id: score_check_condition  # 必須：一意なID
+            variable_selector:
+              - validation_node
+              - score
+            comparison_operator: ">="  # ASCII文字推奨
+            value: 80
+        logical_operator: and
+      
+      # 複数条件の例
+      - id: valid_data_case
+        case_id: valid_data_case  # 必須：idと同じ値
+        conditions:
+          - id: score_validation_condition  # 必須：一意なID
+            variable_selector:
+              - validation_node
+              - score
+            comparison_operator: ">"
+            value: 80
+          - id: status_validation_condition  # 必須：一意なID
+            variable_selector:
+              - validation_node
+              - status
+            comparison_operator: is
+            value: "approved"
+        logical_operator: and
+      
+      # 文字列の部分一致
+      - id: contains_keyword
+        case_id: contains_keyword  # 必須：idと同じ値
+        conditions:
+          - id: keyword_contains_condition  # 必須：一意なID
+            variable_selector:
+              - analysis_node
+              - category
+            comparison_operator: contains
+            value: "緊急"
+        logical_operator: and
+    desc: "条件チェック"
+    selected: false  # 必須
+    title: "条件分岐"  # 必須
+  height: 198  # 必須
+  id: condition_check_node
+  position:
+    x: 650
+    y: 200
+  positionAbsolute:  # 必須
+    x: 650
+    y: 200
+  selected: false  # 必須
+  sourcePosition: right  # 必須
+  targetPosition: left  # 必須
+  type: custom  # 必須：外側は"custom"
+  width: 244  # 必須
+```
+
+■条件記述の完全ガイド（具体例）
+
+1. 単純な数値比較：
+```yaml
+# 正しい例
+conditions:
+  - variable_selector: [calc_node, total]
+    comparison_operator: ">"
+    value: 100
+
+# 間違い例
+conditions: "calc_node.total > 100"  # 文字列での記述はNG
+```
+
+2. 複数条件（AND）：
+```yaml
+# 正しい例：価格が1000以上かつ在庫ありの場合
+conditions:
+  - variable_selector: [product_node, price]
+    comparison_operator: ">="
+    value: 1000
+  - variable_selector: [product_node, in_stock]
+    comparison_operator: is
+    value: "true"
+logical_operator: and
+
+# 間違い例
+conditions: "product_node.price >= 1000 && product_node.in_stock == true"  # NG
+```
+
+3. 範囲指定（複数のIF/ELSEノードで実現）：
+```yaml
+# 0-30: 低スコア、31-70: 中スコア、71-100: 高スコア
+# ノード1: 低スコア判定
+cases:
+  - id: low_score
+    case_id: low_score
+    conditions:
+      - variable_selector: [score_node, value]
+        comparison_operator: "<="
+        value: 30
+
+# ノード2: 中スコア判定（ノード1のfalseから接続）
+cases:
+  - id: medium_score
+    case_id: medium_score
+    conditions:
+      - variable_selector: [score_node, value]
+        comparison_operator: "<="
+        value: 70
+
+# ノード3以降は不要（ノード2のfalseが71以上を意味する）
+```
+
+■注意事項
+- 各ケースにidとcase_idの両方が必須（同じ値を設定）
+- 比較演算子で数値比較する場合はASCII文字を使用（">="、"<="、"!="）
+- 外側のtype属性は必ず"custom"、data.typeが"if-else"
+- 論理演算子はand/orのみ
+- エッジ接続で分岐先を正しく設定する必要がある（sourceHandleにはケースのidを使用）
+
+■エッジ接続時の注意事項（targetTypeの明確化）
+エッジのdata.targetTypeには接続先ノードの実際のdata.typeを指定する必要があります：
+- answerノードへ接続 → targetType: "answer"
+- llmノードへ接続 → targetType: "llm"
+- codeノードへ接続 → targetType: "code"
+- if-elseノードへ接続 → targetType: "if-else"
+- 間違い例：targetType: "custom" （customは使用しない）
+
+例：
+```yaml
+- data:
+    source: condition_node
+    sourceHandle: high_score_case
+    target: success_answer_node
+    sourceType: if-else
+    targetType: answer  # 接続先のanswerノードのタイプを指定
+```
+
+■分岐設計の重要事項
+- 各ケースの条件は必ず異なるものにする（同じ条件を複数のケースで使用しない）
+- 後続ノードで分岐先ノードの出力を参照する場合は、実行が保証されたノードのみを参照
+- 数値比較を行う場合の推奨パターン：
+  1. 文字列検索で数値の範囲を判定（例：contains "score: 8" or "score: 9"）
+  2. 専用の数値抽出ノードを前段に配置
+  3. codeノードで数値を明示的に抽出してから比較
+
+■エッジ接続の検証ルール
+1. sourceHandleとcase_idの一致確認
+   - エッジのsourceHandleはケースのcase_id（またはid）と完全一致する必要がある
+   - 大文字小文字も含めて正確に一致させる
+   - 例：case_id: "high_score_case" → sourceHandle: "high_score_case"
+
+2. デフォルトケースの扱い
+   - デフォルトケース（全ての条件に該当しない場合）はfalseハンドルを使用
+   - sourceHandleには "false" を指定
+   - 例：sourceHandle: "false" → デフォルトケースの処理へ
+
+■エラーを防ぐ設計パターン
+1. 独立answer型：各ケースから直接answerノードへ接続
+2. 集約型：すべての分岐が必ず1つのノードに集約されるよう設計
+3. デフォルト保証型：falseケースで必ず実行されるデフォルト処理を配置
+
+■条件分岐後の変数参照に関する重要な注意事項
+1. IF/ELSEノードで分岐したパスは、その分岐が実行された場合のみ変数が利用可能
+2. 実行されなかった分岐のノードからは変数を参照できない（エラーになる）
+3. 複数の分岐結果を統合したい場合の対処法：
+   - 各分岐で独立した処理を完結させる
+   - 必要な情報は各分岐内で生成する
+   - 最終的な統合は各分岐の終端で行う
+
+■間違った例（エラーになる）：
+```yaml
+# food_expiry_node内で全ての分岐結果を参照しようとする（NG）
+{{#urgent_order_node.text#}}{{#normal_order_node.text#}}{{#optimal_stock_node.text#}}{{#excess_stock_node.text#}}
+```
+
+■正しい例：
+```yaml
+# 各分岐で独立して処理を完結させる
+# urgent_order_nodeが実行された場合のみ、その出力を使用
+{{#urgent_order_node.text#}}
+```
+
+■よくある間違い（エラーの原因）
+1. ★最頻出エラー★ 条件IDの欠落
+   - 症状: conditionsの各要素にidフィールドがない
+   - 原因: 条件作成時にidフィールドを忘れる
+   - 対策: 各条件に必ず一意なIDを設定（例: "condition_1"）
+2. ★頻出エラー★ case_idフィールドの欠落
+   - 症状: "case_id Field required"エラー
+   - 原因: idだけ設定してcase_idを忘れる
+   - 対策: 必ずid/case_idをペアで設定
+3. ★頻出エラー★ sourceHandleとcase_idの不一致
+   - 症状: エッジが正しく接続されない
+   - 原因: エッジのsourceHandleがケースのcase_idと異なる
+   - 対策: sourceHandleにはケースのcase_id（またはid）を正確に指定
+4. Unicode文字の使用（推奨：ASCII文字 ">="、"<="、"!="を使用）
+5. 外側のtype属性を"if-else"にする（正しくは"custom"）
+6. height/widthの省略
+7. positionAbsoluteの省略
+8. data.selectedやdata.titleの省略
+
+■よくあるインポートエラーパターン
+1. fiby_versionフィールドエラー
+   - 症状: "fiby_version must be string"エラー
+   - 原因: advanced-chatモードでfiby_versionが欠落
+   - 対策: YAMLの最初にfiby_version: "0.1.0"を追加
+
+2. graph構造エラー
+   - 症状: ノードやエッジが読み込まれない
+   - 原因: advanced-chatモードでgraphセクションの欠落
+   - 対策: 必ずgraph:セクション内にnodes:とedges:を配置
+
+正しいYAML構造の例：
+```yaml
+fiby_version: "0.1.0"
+graph:
+  nodes:
+    - id: node1
+      type: custom
+      data:
+        type: if-else
+        # ...
+  edges:
+    - id: edge1
+      source: node1
+      # ...
+```
+
+■ベストプラクティス
+- ★最重要★ 条件には必ずIDを付与（条件IDの必須化）
+- 比較演算子はASCII文字を使用（">="、"<="、"!="）
+- boolean値の型に注意（true/falseは引用符なし）
+- 条件は明確で理解しやすく記述
+- 複雑な条件は複数のif-elseノードに分割
+- デフォルトケースを考慮（falseハンドルを使用）
+- ケースIDは意味が分かる名前に
+- エッジのsourceHandleで分岐先を明確に
+- 数値比較の演算子はコピー＆ペーストで正確に入力
+- YAMLファイル内にコメントを一切含めない（descフィールドで代替）
+- エッジのtargetTypeには接続先ノードの実際のdata.typeを使用
+- advanced-chatモードではgraphセクションを必ず使用
+
+■エラー防止のための条件設定ガイドライン
+1. 複雑な条件は事前にcodeノードで処理
+   - 例：日付の計算、文字列の加工、複雑な数値演算はcodeノードで実行
+   - IF/ELSEノードでは単純な比較のみを行う
+
+2. 条件の重複を避ける（各ケースは排他的に設計）
+   - 悪い例：case1が">=50"、case2が">=30" → 50以上は両方にマッチ
+   - 良い例：case1が">70"、case2が">30" → 順番評価で31-70の範囲に
+
+3. デフォルトケースの活用
+   - すべての条件に該当しない場合の処理を必ず用意
+   - falseハンドルを使用してデフォルト処理へ接続
+
+■実装時の具体的なエラー例（実際のクラッシュ事例）
+
+1. YAMLコメントによるクラッシュ
+```yaml
+# ❌ 絶対にやってはいけない例
+- data:
+    type: if-else
+    cases:
+      # このコメントがクラッシュを引き起こす
+      - id: case_1
+        case_id: case_1
+```
+
+2. targetTypeの誤り
+```yaml
+# ❌ 間違い
+- data:
+    sourceType: custom
+    targetType: custom  # customではなく実際の型を指定
+
+# ✅ 正解
+- data:
+    sourceType: if-else
+    targetType: answer  # 実際のノードタイプを指定
+```
+
+3. isInIterationの使用
+```yaml
+# ❌ 間違い
+- data:
+    isInIteration: false  # 存在しないフィールド
+
+# ✅ 正解
+- data:
+    isInLoop: false      # 正しいフィールド名
+```
+
+■推奨パターン1：独立answer型
+```yaml
+- data:
+    type: if-else
+    cases:
+      - id: case_a
+        case_id: case_a
+        conditions: [...]
+      - id: case_b
+        case_id: case_b
+        conditions: [...]
+    # 各ケースから直接answerノードへ接続
+    # 利点：未実行ノードの参照エラーが発生しない
+```
+
+■推奨パターン2：条件の明確な差別化
+```yaml
+- data:
+    type: if-else
+    cases:
+      - id: low_score
+        case_id: low_score
+        conditions:
+          - variable_selector: [node, score]
+            comparison_operator: "<="
+            value: 30
+      - id: medium_score
+        case_id: medium_score
+        conditions:
+          - variable_selector: [node, score]
+            comparison_operator: "<="
+            value: 70
+      # 注：条件は順番に評価されるため、31-70の範囲を意味する
+```
