@@ -1,0 +1,159 @@
+app:
+  description: "LLMコンポーネントの記述ルールを検証するためのシンプルなチャットボットアプリケーション"
+  icon: "🤖"
+  icon_background: "#FFEAD5"
+  mode: advanced-chat
+  name: "LLMルール検証チャットボット"
+  use_icon_as_answer_icon: false
+  
+dependencies: []
+
+kind: app
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      こんにちは！私はLLMコンポーネントのルール検証用チャットボットです。
+      何か質問があればお答えします。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "今日の天気はどうですか？"
+      - "簡単な計算をしてください"
+      - "プログラミングについて教えてください"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-llm-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: analysis_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: llm-answer-edge
+        selected: false
+        source: analysis_llm_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "ユーザーからの入力を受け取る開始ノード"
+          selected: false
+          title: "開始"
+          type: start
+          variables:
+            - label: "ユーザーの質問"
+              max_length: 1000
+              options: []
+              required: true
+              type: text-input
+              variable: user_query
+        height: 116
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: start
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-prompt-1
+              role: system
+              text: |
+                あなたは優秀なAIアシスタントです。
+                以下のルールに従って回答してください：
+                1. 丁寧で分かりやすい言葉使い
+                2. 具体的で実用的な回答
+                3. 必要に応じて例を提示
+            - id: user-prompt-1
+              role: user
+              text: |
+                ユーザーからの質問：
+                {{#start_node.user_query#}}
+                
+                上記の質問に対して、適切に回答してください。
+          completion_params:
+            temperature: 0.7
+            max_tokens: 1000
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          desc: "ユーザーの質問を分析し、適切な回答を生成するLLMノード"
+          selected: false
+          title: "質問分析・回答生成"
+          type: llm
+        height: 98
+        id: analysis_llm_node
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: llm
+        width: 244
+      - data:
+          answer: "{{#analysis_llm_node.text#}}"
+          desc: "LLMの回答をユーザーに返すノード"
+          selected: false
+          title: "回答"
+          type: answer
+          variables: []
+        height: 107
+        id: answer_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: answer
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

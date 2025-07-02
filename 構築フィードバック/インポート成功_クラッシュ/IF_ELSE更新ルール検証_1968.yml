@@ -1,0 +1,653 @@
+app:
+  description: IF_ELSEコンポーネントの更新されたコーディングルールを検証するためのテストアプリケーション。様々な条件分岐パターンをテストし、必須フィールドやエッジ設定の正しさを確認します。
+  icon: 🔍
+  icon_background: '#E6F3FF'
+  mode: advanced-chat
+  name: IF_ELSE更新ルール検証
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      IF_ELSEコンポーネントの更新ルールを検証するテストアプリです。
+      
+      以下の条件でテストを実行します：
+      1. 文字列の条件分岐（contains、not contains、start with、end with等）
+      2. 数値比較（Unicode演算子使用）
+      3. NULL/存在チェック
+      4. 複数条件の組み合わせ（AND/OR）
+      5. 分岐パターンの実装
+      
+      「スタート」と入力してテストを開始してください。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - スタート
+      - テストを開始
+      - IF_ELSEルールを検証
+    text_to_speech:
+      enabled: false
+      language: ""
+      voice: ""
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          priority: 1
+          sourceType: start
+          targetType: llm
+        id: start_to_analysis
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: analysis_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      
+      - data:
+          isInLoop: false
+          priority: 1
+          sourceType: llm
+          targetType: if-else
+        id: analysis_to_string_check
+        selected: false
+        source: analysis_node
+        sourceHandle: source
+        target: string_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      
+      - data:
+          isInLoop: false
+          priority: 1
+          sourceType: if-else
+          targetType: answer
+        id: contains_to_answer1
+        selected: false
+        source: string_check_node
+        sourceHandle: contains_case
+        target: contains_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      
+      - data:
+          isInLoop: false
+          priority: 1
+          sourceType: if-else
+          targetType: answer
+        id: startwith_to_answer2
+        selected: false
+        source: string_check_node
+        sourceHandle: startwith_case
+        target: startwith_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      
+      - data:
+          isInLoop: false
+          priority: 1
+          sourceType: if-else
+          targetType: answer
+        id: default_to_numeric
+        selected: false
+        source: string_check_node
+        sourceHandle: false
+        target: numeric_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      
+      - data:
+          isInLoop: false
+          priority: 1
+          sourceType: if-else
+          targetType: answer
+        id: high_score_to_answer
+        selected: false
+        source: numeric_check_node
+        sourceHandle: high_score_case
+        target: high_score_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      
+      - data:
+          isInLoop: false
+          priority: 1
+          sourceType: if-else
+          targetType: answer
+        id: medium_score_to_answer
+        selected: false
+        source: numeric_check_node
+        sourceHandle: medium_score_case
+        target: medium_score_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      
+      - data:
+          isInLoop: false
+          priority: 1
+          sourceType: if-else
+          targetType: code
+        id: low_score_to_multi_check
+        selected: false
+        source: numeric_check_node
+        sourceHandle: false
+        target: multi_condition_prep
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      
+      - data:
+          isInLoop: false
+          priority: 1
+          sourceType: code
+          targetType: if-else
+        id: prep_to_multi_check
+        selected: false
+        source: multi_condition_prep
+        sourceHandle: source
+        target: multi_condition_check
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      
+      - data:
+          isInLoop: false
+          priority: 1
+          sourceType: if-else
+          targetType: answer
+        id: and_success_to_answer
+        selected: false
+        source: multi_condition_check
+        sourceHandle: and_success_case
+        target: and_success_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      
+      - data:
+          isInLoop: false
+          priority: 1
+          sourceType: if-else
+          targetType: answer
+        id: or_success_to_answer
+        selected: false
+        source: multi_condition_check
+        sourceHandle: or_success_case
+        target: or_success_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      
+      - data:
+          isInLoop: false
+          priority: 1
+          sourceType: if-else
+          targetType: answer
+        id: multi_default_to_answer
+        selected: false
+        source: multi_condition_check
+        sourceHandle: false
+        target: default_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    
+    nodes:
+      - data:
+          desc: 開始ノード
+          selected: false
+          title: 開始
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      
+      - data:
+          desc: ユーザー入力を分析してテスト用データを生成
+          type: llm
+          model:
+            provider: openai
+            name: gpt-4o-mini
+            mode: chat
+            completion_params:
+              temperature: 0.7
+              max_tokens: 1000
+          prompt_template:
+            - id: system_prompt
+              role: system
+              text: |
+                あなたはIF_ELSEコンポーネントのテスト用データを生成するアシスタントです。
+                ユーザーの入力に基づいて、以下の形式でテストデータを生成してください：
+                
+                テスト文字列: [文字列比較用のテキスト]
+                数値スコア: [0-100の数値]
+                ステータス: [approved/pending/rejected のいずれか]
+                カテゴリ: [緊急/通常/その他 のいずれか]
+                存在フラグ: [true/false]
+                
+                文字列には「テスト」や「検証」などのキーワードを含めてください。
+            - id: user_prompt
+              role: user
+              text: "{{#sys.query#}}"
+          context:
+            enabled: false
+            variable_selector: []
+          variables: []
+          vision:
+            enabled: false
+          selected: false
+          title: テストデータ生成
+        height: 98
+        id: analysis_node
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      
+      - data:
+          desc: 文字列比較の各種パターンをテスト
+          type: if-else
+          cases:
+            - id: contains_case
+              case_id: contains_case
+              conditions:
+                - id: contains_check
+                  variable_selector:
+                    - analysis_node
+                    - text
+                  comparison_operator: contains
+                  value: "テスト"
+              logical_operator: and
+            
+            - id: startwith_case
+              case_id: startwith_case
+              conditions:
+                - id: startwith_check
+                  variable_selector:
+                    - analysis_node
+                    - text
+                  comparison_operator: start with
+                  value: "検証"
+              logical_operator: and
+          selected: false
+          title: 文字列条件チェック
+        height: 154
+        id: string_check_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      
+      - data:
+          desc: containsケース用の出力
+          type: answer
+          answer: |
+            ✅ 文字列比較（contains）テスト成功
+            
+            入力テキストに「テスト」が含まれています。
+            更新ルールの検証項目：
+            - ✓ type="custom"（外側）
+            - ✓ data.type="if-else"
+            - ✓ case_id設定
+            - ✓ 文字列比較演算子
+          selected: false
+          title: Containsケース回答
+        height: 107
+        id: contains_answer
+        position:
+          x: 950
+          y: 50
+        positionAbsolute:
+          x: 950
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      
+      - data:
+          desc: start withケース用の出力
+          type: answer
+          answer: |
+            ✅ 文字列比較（start with）テスト成功
+            
+            入力テキストが「検証」で始まっています。
+            更新ルールの検証項目：
+            - ✓ sourceHandle設定
+            - ✓ targetType設定
+            - ✓ isInLoop設定
+          selected: false
+          title: Start Withケース回答
+        height: 107
+        id: startwith_answer
+        position:
+          x: 950
+          y: 200
+        positionAbsolute:
+          x: 950
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      
+      - data:
+          desc: 数値比較の各種パターンをテスト（Unicode演算子使用）
+          type: if-else
+          cases:
+            - id: high_score_case
+              case_id: high_score_case
+              conditions:
+                - id: high_check
+                  variable_selector:
+                    - analysis_node
+                    - text
+                  comparison_operator: "≥"
+                  value: 80
+              logical_operator: and
+            
+            - id: medium_score_case
+              case_id: medium_score_case
+              conditions:
+                - id: medium_check
+                  variable_selector:
+                    - analysis_node
+                    - text
+                  comparison_operator: "≥"
+                  value: 50
+              logical_operator: and
+          selected: false
+          title: 数値条件チェック
+        height: 154
+        id: numeric_check_node
+        position:
+          x: 950
+          y: 350
+        positionAbsolute:
+          x: 950
+          y: 350
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      
+      - data:
+          desc: 高スコアケース用の出力
+          type: answer
+          answer: |
+            ✅ 数値比較（≥）テスト成功
+            
+            スコアが80以上です。
+            更新ルールの検証項目：
+            - ✓ Unicode演算子（≥）使用
+            - ✓ height/width設定
+            - ✓ positionAbsolute設定
+          selected: false
+          title: 高スコア回答
+        height: 107
+        id: high_score_answer
+        position:
+          x: 1250
+          y: 250
+        positionAbsolute:
+          x: 1250
+          y: 250
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      
+      - data:
+          desc: 中スコアケース用の出力
+          type: answer
+          answer: |
+            ✅ 数値比較（条件順序）テスト成功
+            
+            スコアが50以上80未満です。
+            条件は順番に評価されることを確認。
+          selected: false
+          title: 中スコア回答
+        height: 107
+        id: medium_score_answer
+        position:
+          x: 1250
+          y: 400
+        positionAbsolute:
+          x: 1250
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      
+      - data:
+          desc: 複数条件テスト用のデータ準備
+          type: code
+          code_language: python3
+          code: |
+            def main(text_input):
+                import json
+                
+                data = {
+                    "status": "approved",
+                    "category": "緊急",
+                    "priority": 1,
+                    "exists": True
+                }
+                
+                return {
+                    "output": json.dumps(data, ensure_ascii=False)
+                }
+          variables:
+            - value_selector:
+                - analysis_node
+                - text
+              variable: text_input
+          outputs:
+            type: object
+            properties:
+              output:
+                type: string
+          selected: false
+          title: 複数条件データ準備
+        height: 54
+        id: multi_condition_prep
+        position:
+          x: 1250
+          y: 550
+        positionAbsolute:
+          x: 1250
+          y: 550
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      
+      - data:
+          desc: AND条件とOR条件の組み合わせテスト
+          type: if-else
+          cases:
+            - id: and_success_case
+              case_id: and_success_case
+              conditions:
+                - id: status_check
+                  variable_selector:
+                    - multi_condition_prep
+                    - output
+                  comparison_operator: contains
+                  value: "approved"
+                - id: category_check
+                  variable_selector:
+                    - multi_condition_prep
+                    - output
+                  comparison_operator: contains
+                  value: "緊急"
+              logical_operator: and
+            
+            - id: or_success_case
+              case_id: or_success_case
+              conditions:
+                - id: priority_check
+                  variable_selector:
+                    - multi_condition_prep
+                    - output
+                  comparison_operator: contains
+                  value: "priority"
+                - id: exists_check
+                  variable_selector:
+                    - multi_condition_prep
+                    - output
+                  comparison_operator: contains
+                  value: "false"
+              logical_operator: or
+          selected: false
+          title: 複数条件チェック
+        height: 198
+        id: multi_condition_check
+        position:
+          x: 1550
+          y: 550
+        positionAbsolute:
+          x: 1550
+          y: 550
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      
+      - data:
+          desc: AND条件成功時の出力
+          type: answer
+          answer: |
+            ✅ 複数条件（AND）テスト成功
+            
+            ステータスが「approved」かつカテゴリが「緊急」です。
+            更新ルールの検証項目：
+            - ✓ 複数条件のAND結合
+            - ✓ 条件IDの設定（オプション）
+          selected: false
+          title: AND条件成功回答
+        height: 107
+        id: and_success_answer
+        position:
+          x: 1850
+          y: 450
+        positionAbsolute:
+          x: 1850
+          y: 450
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      
+      - data:
+          desc: OR条件成功時の出力
+          type: answer
+          answer: |
+            ✅ 複数条件（OR）テスト成功
+            
+            優先度情報が含まれているか、existsがfalseです。
+            更新ルールの検証項目：
+            - ✓ 複数条件のOR結合
+            - ✓ デフォルトハンドル（false）の動作
+          selected: false
+          title: OR条件成功回答
+        height: 107
+        id: or_success_answer
+        position:
+          x: 1850
+          y: 600
+        positionAbsolute:
+          x: 1850
+          y: 600
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      
+      - data:
+          desc: すべての条件に一致しない場合のデフォルト処理
+          type: answer
+          answer: |
+            ✅ デフォルトケーステスト成功
+            
+            すべての条件分岐が実行されず、デフォルト処理が実行されました。
+            更新ルールの検証項目：
+            - ✓ falseハンドルの正しい動作
+            - ✓ 独立した分岐処理の実装
+            - ✓ 実行されない分岐の変数を参照しない設計
+          selected: false
+          title: デフォルト回答
+        height: 107
+        id: default_answer
+        position:
+          x: 1850
+          y: 750
+        positionAbsolute:
+          x: 1850
+          y: 750
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

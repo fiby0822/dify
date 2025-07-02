@@ -1,0 +1,328 @@
+app:
+  description: ユーザーの要件を直接受け取り、DIFYにインポート可能なymlファイルを自動生成するシンプルボット
+  icon: ⚡
+  icon_background: '#3B82F6'
+  mode: advanced-chat
+  name: DIFY簡易アプリ生成ボット
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/anthropic:0.0.14@d664a277a0148dc3eb2a9cd73611faca82c48bafcbb87347524a22731c76fdc5
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        image_file_size_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: '⚡ DIFY簡易アプリ生成ボット
+
+      作りたいアプリの要件を教えてください。すぐにDIFYにインポート可能なymlファイルを生成いたします！
+
+      例：「画像をアップロードしてOCRでテキスト抽出するアプリ」 例：「CSVファイルを分析して結果を表示するアプリ」'
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+    - 画像OCRアプリを作りたい
+    - ファイル分析アプリを作りたい
+    - 質疑応答アプリを作りたい
+    - 翻訳アプリを作りたい
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: start
+        targetType: llm
+      id: start-generation-edge
+      selected: false
+      source: start_node
+      sourceHandle: source
+      target: yml_generation_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: generation-format-edge
+      selected: false
+      source: yml_generation_node
+      sourceHandle: source
+      target: yml_formatting_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: code
+        targetType: answer
+      id: format-final-edge
+      selected: false
+      source: yml_formatting_node
+      sourceHandle: source
+      target: final_yml_answer
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: DIFYアプリ生成の開始
+        selected: false
+        title: 開始
+        type: start
+        variables: []
+      height: 82
+      id: start_node
+      position:
+        x: 50
+        y: 100
+      positionAbsolute:
+        x: 50
+        y: 100
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: ユーザーの要件からDIFYアプリのymlファイルを直接生成
+        model:
+          completion_params: {}
+          mode: chat
+          name: claude-3-7-sonnet-20250219
+          provider: langgenius/anthropic/anthropic
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: "あなたはDIFYアプリのymlファイル生成の専門家です。\nユーザーの要件をもとに、DIFYにインポート可能なymlファイルを生成してください。\n\
+            \n必ず以下の形式に従ってください：\n\n```yaml\napp:\n  description: [アプリの説明]\n  icon:\
+            \ [適切な絵文字]\n  icon_background: '[カラーコード #から始まる6桁]'\n  mode: advanced-chat\n\
+            \  name: [アプリ名]\n  use_icon_as_answer_icon: false\ndependencies:\n- current_identifier:\
+            \ null\n  type: marketplace\n  value:\n    marketplace_plugin_unique_identifier:\
+            \ langgenius/openai:0.0.26@c1e643ac6a7732f6333a783320b4d3026fa5e31d8e7026375b98d44418d33f26\n\
+            kind: app\nversion: 0.3.0\nworkflow:\n  conversation_variables: []\n \
+            \ environment_variables: []\n  features:\n    file_upload:\n      enabled:\
+            \ [true/false]\n      [ファイルアップロード設定]\n    opening_statement: '[オープニングメッセージ]'\n\
+            \    suggested_questions: [提案質問のリスト]\n  graph:\n    edges: [エッジ定義]\n \
+            \   nodes: [ノード定義]\n```\n\n重要なポイント：\n- startノード、llmノード、answerノードを適切に配置\n\
+            - エッジで正しくノードを接続（source/target, sourceHandle/targetHandle）\n- variable_selectorは正しい形式で記述（[sys,\
+            \ query]など）\n- ファイルが必要な場合はfile_upload設定を有効化\n- ノードIDはユニークにする\n- position座標は適切に配置\n\
+            - 完全に動作するワークフローを作成\n\nymlファイルのみを出力し、余計な説明は不要です。\n"
+        - id: user-prompt
+          role: user
+          text: '以下の要件でDIFYアプリのymlファイルを生成してください：
+
+
+            {{#sys.query#}}
+
+
+            完全なymlファイルを生成してください。
+
+            '
+        selected: false
+        structured_output_enabled: false
+        title: ymlファイル生成
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 134
+      id: yml_generation_node
+      position:
+        x: 350
+        y: 100
+      positionAbsolute:
+        x: 350
+        y: 100
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        code: "def main(yml_content: str) -> dict:\n    \"\"\"\n    生成されたymlファイルの整形と検証\n\
+          \    \"\"\"\n    from datetime import datetime\n    \n    # ymlコンテンツの整形\n\
+          \    formatted_yml = yml_content.strip()\n    \n    # コードブロックのマークダウン記法を除去\n\
+          \    if \"```yaml\" in formatted_yml:\n        formatted_yml = formatted_yml.replace(\"\
+          ```yaml\", \"\").replace(\"```\", \"\").strip()\n    elif \"```\" in formatted_yml:\n\
+          \        formatted_yml = formatted_yml.replace(\"```\", \"\").strip()\n\
+          \    \n    # ファイル名の生成\n    current_date = datetime.now().strftime(\"%Y%m%d_%H%M%S\"\
+          )\n    yml_filename = f\"dify_app_{current_date}.yml\"\n    \n    # 基本的な検証\n\
+          \    validation_status = \"✅ 検証成功\"\n    validation_details = []\n    \n\
+          \    # 必須セクションの確認\n    required_sections = [\"app:\", \"workflow:\", \"\
+          graph:\", \"nodes:\", \"edges:\"]\n    for section in required_sections:\n\
+          \        if section in formatted_yml:\n            validation_details.append(f\"\
+          ✅ {section} 確認\")\n        else:\n            validation_details.append(f\"\
+          ❌ {section} 未発見\")\n            validation_status = \"⚠️ 検証エラーあり\"\n   \
+          \ \n    # 文字数とサイズの計算\n    line_count = formatted_yml.count('\\n') + 1\n\
+          \    char_count = len(formatted_yml)\n    file_size = len(formatted_yml.encode('utf-8'))\n\
+          \    \n    validation_report = \"\\n\".join(validation_details)\n    \n\
+          \    return {\n        \"formatted_yml\": formatted_yml,\n        \"yml_filename\"\
+          : yml_filename,\n        \"validation_status\": validation_status,\n   \
+          \     \"validation_report\": validation_report,\n        \"line_count\"\
+          : line_count,\n        \"char_count\": char_count,\n        \"file_size\"\
+          : file_size\n    }\n"
+        code_language: python3
+        desc: ymlファイルの整形と検証
+        error_strategy: fail-branch
+        outputs:
+          char_count:
+            children: null
+            type: number
+          file_size:
+            children: null
+            type: number
+          formatted_yml:
+            children: null
+            type: string
+          line_count:
+            children: null
+            type: number
+          validation_report:
+            children: null
+            type: string
+          validation_status:
+            children: null
+            type: string
+          yml_filename:
+            children: null
+            type: string
+        selected: false
+        title: yml整形処理
+        type: code
+        variables:
+        - value_selector:
+          - yml_generation_node
+          - text
+          variable: yml_content
+      height: 118
+      id: yml_formatting_node
+      position:
+        x: 650
+        y: 100
+      positionAbsolute:
+        x: 650
+        y: 100
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '## ⚡ DIFYアプリのymlファイル生成完了！
+
+
+          **📁 ファイル名**: `{{#yml_formatting_node.yml_filename#}}`
+
+          **📊 統計情報**: {{#yml_formatting_node.line_count#}}行 / {{#yml_formatting_node.char_count#}}文字
+          / {{#yml_formatting_node.file_size#}}bytes
+
+          **🔍 検証状態**: {{#yml_formatting_node.validation_status#}}
+
+
+          ### 📋 検証レポート
+
+          ```
+
+          {{#yml_formatting_node.validation_report#}}
+
+          ```
+
+
+          ### 📄 生成されたymlファイル
+
+
+          ```yaml
+
+          {{#yml_formatting_node.formatted_yml#}}
+
+          ```
+
+
+          ---
+
+
+          ## 📥 インポート手順
+
+
+          1. **コピー**: 上記のymlコンテンツを全て選択してコピー
+
+          2. **保存**: テキストエディタに貼り付けて `.yml` 形式で保存
+
+          3. **インポート**: DIFYの「アプリ作成」→「DSLファイルからインポート」でファイルをアップロード
+
+
+          🎉 **完了**: アプリが正常にインポートされ、すぐに使用開始できます！
+
+
+          ---
+
+
+          💡 **ヒント**: 別のアプリを作りたい場合は、新しい要件を教えてください。すぐに生成いたします！
+
+          '
+        desc: ''
+        selected: true
+        title: ymlファイル出力
+        type: answer
+        variables: []
+      height: 504
+      id: final_yml_answer
+      position:
+        x: 950
+        y: 100
+      positionAbsolute:
+        x: 950
+        y: 100
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: 193.10462832561302
+      y: 119.44379858130799
+      zoom: 0.9404562959203114

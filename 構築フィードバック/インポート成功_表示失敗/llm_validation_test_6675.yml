@@ -1,0 +1,231 @@
+app:
+  description: "LLMコンポーネント記述ルールの動作検証用アプリケーション。ユーザーの質問を分析・整理してから回答を生成する2段階LLM処理を実装。"
+  icon: "🧪"
+  icon_background: "#E0F2FE"
+  mode: advanced-chat
+  name: "LLMコンポーネント検証テスト"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      LLMコンポーネント検証テストへようこそ！
+      質問を入力すると、以下の処理を行います：
+      1. 質問を分析・整理
+      2. 整理された内容に基づいて回答を生成
+      
+      どんな質問でもお気軽にどうぞ。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "Difyとは何か教えてください"
+      - "LLMコンポーネントの基本的な使い方は？"
+      - "プロンプトエンジニアリングのベストプラクティスを教えて"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-analysis-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: analysis_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: llm
+        id: analysis-answer-edge
+        selected: false
+        source: analysis_llm_node
+        sourceHandle: source
+        target: answer_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: llm-answer-edge
+        selected: false
+        source: answer_llm_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "ユーザー入力を受け取る開始ノード"
+          selected: false
+          title: "開始"
+          type: start
+          variables:
+            - variable: user_query
+              type: text-input
+              default: ''
+              label: "質問を入力してください"
+              max_length: 2000
+              required: true
+        height: 116
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: start
+        width: 244
+      - data:
+          desc: "ユーザーの質問を分析・整理する最初のLLMノード"
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+            completion_params:
+              temperature: 0.3
+              max_tokens: 500
+              top_p: 0.9
+          prompt_template:
+            - id: system-prompt-analysis-1
+              role: system
+              text: |
+                あなたは質問分析の専門家です。
+                ユーザーの質問を以下の観点で分析し、整理してください：
+                
+                1. 質問の主題を明確にする
+                2. 質問の意図や背景を推測する
+                3. 回答に必要な要素をリストアップする
+                4. 曖昧な部分があれば明確化する
+                
+                分析結果は簡潔にまとめてください。
+            - id: user-prompt-analysis-1
+              role: user
+              text: |
+                以下の質問を分析してください：
+                
+                {{#start_node.user_query#}}
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          selected: false
+          title: "質問分析LLM"
+          type: llm
+        height: 98
+        id: analysis_llm_node
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: llm
+        width: 244
+      - data:
+          desc: "分析結果に基づいて回答を生成する2つ目のLLMノード"
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+            completion_params:
+              temperature: 0.7
+              max_tokens: 1000
+              top_p: 0.95
+          prompt_template:
+            - id: system-prompt-answer-1
+              role: system
+              text: |
+                あなたは親切で知識豊富なアシスタントです。
+                以下のルールに従って回答してください：
+                
+                1. 正確で信頼できる情報を提供する
+                2. わかりやすく構造化された回答をする
+                3. 必要に応じて例や具体例を含める
+                4. 専門用語は適切に説明する
+                5. 回答の最後に要約を含める
+            - id: user-prompt-answer-1
+              role: user
+              text: |
+                元の質問：
+                {{#start_node.user_query#}}
+                
+                質問の分析結果：
+                {{#analysis_llm_node.text#}}
+                
+                上記の分析結果を踏まえて、元の質問に対する包括的な回答を提供してください。
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          selected: false
+          title: "回答生成LLM"
+          type: llm
+        height: 98
+        id: answer_llm_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: llm
+        width: 244
+      - data:
+          answer: "{{#answer_llm_node.text#}}"
+          desc: "最終的な回答を表示"
+          selected: false
+          title: "回答"
+          type: answer
+          variables: []
+        height: 107
+        id: answer_node
+        position:
+          x: 950
+          y: 200
+        positionAbsolute:
+          x: 950
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: answer
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

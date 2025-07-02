@@ -1,0 +1,50 @@
+# Dify YMLファイル作成依頼プロンプト
+
+## 要件
+LLMコンポーネントの記述ルールが正しく機能するかを検証するため、以下の要素を含むテスト用Difyアプリケーションを作成してください：
+
+1. **基本的なLLMノード**
+   - systemロールとuserロールの両方を使用
+   - 変数参照（{{#node_id.variable#}}形式）を含む
+   - 温度パラメータを明示的に設定（0.7）
+
+2. **入力と出力の確認**
+   - startノードからの入力を受け取る
+   - LLMノードで処理
+   - endノードに出力
+
+3. **必須パラメータの網羅**
+   - structured_output_enabled: false
+   - vision.enabled: false
+   - context設定
+   - height/width/position設定
+
+4. **アプリケーションモード**
+   - advanced-chatモードで作成
+   - startノードのvariablesは空配列[]
+
+## アウトプットフォルダパス
+/Users/tatsuya/Documents/01_fiby/09_ゼット/Dev/LLM
+
+## 参考資料フォルダパス（あれば）
+なし
+
+## コーディングルール
+Dify YMLファイルの作成にあたっては、以下のコーディングルールに従ってください：
+
+### 1. 全体コーディングルール
+/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/全体コーディングルール/全体コーディングルール.md を参照してください。
+
+### 2. コンポーネント別コーディングルール
+各コンポーネントを使用する際は、/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/コンポーネント別コーディングルール フォルダ内の該当するtxtファイルを参照してください。
+特に、コンポーネント記述ルール_LLM.txt の内容を厳密に遵守してください。
+
+### 3. 品質チェック
+YMLファイル作成後は、/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/品質チェック/品質チェックリスト.md を参照し、必ずセルフレビューを実施してください。
+
+## 注意事項
+- 外側のtype属性は必ず"custom"にすること
+- positionAbsoluteはpositionと同じ値にすること
+- prompt_templateには必ずid属性を含めること
+- YAMLコメントはノード定義の外側に配置すること
+- providerはシンプルな形式（"openai"など）を使用すること

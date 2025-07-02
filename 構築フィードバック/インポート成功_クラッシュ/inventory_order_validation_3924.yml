@@ -1,0 +1,499 @@
+app:
+  description: 商品在庫管理と注文処理判定システム
+  icon: 📦
+  icon_background: '#E0F2FE'
+  mode: advanced-chat
+  name: 在庫管理注文処理システム
+  use_icon_as_answer_icon: false
+kind: app
+version: 0.3.0
+dependencies: []
+workflow:
+  environment_variables: []
+  conversation_variables: []
+  features:
+    file_upload:
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+          - local_file
+          - remote_url
+    opening_statement: 商品の注文を処理します。商品名、注文数量、単価を入力してください。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ja-JP
+      voice: ja-JP-NanamiNeural
+  graph:
+    edges:
+      - data:
+          priority: 0
+          selected: false
+          smooth: false
+          sourceType: start
+          targetType: code
+          title: null
+          type: custom
+          zIndex: 0
+        id: start-data_parser
+        selected: false
+        source: start
+        sourceHandle: source
+        target: data_parser
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          priority: 0
+          selected: false
+          smooth: false
+          sourceType: code
+          targetType: code
+          title: null
+          type: custom
+          zIndex: 0
+        id: data_parser-calculation_node
+        selected: false
+        source: data_parser
+        sourceHandle: source
+        target: calculation_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          priority: 0
+          selected: false
+          smooth: false
+          sourceType: code
+          targetType: if-else
+          title: null
+          type: custom
+          zIndex: 0
+        id: calculation_node-order_validation
+        selected: false
+        source: calculation_node
+        sourceHandle: source
+        target: order_validation
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          priority: 0
+          selected: false
+          smooth: false
+          sourceType: if-else
+          targetType: llm
+          title: null
+          type: custom
+          zIndex: 0
+        id: order_validation-high_value_order-sufficient_stock_high_value
+        selected: false
+        source: order_validation
+        sourceHandle: sufficient_stock_high_value
+        target: high_value_order
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          priority: 0
+          selected: false
+          smooth: false
+          sourceType: if-else
+          targetType: llm
+          title: null
+          type: custom
+          zIndex: 0
+        id: order_validation-normal_order-sufficient_stock_normal_value
+        selected: false
+        source: order_validation
+        sourceHandle: sufficient_stock_normal_value
+        target: normal_order
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          priority: 0
+          selected: false
+          smooth: false
+          sourceType: if-else
+          targetType: llm
+          title: null
+          type: custom
+          zIndex: 0
+        id: order_validation-insufficient_stock-false
+        selected: false
+        source: order_validation
+        sourceHandle: 'false'
+        target: insufficient_stock
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          priority: 0
+          selected: false
+          smooth: false
+          sourceType: llm
+          targetType: answer
+          title: null
+          type: custom
+          zIndex: 0
+        id: high_value_order-answer_1
+        selected: false
+        source: high_value_order
+        sourceHandle: source
+        target: answer_1
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          priority: 0
+          selected: false
+          smooth: false
+          sourceType: llm
+          targetType: answer
+          title: null
+          type: custom
+          zIndex: 0
+        id: normal_order-answer_2
+        selected: false
+        source: normal_order
+        sourceHandle: source
+        target: answer_2
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          priority: 0
+          selected: false
+          smooth: false
+          sourceType: llm
+          targetType: answer
+          title: null
+          type: custom
+          zIndex: 0
+        id: insufficient_stock-answer_3
+        selected: false
+        source: insufficient_stock
+        sourceHandle: source
+        target: answer_3
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: ユーザーからの入力を受け取る
+          selected: false
+          title: 開始
+          type: start
+          variables: []
+        height: 90
+        id: start
+        position:
+          x: 80
+          y: 282
+        positionAbsolute:
+          x: 80
+          y: 282
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          code: "def main():\n    product_name = sys.query.get('商品名', '')\n    quantity_str = sys.query.get('注文数量', '0')\n    price_str = sys.query.get('単価', '0')\n    \n    try:\n        quantity = int(quantity_str)\n        price = float(price_str)\n    except:\n        quantity = 0\n        price = 0\n    \n    return {\n        'product_name': product_name,\n        'quantity': quantity,\n        'price': price,\n        'stock_limit': 100\n    }"
+          code_language: python3
+          desc: 入力データを解析
+          outputs:
+            product_name:
+              type: string
+            quantity:
+              type: number
+            price:
+              type: number
+            stock_limit:
+              type: number
+          selected: false
+          title: データ解析
+          type: code
+          variables:
+            - value_selector:
+                - sys
+                - query
+              variable: sys.query
+        height: 106
+        id: data_parser
+        position:
+          x: 384
+          y: 274
+        positionAbsolute:
+          x: 384
+          y: 274
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          code: "def main():\n    quantity = data_parser.get('quantity', 0)\n    price = data_parser.get('price', 0)\n    \n    total_amount = quantity * price\n    \n    return {\n        'total_amount': total_amount\n    }"
+          code_language: python3
+          desc: 注文金額を計算
+          outputs:
+            total_amount:
+              type: number
+          selected: false
+          title: 金額計算
+          type: code
+          variables:
+            - value_selector:
+                - data_parser
+              variable: data_parser
+        height: 106
+        id: calculation_node
+        position:
+          x: 688
+          y: 274
+        positionAbsolute:
+          x: 688
+          y: 274
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - case_id: sufficient_stock_high_value
+              id: sufficient_stock_high_value
+              conditions:
+                - id: stock_check_1
+                  variable_selector:
+                    - data_parser
+                    - quantity
+                  comparison_operator: "<="
+                  value: 100
+                - id: amount_check_1
+                  variable_selector:
+                    - calculation_node
+                    - total_amount
+                  comparison_operator: ">="
+                  value: 10000
+              logical_operator: and
+            - case_id: sufficient_stock_normal_value
+              id: sufficient_stock_normal_value
+              conditions:
+                - id: stock_check_2
+                  variable_selector:
+                    - data_parser
+                    - quantity
+                  comparison_operator: "<="
+                  value: 100
+                - id: amount_check_2
+                  variable_selector:
+                    - calculation_node
+                    - total_amount
+                  comparison_operator: "<"
+                  value: 10000
+              logical_operator: and
+          desc: 在庫と金額で注文を分類
+          selected: false
+          title: 注文検証
+          type: if-else
+        height: 202
+        id: order_validation
+        position:
+          x: 992
+          y: 225
+        positionAbsolute:
+          x: 992
+          y: 225
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          context:
+            enabled: true
+            variable_selector:
+              - sys
+              - context
+          desc: 高額注文の処理
+          model:
+            completion_params:
+              temperature: 0.5
+            mode: chat
+            name: gpt-4o-mini
+            provider: openai
+          prompt:
+            - id: prompt_1
+              role: system
+              text: 高額注文の確認メッセージを生成してください。
+            - id: prompt_2
+              role: user
+              text: "商品名: {{#data_parser.product_name#}}\n注文数量: {{#data_parser.quantity#}}\n単価: {{#data_parser.price#}}\n合計金額: {{#calculation_node.total_amount#}}\n\nこれは高額注文です。特別な対応をご案内します。"
+          selected: false
+          title: 高額注文処理
+          type: llm
+          variables: []
+          vision:
+            enabled: false
+        height: 122
+        id: high_value_order
+        position:
+          x: 1296
+          y: 80
+        positionAbsolute:
+          x: 1296
+          y: 80
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          context:
+            enabled: true
+            variable_selector:
+              - sys
+              - context
+          desc: 通常注文の処理
+          model:
+            completion_params:
+              temperature: 0.5
+            mode: chat
+            name: gpt-4o-mini
+            provider: openai
+          prompt:
+            - id: prompt_1
+              role: system
+              text: 通常注文の確認メッセージを生成してください。
+            - id: prompt_2
+              role: user
+              text: "商品名: {{#data_parser.product_name#}}\n注文数量: {{#data_parser.quantity#}}\n単価: {{#data_parser.price#}}\n合計金額: {{#calculation_node.total_amount#}}\n\n通常の注文として処理いたします。"
+          selected: false
+          title: 通常注文処理
+          type: llm
+          variables: []
+          vision:
+            enabled: false
+        height: 122
+        id: normal_order
+        position:
+          x: 1296
+          y: 250
+        positionAbsolute:
+          x: 1296
+          y: 250
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          context:
+            enabled: true
+            variable_selector:
+              - sys
+              - context
+          desc: 在庫不足の処理
+          model:
+            completion_params:
+              temperature: 0.5
+            mode: chat
+            name: gpt-4o-mini
+            provider: openai
+          prompt:
+            - id: prompt_1
+              role: system
+              text: 在庫不足のお知らせメッセージを生成してください。
+            - id: prompt_2
+              role: user
+              text: "商品名: {{#data_parser.product_name#}}\n注文数量: {{#data_parser.quantity#}}\n在庫数: {{#data_parser.stock_limit#}}\n\n申し訳ございません。在庫が不足しております。"
+          selected: false
+          title: 在庫不足処理
+          type: llm
+          variables: []
+          vision:
+            enabled: false
+        height: 122
+        id: insufficient_stock
+        position:
+          x: 1296
+          y: 420
+        positionAbsolute:
+          x: 1296
+          y: 420
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: '{{#high_value_order.text#}}'
+          desc: 高額注文の回答
+          selected: false
+          title: 回答1
+          type: answer
+          variables: []
+        height: 90
+        id: answer_1
+        position:
+          x: 1600
+          y: 80
+        positionAbsolute:
+          x: 1600
+          y: 80
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: '{{#normal_order.text#}}'
+          desc: 通常注文の回答
+          selected: false
+          title: 回答2
+          type: answer
+          variables: []
+        height: 90
+        id: answer_2
+        position:
+          x: 1600
+          y: 250
+        positionAbsolute:
+          x: 1600
+          y: 250
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: '{{#insufficient_stock.text#}}'
+          desc: 在庫不足の回答
+          selected: false
+          title: 回答3
+          type: answer
+          variables: []
+        height: 90
+        id: answer_3
+        position:
+          x: 1600
+          y: 420
+        positionAbsolute:
+          x: 1600
+          y: 420
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244

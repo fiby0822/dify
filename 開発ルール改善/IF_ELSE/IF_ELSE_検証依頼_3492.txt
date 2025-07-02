@@ -1,0 +1,66 @@
+# Dify YMLファイル作成依頼プロンプト
+
+## 要件
+更新されたIF_ELSEコンポーネントルールの完全検証用YMLファイルを作成してください。
+以下の全ての機能と仕様を網羅的にテストできるワークフローを実装してください：
+
+### 1. 必須フィールドの検証
+- case_idフィールドの必須化（idと同じ値を設定）
+- 外側type="custom"、data.type="if-else"の正しい設定
+- height、width、positionAbsoluteの必須フィールド
+- data.selected、data.titleの必須フィールド
+
+### 2. Unicode比較演算子の検証
+- 数値比較での"≥"（以上）の使用
+- 数値比較での"≤"（以下）の使用  
+- 数値比較での"≠"（等しくない）の使用
+- 通常の">"、"<"、"="演算子も含める
+
+### 3. 各種比較演算子の網羅的テスト
+- 文字列比較：is、is not、contains、not contains、start with、end with
+- 集合演算：in、not in、all of
+- NULL/存在チェック：empty、not empty、null、not null、exists、not exists
+
+### 4. 論理演算子の検証
+- AND条件（logical_operator: "and"）
+- OR条件（logical_operator: "or"）
+
+### 5. エッジケースとベストプラクティス
+- デフォルトケースの実装
+- 複数ケースの連鎖
+- sourceHandleでのケースID使用確認
+- 意味のあるケースIDの命名
+
+## アウトプットフォルダパス
+/Users/tatsuya/Documents/01_fiby/09_ゼット/Dev/IF_ELSE
+
+## 参考資料フォルダパス（あれば）
+/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/コンポーネント別コーディングルール/コンポーネント記述ルール_IF_ELSE.txt
+
+## コーディングルール
+Dify YMLファイルの作成にあたっては、以下のコーディングルールに従ってください：
+
+### 1. 全体コーディングルール
+/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/全体コーディングルール/全体コーディングルール.md を参照してください。
+特に以下の点に注意：
+- YAMLファイル内にコメント（#）を含めない
+- 必須セクション（dependencies、kind、version等）の確実な記載
+- advanced-chatモードでの適切な構造
+
+### 2. コンポーネント別コーディングルール
+各コンポーネントを使用する際は、/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/コンポーネント別コーディングルール フォルダ内の該当するtxtファイルを参照してください。
+特に、更新されたコンポーネント記述ルール_IF_ELSE.txtの内容を厳密に守ってください：
+- case_idフィールドの必須化
+- Unicode比較演算子の正確な使用
+- 外側type="custom"の設定
+
+### 3. 品質チェック
+YMLファイル作成後は、/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/品質チェック/品質チェックリスト.md を参照し、必ずセルフレビューを実施してください。
+特にIF_ELSE専用チェック項目に注意。
+
+## 追加要件
+- ファイル名は「IF_ELSE_検証_3492.yml」とすること
+- 各IF_ELSEノードには意味のあるIDを付けること
+- エッジ接続を正しく設定し、sourceHandleにcase_idを使用すること
+- テスト用の入力パターンを明確にすること
+- 動作確認時にどの条件が適用されたかが分かるような出力にすること

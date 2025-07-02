@@ -1,0 +1,27 @@
+【YMLファイル分析結果】
+ファイル名：tech_support_faq_system_3947.yml
+タイトル：技術サポートFAQシステム
+
+■報告された問題
+1. ナレッジが選択されていない
+
+■実際のファイル確認結果
+1. ナレッジ選択状況：
+   - hardware_knowledge_node: dataset_ids設定済み（選択されている）
+   - software_knowledge_node: dataset_ids設定済み（選択されている）
+   - other_knowledge_node: dataset_ids設定済み（選択されている）
+
+2. IF_ELSE接続状況：
+   - category_branch_node:
+     - hardware_case → hardware_knowledge_nodeへ接続
+     - software_case → software_knowledge_nodeへ接続
+     - false → other_knowledge_nodeへ接続（ELSEケース接続済み）
+
+■結論
+YMLファイル上では報告された問題は確認できませんでした。
+すべてのナレッジノードにdataset_idsが設定されており、IF_ELSEのELSEケースも適切に接続されています。
+
+■特記事項
+- retrieval_modeがmultipleに設定されているノードあり
+- reranking機能が有効化されている
+- 各ナレッジ検索ノードでembedding設定やweight設定が詳細に指定されている

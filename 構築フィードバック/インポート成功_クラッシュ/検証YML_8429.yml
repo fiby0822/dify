@@ -1,0 +1,332 @@
+app:
+  description: "IF/ELSEコンポーネントの動作検証用アプリケーション。数値比較、文字列検索、複数条件のAND/OR検証を行います。"
+  icon: "🔍"
+  icon_background: "#E0F2FE"
+  mode: advanced-chat
+  name: "IF/ELSE検証アプリ"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      IF/ELSEコンポーネントの検証を開始します。
+      テストデータ：
+      - スコア: 85
+      - ステータス: 承認済み
+      - カテゴリ: 緊急対応案件
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "条件分岐をテストしてください"
+      - "IF/ELSEの動作を確認"
+      - "検証を実行"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: assigner
+        id: start-assign-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: assign_variables_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: assigner
+          targetType: if-else
+        id: assign-condition-edge
+        selected: false
+        source: assign_variables_node
+        sourceHandle: source
+        target: condition_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: condition-answer1-edge
+        selected: false
+        source: condition_check_node
+        sourceHandle: case_1
+        target: answer_case1_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: condition-answer2-edge
+        selected: false
+        source: condition_check_node
+        sourceHandle: case_2
+        target: answer_case2_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: condition-answer3-edge
+        selected: false
+        source: condition_check_node
+        sourceHandle: case_3
+        target: answer_case3_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: condition-default-edge
+        selected: false
+        source: condition_check_node
+        sourceHandle: false
+        target: answer_default_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "検証開始"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "テスト用変数の設定"
+          assigned_variable_selector:
+            - assign_variables_node
+            - output
+          input_variable_selector:
+            - sys
+            - query
+          selected: false
+          title: "変数代入"
+          type: assigner
+          write_mode: over-write
+        height: 132
+        id: assign_variables_node
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: case_1
+              case_id: case_1
+              conditions:
+                - variable_selector:
+                    - assign_variables_node
+                    - score
+                  comparison_operator: "≥"
+                  value: 80
+                - variable_selector:
+                    - assign_variables_node
+                    - status
+                  comparison_operator: is
+                  value: "承認済み"
+              logical_operator: and
+            - id: case_2
+              case_id: case_2
+              conditions:
+                - variable_selector:
+                    - assign_variables_node
+                    - category
+                  comparison_operator: contains
+                  value: "緊急"
+              logical_operator: and
+            - id: case_3
+              case_id: case_3
+              conditions:
+                - variable_selector:
+                    - assign_variables_node
+                    - score
+                  comparison_operator: "≥"
+                  value: 90
+              logical_operator: and
+          desc: "条件分岐チェック"
+          selected: false
+          title: "IF/ELSE条件分岐"
+        height: 250
+        id: condition_check_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ✅ Case 1が実行されました！
+            
+            条件：スコア≥80 かつ ステータス="承認済み"
+            結果：条件を満たしています
+            
+            テストデータ：
+            - スコア: {{#assign_variables_node.score#}}
+            - ステータス: {{#assign_variables_node.status#}}
+            
+            AND条件が正しく動作しています。
+          desc: "Case 1の結果"
+          selected: false
+          title: "Case 1: 合格（AND条件）"
+          type: answer
+          variables: []
+        height: 200
+        id: answer_case1_node
+        position:
+          x: 950
+          y: 50
+        positionAbsolute:
+          x: 950
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            🚨 Case 2が実行されました！
+            
+            条件：カテゴリに"緊急"を含む
+            結果：条件を満たしています
+            
+            テストデータ：
+            - カテゴリ: {{#assign_variables_node.category#}}
+            
+            文字列のcontains演算子が正しく動作しています。
+          desc: "Case 2の結果"
+          selected: false
+          title: "Case 2: 緊急案件"
+          type: answer
+          variables: []
+        height: 200
+        id: answer_case2_node
+        position:
+          x: 950
+          y: 270
+        positionAbsolute:
+          x: 950
+          y: 270
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            📊 Case 3が実行されました！
+            
+            条件：スコア≥90
+            結果：条件を満たしています
+            
+            テストデータ：
+            - スコア: {{#assign_variables_node.score#}}
+            
+            Unicode演算子（≥）が正しく動作しています。
+          desc: "Case 3の結果"
+          selected: false
+          title: "Case 3: 高得点"
+          type: answer
+          variables: []
+        height: 200
+        id: answer_case3_node
+        position:
+          x: 950
+          y: 490
+        positionAbsolute:
+          x: 950
+          y: 490
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ℹ️ デフォルトケースが実行されました
+            
+            いずれの条件にも該当しませんでした。
+            
+            テストデータ：
+            - スコア: {{#assign_variables_node.score#}}
+            - ステータス: {{#assign_variables_node.status#}}
+            - カテゴリ: {{#assign_variables_node.category#}}
+          desc: "デフォルトケースの結果"
+          selected: false
+          title: "デフォルト: その他"
+          type: answer
+          variables: []
+        height: 200
+        id: answer_default_node
+        position:
+          x: 950
+          y: 710
+        positionAbsolute:
+          x: 950
+          y: 710
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

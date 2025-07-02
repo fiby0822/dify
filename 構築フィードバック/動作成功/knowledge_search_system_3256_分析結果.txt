@@ -1,0 +1,31 @@
+YMLファイル: knowledge_search_system_3256.yml（カスタマーサポート知識ベース検索システム）
+分析日時: 2025-07-02
+
+【報告された問題】
+1. ナレッジが選択されていないものがあった
+
+【詳細分析結果】
+
+1. ナレッジ選択に関する分析：
+   - tech_knowledge_search（行382-383）: dataset_idsが1つ指定されている（暗号化されたID形式）
+   - operation_knowledge_search（行406-407）: dataset_idsが1つ指定されている（暗号化されたID形式）
+   - trouble_knowledge_search（行430-431）: dataset_idsが1つ指定されている（暗号化されたID形式）
+   - other_knowledge_search（行454-455）: dataset_idsが1つ指定されている（暗号化されたID形式）
+
+   すべての知識検索ノードでdataset_idsが正しく指定されている構造となっている。
+
+2. IF_ELSE構造の分析：
+   - category_condition（行261-368）:
+     - technical_case: tech_knowledge_searchに接続（正常）
+     - operation_case: operation_knowledge_searchに接続（正常）
+     - troubleshoot_case: trouble_knowledge_searchに接続（正常）
+     - false（ELSEケース）: other_knowledge_searchに接続（行105で確認、正常）
+
+【推測される問題の原因】
+1. YMLファイル内では正しくdataset_idsが指定されているが、実行環境でこれらのIDが無効となっている
+2. ナレッジベースの権限やアクセス制限の問題
+3. Difyプラットフォーム側でのデータセット参照の失敗
+
+【特記事項】
+- すべての知識検索ノードでretrieval_modeがsingleに設定されている
+- query_variable_selectorも適切に設定されている（sys.query）

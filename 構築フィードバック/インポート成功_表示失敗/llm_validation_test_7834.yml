@@ -1,0 +1,429 @@
+app:
+  description: |
+    LLMコンポーネントの全機能を検証するためのテストアプリケーション。
+    異なるtemperature設定での応答比較、変数参照、プロンプトエンジニアリングの検証を行います。
+  icon: 🧪
+  icon_background: "#FF6B6B"
+  mode: advanced-chat
+  name: LLMコンポーネント包括テストアプリ
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      🧪 LLMコンポーネント包括テストアプリへようこそ！
+      
+      このアプリは、LLMノードの様々な設定と機能をテストします。
+      
+      【テスト内容】
+      1. 基本的なchatモード（temperature: 0.7）
+      2. 事実重視モード（temperature: 0.1）
+      3. 創造的モード（temperature: 0.9）
+      4. 3つの結果を統合・比較
+      
+      テストしたい内容や質問を入力してください。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "日本の四季について教えてください"
+      - "効果的な時間管理の方法を3つ提案してください"
+      - "架空の新しいスポーツを考案してください"
+      - "プログラミングを学ぶメリットは何ですか？"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-basic_llm-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: basic_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-low_temp_llm-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: low_temp_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-high_temp_llm-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: high_temp_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: llm
+        id: basic_llm-integration_llm-edge
+        selected: false
+        source: basic_llm_node
+        sourceHandle: source
+        target: integration_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: llm
+        id: low_temp_llm-integration_llm-edge
+        selected: false
+        source: low_temp_llm_node
+        sourceHandle: source
+        target: integration_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: llm
+        id: high_temp_llm-integration_llm-edge
+        selected: false
+        source: high_temp_llm_node
+        sourceHandle: source
+        target: integration_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: integration_llm-answer-edge
+        selected: false
+        source: integration_llm_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: テスト入力を受け付ける開始ノード
+          selected: false
+          title: 開始
+          type: start
+          variables:
+            - label: テスト入力
+              max_length: 2000
+              options: []
+              required: true
+              type: paragraph
+              variable: test_input
+            - label: テストシナリオ
+              max_length: 500
+              options: []
+              required: false
+              type: text-input
+              variable: test_scenario
+        height: 116
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: start
+        width: 244
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: 標準的なchatモードでの動作確認
+          memory:
+            enabled: false
+          model:
+            completion_params:
+              max_tokens: 500
+              temperature: 0.7
+              top_p: 0.9
+            mode: chat
+            name: gpt-4o
+            provider: openai
+          prompt_template:
+            - id: system-basic
+              role: system
+              text: |
+                あなたは知識豊富で親切なAIアシスタントです。
+                以下の特徴を持って回答してください：
+                1. バランスの取れた回答
+                2. 正確性と親しみやすさの両立
+                3. 適度な詳細さ
+                
+                このテストは標準設定（temperature: 0.7）での動作確認です。
+            - id: user-basic
+              role: user
+              text: |
+                {{#start_node.test_input#}}
+                
+                テストシナリオ: {{#start_node.test_scenario#}}
+          selected: false
+          structured_output_enabled: false
+          title: 基本テストLLM
+          type: llm
+          variables: []
+          vision:
+            enabled: false
+        height: 98
+        id: basic_llm_node
+        position:
+          x: 350
+          y: 50
+        positionAbsolute:
+          x: 350
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: llm
+        width: 244
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: 事実ベースの応答生成
+          memory:
+            enabled: false
+          model:
+            completion_params:
+              max_tokens: 500
+              temperature: 0.1
+              top_p: 0.5
+            mode: chat
+            name: gpt-4o
+            provider: openai
+          prompt_template:
+            - id: system-low-temp
+              role: system
+              text: |
+                あなたは正確性を最優先するAIアシスタントです。
+                以下の原則に従ってください：
+                1. 事実のみを述べる
+                2. 推測や創造的な内容は避ける
+                3. 不確実な情報は明示する
+                4. 簡潔で明確な表現
+                
+                このテストは低temperature（0.1）での事実重視モードです。
+            - id: user-low-temp
+              role: user
+              text: |
+                {{#start_node.test_input#}}
+                
+                テストシナリオ: {{#start_node.test_scenario#}}
+          selected: false
+          structured_output_enabled: false
+          title: 低温度テストLLM
+          type: llm
+          variables: []
+          vision:
+            enabled: false
+        height: 98
+        id: low_temp_llm_node
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: llm
+        width: 244
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: 創造的でアイデア豊富な応答生成
+          memory:
+            enabled: false
+          model:
+            completion_params:
+              max_tokens: 500
+              temperature: 0.9
+              top_p: 0.95
+            mode: chat
+            name: gpt-4o
+            provider: openai
+          prompt_template:
+            - id: system-high-temp
+              role: system
+              text: |
+                あなたは創造性と革新性を重視するAIアシスタントです。
+                以下の方針で回答してください：
+                1. 独創的なアイデアを提案
+                2. 型にはまらない発想
+                3. 想像力豊かな表現
+                4. 新しい視点の提供
+                
+                このテストは高temperature（0.9）での創造的モードです。
+            - id: user-high-temp
+              role: user
+              text: |
+                {{#start_node.test_input#}}
+                
+                テストシナリオ: {{#start_node.test_scenario#}}
+          selected: false
+          structured_output_enabled: false
+          title: 高温度テストLLM
+          type: llm
+          variables: []
+          vision:
+            enabled: false
+        height: 98
+        id: high_temp_llm_node
+        position:
+          x: 350
+          y: 350
+        positionAbsolute:
+          x: 350
+          y: 350
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: llm
+        width: 244
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: 3つの結果を統合して比較分析
+          memory:
+            enabled: false
+          model:
+            completion_params:
+              max_tokens: 1500
+              temperature: 0.5
+              top_p: 0.8
+            mode: chat
+            name: gpt-4o
+            provider: openai
+          prompt_template:
+            - id: system-integration
+              role: system
+              text: |
+                あなたは分析的で洞察力のあるAIアシスタントです。
+                3つの異なるtemperature設定での回答を比較分析し、
+                それぞれの特徴と違いを明確に示してください。
+                
+                分析の観点：
+                1. 回答の正確性と事実性
+                2. 創造性と独創性
+                3. 実用性とバランス
+                4. 各設定の長所と短所
+            - id: user-integration
+              role: user
+              text: |
+                元の質問：
+                {{#start_node.test_input#}}
+                
+                【基本設定（temperature: 0.7）の回答】
+                {{#basic_llm_node.text#}}
+                
+                【低温度設定（temperature: 0.1）の回答】
+                {{#low_temp_llm_node.text#}}
+                
+                【高温度設定（temperature: 0.9）の回答】
+                {{#high_temp_llm_node.text#}}
+                
+                上記3つの回答を比較分析し、それぞれの特徴をまとめてください。
+          selected: false
+          structured_output_enabled: false
+          title: 統合分析LLM
+          type: llm
+          variables: []
+          vision:
+            enabled: false
+        height: 98
+        id: integration_llm_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: llm
+        width: 244
+      - data:
+          answer: |
+            ## 🧪 LLMコンポーネントテスト結果
+            
+            {{#integration_llm_node.text#}}
+            
+            ---
+            
+            ### 📊 テスト概要
+            - **入力内容**: {{#start_node.test_input#}}
+            - **テストシナリオ**: {{#start_node.test_scenario#}}
+            
+            ### 🔍 テスト設定
+            1. **基本モード**: temperature=0.7, top_p=0.9
+            2. **事実重視モード**: temperature=0.1, top_p=0.5
+            3. **創造的モード**: temperature=0.9, top_p=0.95
+            
+            ### ✅ テスト完了
+            LLMコンポーネントの各種パラメータによる動作の違いを確認できました。
+          desc: テスト結果のレポート出力
+          selected: false
+          title: テスト結果
+          type: answer
+          variables: []
+        height: 107
+        id: answer_node
+        position:
+          x: 950
+          y: 200
+        positionAbsolute:
+          x: 950
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: answer
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

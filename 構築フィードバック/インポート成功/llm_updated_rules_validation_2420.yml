@@ -1,0 +1,326 @@
+app:
+  description: "更新されたLLMコーディングルールの検証用アプリ。3つの異なるLLMノードパターンで技術的な質問に段階的に回答を生成します。"
+  icon: "🔧"
+  icon_background: "#F3E5F5"
+  mode: advanced-chat
+  name: "LLM更新ルール検証アプリ"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      LLM更新ルール検証アプリへようこそ！
+      
+      このアプリは、更新されたLLMコーディングルールに基づいて作成されています。
+      技術的な質問をすると、以下の3段階で回答を生成します：
+      
+      1. 基本的な回答（すべてのフィールドを含む完全版）
+      2. 詳細な技術解説（variablesフィールドを省略）
+      3. 実装例とベストプラクティス（memoryフィールドも含む）
+      
+      どんな技術的な質問でもお気軽にどうぞ！
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "Reactのフックについて教えてください"
+      - "マイクロサービスアーキテクチャの利点と欠点は？"
+      - "機械学習モデルの過学習を防ぐ方法を教えて"
+      - "GraphQLとRESTの違いを説明してください"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-pattern-a-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: pattern_a_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: llm
+        id: pattern-a-pattern-b-edge
+        selected: false
+        source: pattern_a_llm_node
+        sourceHandle: source
+        target: pattern_b_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: llm
+        id: pattern-b-pattern-c-edge
+        selected: false
+        source: pattern_b_llm_node
+        sourceHandle: source
+        target: pattern_c_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: pattern-c-answer-edge
+        selected: false
+        source: pattern_c_llm_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "ユーザーからの技術的な質問を受け取る"
+          selected: false
+          title: "開始"
+          type: start
+          variables:
+            - variable: technical_question
+              type: paragraph
+              label: "技術的な質問を入力してください"
+              max_length: 3000
+              required: true
+        height: 116
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "Pattern A: すべてのフィールドを含む完全版"
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+            completion_params:
+              temperature: 0.7
+              max_tokens: 800
+              top_p: 0.9
+          prompt_template:
+            - id: system-basic-1
+              role: system
+              text: |
+                あなたは技術的な質問に対して基本的でわかりやすい回答を提供する専門家です。
+                以下のガイドラインに従ってください：
+                1. 技術用語は簡潔に説明する
+                2. 概念を明確に定義する
+                3. 基本的な理解を促進する回答をする
+                4. 専門用語を使いすぎない
+            - id: user-basic-1
+              role: user
+              text: |
+                以下の技術的な質問に対して、基本的でわかりやすい回答を提供してください：
+                
+                {{#start_node.technical_question#}}
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          selected: false
+          title: "基本回答生成（Pattern A）"
+          type: llm
+        height: 98
+        id: pattern_a_llm_node
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "Pattern B: variablesフィールドを省略"
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+            completion_params:
+              temperature: 0.5
+              max_tokens: 1000
+              top_p: 0.85
+          prompt_template:
+            - id: system-detail-1
+              role: system
+              text: |
+                あなたは技術的な質問に対して詳細な解説を提供する専門家です。
+                以下のガイドラインに従ってください：
+                1. 技術的な詳細を含める
+                2. アーキテクチャやデザインパターンに言及する
+                3. 利点と欠点を明確にする
+                4. 実際の使用例を含める
+            - id: user-detail-1
+              role: user
+              text: |
+                質問：{{#start_node.technical_question#}}
+                
+                基本的な回答：
+                {{#pattern_a_llm_node.text#}}
+                
+                上記の基本回答を踏まえて、より技術的で詳細な解説を追加してください。
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          selected: false
+          title: "詳細解説生成（Pattern B）"
+          type: llm
+        height: 98
+        id: pattern_b_llm_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "Pattern C: memoryフィールドも含む拡張版"
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+            completion_params:
+              temperature: 0.6
+              max_tokens: 1200
+          prompt_template:
+            - id: system-practice-1
+              role: system
+              text: |
+                あなたは実践的な実装例とベストプラクティスを提供する専門家です。
+                以下のガイドラインに従ってください：
+                1. 具体的なコード例を含める
+                2. ベストプラクティスを説明する
+                3. よくある間違いと対策を含める
+                4. パフォーマンスやセキュリティの観点も考慮する
+            - id: user-practice-1
+              role: user
+              text: |
+                質問：{{#start_node.technical_question#}}
+                
+                これまでの回答：
+                基本回答：{{#pattern_a_llm_node.text#}}
+                詳細解説：{{#pattern_b_llm_node.text#}}
+                
+                上記を踏まえて、実装例とベストプラクティスを提供してください。
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          memory:
+            enabled: false
+          selected: false
+          title: "実装例生成（Pattern C）"
+          type: llm
+        height: 98
+        id: pattern_c_llm_node
+        position:
+          x: 950
+          y: 200
+        positionAbsolute:
+          x: 950
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ## 技術的な質問への段階的回答
+            
+            ### 質問内容
+            {{#start_node.technical_question#}}
+            
+            ---
+            
+            ### 1. 基本的な回答
+            {{#pattern_a_llm_node.text#}}
+            
+            ---
+            
+            ### 2. 詳細な技術解説
+            {{#pattern_b_llm_node.text#}}
+            
+            ---
+            
+            ### 3. 実装例とベストプラクティス
+            {{#pattern_c_llm_node.text#}}
+            
+            ---
+            
+            **検証結果**: 更新されたLLMコーディングルールに基づき、以下の設定で正常に動作しました：
+            - すべてのノードで type: custom を使用
+            - Pattern Bではvariablesフィールドを省略
+            - すべてのLLMノードでcontextフィールドを設定
+            - Pattern Cではmemoryフィールドも追加
+          desc: "3つの回答を統合して表示"
+          selected: false
+          title: "統合回答"
+          type: answer
+          variables: []
+        height: 461
+        id: answer_node
+        position:
+          x: 1250
+          y: 200
+        positionAbsolute:
+          x: 1250
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.7

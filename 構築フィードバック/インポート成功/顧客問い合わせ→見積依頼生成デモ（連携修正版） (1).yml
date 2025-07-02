@@ -1,0 +1,469 @@
+app:
+  description: 商品抽出→法規チェック分岐→仕入先判定→メール草案→統合出力の5段階ワークフロー
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  mode: advanced-chat
+  name: 顧客問い合わせ→見積依頼生成デモ（連携修正版）
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/openai:0.0.26@c1e643ac6a7732f6333a783320b4d3026fa5e31d8e7026375b98d44418d33f26
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        image_file_size_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: 顧客メール本文を入力してください。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        sourceType: start
+        targetType: llm
+      id: e1
+      source: n_start
+      sourceHandle: source
+      target: n_extract
+      targetHandle: target
+      type: custom
+    - data:
+        sourceType: llm
+        targetType: if-else
+      id: e2
+      source: n_extract
+      sourceHandle: source
+      target: n_check_regulation
+      targetHandle: target
+      type: custom
+    - data:
+        sourceType: if-else
+        targetType: answer
+      id: e3_violation
+      source: n_check_regulation
+      sourceHandle: 'true'
+      target: n_violation_answer
+      targetHandle: target
+      type: custom
+    - data:
+        sourceType: if-else
+        targetType: llm
+      id: e3_ok
+      source: n_check_regulation
+      sourceHandle: 'false'
+      target: n_supplier
+      targetHandle: target
+      type: custom
+    - data:
+        sourceType: llm
+        targetType: llm
+      id: e4
+      source: n_supplier
+      sourceHandle: source
+      target: n_mail
+      targetHandle: target
+      type: custom
+    - data:
+        sourceType: llm
+        targetType: llm
+      id: e5
+      source: n_mail
+      sourceHandle: source
+      target: n_aggregate
+      targetHandle: target
+      type: custom
+    - data:
+        sourceType: llm
+        targetType: answer
+      id: e6
+      source: n_aggregate
+      sourceHandle: source
+      target: n_answer
+      targetHandle: target
+      type: custom
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: answer
+      id: n_check_regulation-regulation_violation-n_violation_answer-target
+      source: n_check_regulation
+      sourceHandle: regulation_violation
+      target: n_violation_answer
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        selected: false
+        title: 開始
+        type: start
+        variables: []
+      height: 54
+      id: n_start
+      position:
+        x: -27.5
+        y: 268.75
+      positionAbsolute:
+        x: -27.5
+        y: 268.75
+      selected: false
+      sourcePosition: right
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+        model:
+          completion_params:
+            temperature: 0.2
+          mode: chat
+          name: gpt-4o
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: e0e51357-e56f-43cf-8531-a3b56bd5ebf5
+          role: system
+          text: 'あなたは三菱電機トレーディング株式会社の資材調達担当者です。
+
+            ユーザーが入力する顧客メール本文から製品情報（品番・品名・数量・備考）を抽出し、
+
+            「薬」「医薬」「drug」「医療」「古物」「中古」「リユース」などが含まれる場合は
+
+            法規抵触可能性ありと判断してください。
+
+
+            出力フォーマット:
+
+            商品情報リスト:
+
+            - 品番:<品番> 品名:<品名> 数量:<数量> 備考:<備考>
+
+            - …
+
+
+            チェック結果:
+
+            - <問題なし／対象製品と理由>
+
+
+            法規抵触フラグ:
+
+            - <YES/NO>'
+        - id: 6a7817c0-1c07-4f4a-9d4d-a662f3fe4d99
+          role: user
+          text: '{{#sys.query#}}'
+        selected: false
+        title: 商品抽出・法規チェック
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 90
+      id: n_extract
+      position:
+        x: 280
+        y: 260
+      positionAbsolute:
+        x: 280
+        y: 260
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        cases:
+        - case_id: regulation_violation
+          conditions:
+          - comparison_operator: contains
+            id: check_violation
+            value: 'YES'
+            varType: string
+            variable_selector:
+            - n_extract
+            - text
+          id: regulation_violation
+          logical_operator: and
+        selected: false
+        title: 法規チェック分岐
+        type: if-else
+      height: 126
+      id: n_check_regulation
+      position:
+        x: 640
+        y: 260
+      positionAbsolute:
+        x: 640
+        y: 260
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '## ⚠️ 法規抵触の可能性があります
+
+
+          {{#n_extract.text#}}
+
+
+          ---
+
+          法規抵触の可能性がある製品が含まれているため、処理を中断しました。
+
+          該当製品については、法務部門にご相談ください。'
+        selected: false
+        title: 法規抵触通知
+        type: answer
+      height: 185
+      id: n_violation_answer
+      position:
+        x: 1000
+        y: 120
+      positionAbsolute:
+        x: 1000
+        y: 120
+      selected: false
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+        model:
+          completion_params:
+            temperature: 0.2
+          mode: chat
+          name: gpt-4o
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: 76ad1ea1-bac0-4368-8e93-69c3be43f6b3
+          role: system
+          text: '以下の商品情報リストを基に、簡易仕入先マスタから各製品の仕入先を判定してください。
+
+
+            簡易仕入先マスタ:
+
+            - SUP001: 村田製作所 / MUR-MLCC-0402
+
+            - SUP002: TDK株式会社 / TDK-CAP-0805
+
+            - SUP003: オムロン株式会社 / OMR-SSR-G3NA / OMR-SW-D2F
+
+            - SUP004: パナソニックインダストリアル / PAN-RELAY-APAN
+
+
+            出力フォーマット:
+
+            仕入先判定結果リスト:
+
+            - 【商品】<品名(品番)> 【個数】<数量> 【仕入先】<仕入先名>
+
+            - …
+
+
+            見積依頼先:
+
+            - <仕入先名1>: <商品リスト>
+
+            - <仕入先名2>: <商品リスト>
+
+            - …'
+        - id: 4bbbd5cf-b1df-41f4-a5a2-93aa3f969ec2
+          role: user
+          text: '{{#n_extract.text#}}'
+        selected: true
+        title: 仕入先判定
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 90
+      id: n_supplier
+      position:
+        x: 1000
+        y: 380
+      positionAbsolute:
+        x: 1000
+        y: 380
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+        model:
+          completion_params:
+            temperature: 0.25
+          mode: chat
+          name: gpt-4o
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: 6bf09413-6f74-4ef8-b477-7d707ae94b31
+          role: system
+          text: "以下の情報を基に、仕入先向け見積依頼メールのタイトルと本文を作成してください。\n\n必ず以下の情報を使用すること：\n1. 顧客からの問い合わせ内容\n\
+            2. 仕入先判定結果\n\nメール作成ルール:\n- 件名: 【見積依頼】<主要品名または品番>\n- 本文には以下を含める:\n  - 具体的な商品名と数量（仕入先判定結果から）\n\
+            \  - 希望納期（顧客メールに記載があれば）\n  - 支払条件: 月末締め翌月末現金\n  - 分納可否: 可\n  - 納期回答期限:\
+            \ 翌営業日17:00\n  - 署名\n\n出力フォーマット:\nメールタイトル:\n- <件名>\n\nメール本文:\n- <本文全文>"
+        - id: 076f97a8-cd61-49e0-921b-37fac276aade
+          role: user
+          text: '## 顧客からの問い合わせ内容:
+
+            {{#sys.query#}}
+
+
+            ## 仕入先判定結果:
+
+            {{#n_supplier.text#}}'
+        selected: false
+        title: メール草案生成
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 90
+      id: n_mail
+      position:
+        x: 1360
+        y: 380
+      positionAbsolute:
+        x: 1360
+        y: 380
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+        model:
+          completion_params:
+            temperature: 0
+          mode: chat
+          name: gpt-4o
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: dc5666e7-d92f-4177-8e51-f6bd42e0ead6
+          role: system
+          text: '以下のブロックを統合し、指定フォーマットで出力してください。
+
+
+            最終フォーマット:
+
+            ## 仕入先判定結果リスト:
+
+            <仕入先判定結果を整形して表示>
+
+
+            ## チェック結果:
+
+            <法規チェック結果を表示>
+
+
+            ## メールタイトル:
+
+            <メールタイトルを表示>
+
+
+            ## メール本文:
+
+            <メール本文を表示>'
+        - id: c8a79495-3bb9-43b3-a700-5674ae453840
+          role: user
+          text: '## 商品抽出・法規チェック結果:
+
+            {{#n_extract.text#}}
+
+
+            ## 仕入先判定結果:
+
+            {{#n_supplier.text#}}
+
+
+            ## メール草案:
+
+            {{#n_mail.text#}}'
+        selected: false
+        title: 出力整形
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 90
+      id: n_aggregate
+      position:
+        x: 1720
+        y: 380
+      positionAbsolute:
+        x: 1720
+        y: 380
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '{{#n_aggregate.text#}}'
+        selected: false
+        title: 出力結果
+        type: answer
+      height: 105
+      id: n_answer
+      position:
+        x: 2080
+        y: 380
+      positionAbsolute:
+        x: 2080
+        y: 380
+      selected: false
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: -1073.483792399722
+      y: -50.474350238571674
+      zoom: 1.0837799819882956

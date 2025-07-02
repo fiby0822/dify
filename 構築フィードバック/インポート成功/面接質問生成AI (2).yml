@@ -1,0 +1,301 @@
+app:
+  description: 職種・レベル別にカスタマイズされた面接質問を自動生成するAIアシスタント
+  icon: 🤔
+  icon_background: '#8B5CF6'
+  mode: advanced-chat
+  name: 面接質問生成AI
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/openai:0.0.26@c1e643ac6a7732f6333a783320b4d3026fa5e31d8e7026375b98d44418d33f26
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        image_file_size_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: 'こんにちは！面接質問生成AIです。
+
+
+      以下の機能でサポートいたします：
+
+      ❓ 職種別面接質問の生成
+
+      📊 レベル別質問の調整
+
+      💡 行動面接質問の提案
+
+      🎯 技術面接質問の作成
+
+
+      面接したい職種・ポジション・レベルをお教えください。
+
+      '
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+    - シニアエンジニアの技術面接質問を作成してください
+    - 営業マネージャーの面接質問をお願いします
+    - 新卒マーケティング職の質問を生成してください
+    - 経理部長候補の面接質問を作ってください
+    suggested_questions_after_answer:
+      enabled: true
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: start
+        targetType: llm
+      id: start-llm-edge
+      selected: false
+      source: '1746704294027'
+      sourceHandle: source
+      target: '1746709265761'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: llm-answer-edge
+      selected: false
+      source: '1746709265761'
+      sourceHandle: source
+      target: '1746711315242'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: '面接質問を生成したい職種・ポジション・レベルをお教えください。
+
+          最適な質問セットを作成いたします。
+
+          '
+        selected: false
+        title: 開始
+        type: start
+        variables: []
+      height: 114
+      id: '1746704294027'
+      position:
+        x: 244
+        y: 282
+      positionAbsolute:
+        x: 244
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 面接質問生成専門AIアシスタント
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: gpt-4
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: 'あなたは人材紹介会社の面接質問生成専門AIアシスタントです。
+
+            職種・レベルに応じた効果的な面接質問を生成してください。
+
+
+            ## 質問カテゴリ
+
+            1. **基本質問**: 自己紹介、志望動機、転職理由
+
+            2. **経験・実績**: 具体的な成果、困難克服体験
+
+            3. **スキル・知識**: 専門技術、業界知識
+
+            4. **行動面接**: STAR法による具体例確認
+
+            5. **将来性**: キャリア展望、成長意欲
+
+
+            ## レベル別調整
+
+            **新卒・第二新卒**
+
+            - 基礎知識、学習能力、適応力を重視
+
+            - ポテンシャル確認中心
+
+
+            **中途採用（3-7年）**
+
+            - 実務経験、専門スキル、即戦力性
+
+            - 具体的な成果・実績
+
+
+            **シニア（8年以上）**
+
+            - リーダーシップ、戦略的思考
+
+            - 組織への影響力、後進育成
+
+
+            **管理職候補**
+
+            - マネジメント経験、判断力
+
+            - 組織運営、人材育成方針
+
+
+            ## 出力形式
+
+            **面接質問セット**
+
+
+            **【基本質問】（5-10分）**
+
+            1. [質問1]
+
+            2. [質問2]
+
+            3. [質問3]
+
+
+            **【経験・実績確認】（15-20分）**
+
+            1. [具体的な成果を問う質問]
+
+            2. [困難克服体験を問う質問]
+
+            3. [チームワークを問う質問]
+
+
+            **【技術・スキル確認】（10-15分）**
+
+            1. [専門知識確認質問]
+
+            2. [実務スキル確認質問]
+
+            3. [問題解決能力確認質問]
+
+
+            **【行動面接質問】（15-20分）**
+
+            1. [STAR法質問1]
+
+            2. [STAR法質問2]
+
+            3. [判断力確認質問]
+
+
+            **【将来性・適性確認】（5-10分）**
+
+            1. [キャリア展望質問]
+
+            2. [会社への適合性質問]
+
+            3. [最終確認質問]
+
+
+            **【面接官向けポイント】**
+
+            - [注目すべき回答のポイント]
+
+            - [レッドフラグとなる要素]
+
+            - [追加質問の提案]
+
+
+            各質問には、なぜその質問が重要かの理由も簡潔に付け加えてください。
+
+            '
+        - id: user-prompt
+          role: user
+          text: '{{#sys.query#}}'
+        selected: false
+        structured_output_enabled: false
+        title: 質問生成LLM
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 118
+      id: '1746709265761'
+      position:
+        x: 544
+        y: 282
+      positionAbsolute:
+        x: 544
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '{{#1746709265761.text#}}'
+        desc: ''
+        selected: false
+        title: 質問セット
+        type: answer
+        variables: []
+      height: 105
+      id: '1746711315242'
+      position:
+        x: 844
+        y: 282
+      positionAbsolute:
+        x: 844
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: -117.92909107838057
+      y: -197.85898140094503
+      zoom: 1.3831906290109643

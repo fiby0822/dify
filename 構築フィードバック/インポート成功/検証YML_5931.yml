@@ -1,0 +1,838 @@
+app:
+  description: "更新されたIF_ELSEコンポーネントルールの検証用 - 在庫管理システム"
+  icon: "📦"
+  icon_background: "#E0E7FF"
+  mode: advanced-chat
+  name: "IF_ELSEルール検証アプリ（改善版）"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      在庫管理システムへようこそ！
+      商品の在庫状況を分析し、適切なアクションを提案します。
+      
+      以下の情報を入力してください：
+      - 商品名
+      - 現在の在庫数（数値）
+      - 商品カテゴリー（食品/電化製品/衣類）
+      - 需要レベル（1-10の数値）
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "商品：りんご、在庫：5個、カテゴリー：食品、需要レベル：9"
+      - "商品：冷蔵庫、在庫：75台、カテゴリー：電化製品、需要レベル：6"
+      - "商品：Tシャツ、在庫：120枚、カテゴリー：衣類、需要レベル：4"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-parse-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: input_parser_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: llm
+        id: parse-analysis-edge
+        selected: false
+        source: input_parser_node
+        sourceHandle: source
+        target: stock_analysis_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: if-else
+        id: analysis-stock-check-edge
+        selected: false
+        source: stock_analysis_node
+        sourceHandle: source
+        target: stock_level_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: stock-urgent-edge
+        selected: false
+        source: stock_level_check_node
+        sourceHandle: urgent_order_case
+        target: urgent_order_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: stock-normal-edge
+        selected: false
+        source: stock_level_check_node
+        sourceHandle: normal_order_case
+        target: normal_order_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: stock-optimal-edge
+        selected: false
+        source: stock_level_check_node
+        sourceHandle: optimal_stock_case
+        target: optimal_stock_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: stock-excess-edge
+        selected: false
+        source: stock_level_check_node
+        sourceHandle: excess_stock_case
+        target: excess_stock_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: if-else
+        id: urgent-category-edge
+        selected: false
+        source: urgent_order_node
+        sourceHandle: source
+        target: category_demand_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: if-else
+        id: normal-category-edge
+        selected: false
+        source: normal_order_node
+        sourceHandle: source
+        target: category_demand_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: if-else
+        id: optimal-category-edge
+        selected: false
+        source: optimal_stock_node
+        sourceHandle: source
+        target: category_demand_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: if-else
+        id: excess-category-edge
+        selected: false
+        source: excess_stock_node
+        sourceHandle: source
+        target: category_demand_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: category-food-edge
+        selected: false
+        source: category_demand_check_node
+        sourceHandle: food_high_demand_case
+        target: food_expiry_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: category-electronics-edge
+        selected: false
+        source: category_demand_check_node
+        sourceHandle: electronics_special_case
+        target: electronics_demand_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: category-default-edge
+        selected: false
+        source: category_demand_check_node
+        sourceHandle: false
+        target: standard_management_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: food-answer-edge
+        selected: false
+        source: food_expiry_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: electronics-answer-edge
+        selected: false
+        source: electronics_demand_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: standard-answer-edge
+        selected: false
+        source: standard_management_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "ユーザー入力を受け取る"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 300
+        positionAbsolute:
+          x: 50
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "ユーザー入力を解析して構造化"
+          model:
+            mode: chat
+            name: gpt-4o
+            provider: openai
+          prompt_template:
+            - id: parser-system-1
+              role: system
+              text: |
+                ユーザーの入力から以下の情報を抽出してください：
+                1. 商品名
+                2. 在庫数（数値）
+                3. カテゴリー（食品/電化製品/衣類）
+                4. 需要レベル（1-10の数値）
+                
+                出力形式：
+                商品名: [商品名]
+                在庫数: [数値]
+                カテゴリー: [カテゴリー]
+                需要レベル: [数値]
+            - id: parser-user-1
+              role: user
+              text: |
+                {{#sys.query#}}
+          completion_params:
+            temperature: 0.2
+            max_tokens: 200
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          selected: false
+          title: "入力解析"
+          type: llm
+        height: 98
+        id: input_parser_node
+        position:
+          x: 350
+          y: 300
+        positionAbsolute:
+          x: 350
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "在庫状況の詳細分析"
+          model:
+            mode: chat
+            name: gpt-4o
+            provider: openai
+          prompt_template:
+            - id: analysis-system-1
+              role: system
+              text: |
+                在庫管理の専門家として、商品の在庫状況を分析してください。
+                季節性、商品特性、需要動向を考慮してアドバイスを提供します。
+                
+                数値データは必ず数値のみで抽出してください。
+            - id: analysis-user-1
+              role: user
+              text: |
+                商品情報：
+                {{#input_parser_node.text#}}
+                
+                この商品の在庫状況を分析し、以下を出力してください：
+                1. 在庫レベルの評価
+                2. 推奨アクション
+                3. 注意点
+                
+                また、以下の数値を抽出してください：
+                - stock_quantity: [在庫数の数値のみ]
+                - demand_level: [需要レベルの数値のみ]
+                - category: [カテゴリー名]
+          completion_params:
+            temperature: 0.5
+            max_tokens: 500
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          selected: false
+          title: "在庫分析"
+          type: llm
+        height: 98
+        id: stock_analysis_node
+        position:
+          x: 650
+          y: 300
+        positionAbsolute:
+          x: 650
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "在庫レベルによる条件分岐"
+          type: if-else
+          cases:
+            - id: urgent_order_case
+              case_id: urgent_order_case
+              conditions:
+                - id: stock_check_1
+                  variable_selector:
+                    - input_parser_node
+                    - text
+                  comparison_operator: contains
+                  value: "在庫数: "
+                - id: stock_level_1
+                  variable_selector:
+                    - stock_analysis_node
+                    - text
+                  comparison_operator: contains
+                  value: "stock_quantity: "
+              logical_operator: and
+            - id: normal_order_case
+              case_id: normal_order_case
+              conditions:
+                - variable_selector:
+                    - stock_analysis_node
+                    - text
+                  comparison_operator: contains
+                  value: "stock_quantity: "
+              logical_operator: and
+            - id: optimal_stock_case
+              case_id: optimal_stock_case
+              conditions:
+                - variable_selector:
+                    - stock_analysis_node
+                    - text
+                  comparison_operator: contains
+                  value: "stock_quantity: "
+              logical_operator: and
+            - id: excess_stock_case
+              case_id: excess_stock_case
+              conditions:
+                - variable_selector:
+                    - stock_analysis_node
+                    - text
+                  comparison_operator: contains
+                  value: "stock_quantity: "
+              logical_operator: and
+          selected: false
+          title: "在庫レベルチェック"
+        height: 198
+        id: stock_level_check_node
+        position:
+          x: 950
+          y: 300
+        positionAbsolute:
+          x: 950
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "緊急発注の対応"
+          model:
+            mode: chat
+            name: gpt-4o
+            provider: openai
+          prompt_template:
+            - id: urgent-system-1
+              role: system
+              text: |
+                緊急在庫補充が必要な状況です。
+                迅速な対応策を提案してください。
+            - id: urgent-user-1
+              role: user
+              text: |
+                {{#stock_analysis_node.text#}}
+                
+                在庫数が10以下の緊急状態です。
+                即座に実行すべきアクションを提案してください。
+          completion_params:
+            temperature: 0.3
+            max_tokens: 400
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          selected: false
+          title: "緊急発注対応"
+          type: llm
+        height: 98
+        id: urgent_order_node
+        position:
+          x: 1250
+          y: 50
+        positionAbsolute:
+          x: 1250
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "通常発注の検討"
+          model:
+            mode: chat
+            name: gpt-4o
+            provider: openai
+          prompt_template:
+            - id: normal-system-1
+              role: system
+              text: |
+                通常の在庫補充を検討する状況です。
+                計画的な発注を提案してください。
+            - id: normal-user-1
+              role: user
+              text: |
+                {{#stock_analysis_node.text#}}
+                
+                在庫数が11-50の範囲です。
+                適切な補充計画を提案してください。
+          completion_params:
+            temperature: 0.5
+            max_tokens: 400
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          selected: false
+          title: "通常発注検討"
+          type: llm
+        height: 98
+        id: normal_order_node
+        position:
+          x: 1250
+          y: 200
+        positionAbsolute:
+          x: 1250
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "適正在庫の維持"
+          model:
+            mode: chat
+            name: gpt-4o
+            provider: openai
+          prompt_template:
+            - id: optimal-system-1
+              role: system
+              text: |
+                適正在庫レベルを維持している状況です。
+                現状維持のためのアドバイスを提供してください。
+            - id: optimal-user-1
+              role: user
+              text: |
+                {{#stock_analysis_node.text#}}
+                
+                在庫数が51-99の適正範囲です。
+                効率的な在庫管理の継続方法を提案してください。
+          completion_params:
+            temperature: 0.5
+            max_tokens: 400
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          selected: false
+          title: "適正在庫維持"
+          type: llm
+        height: 98
+        id: optimal_stock_node
+        position:
+          x: 1250
+          y: 350
+        positionAbsolute:
+          x: 1250
+          y: 350
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "過剰在庫の警告"
+          model:
+            mode: chat
+            name: gpt-4o
+            provider: openai
+          prompt_template:
+            - id: excess-system-1
+              role: system
+              text: |
+                過剰在庫の状況です。
+                在庫削減策を提案してください。
+            - id: excess-user-1
+              role: user
+              text: |
+                {{#stock_analysis_node.text#}}
+                
+                在庫数が100以上の過剰状態です。
+                在庫を適正化するための対策を提案してください。
+          completion_params:
+            temperature: 0.5
+            max_tokens: 400
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          selected: false
+          title: "過剰在庫警告"
+          type: llm
+        height: 98
+        id: excess_stock_node
+        position:
+          x: 1250
+          y: 500
+        positionAbsolute:
+          x: 1250
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "カテゴリーと需要による条件分岐"
+          type: if-else
+          cases:
+            - id: food_high_demand_case
+              case_id: food_high_demand_case
+              conditions:
+                - variable_selector:
+                    - stock_analysis_node
+                    - text
+                  comparison_operator: contains
+                  value: "category: 食品"
+                - variable_selector:
+                    - stock_analysis_node
+                    - text
+                  comparison_operator: contains
+                  value: "demand_level: "
+              logical_operator: and
+            - id: electronics_special_case
+              case_id: electronics_special_case
+              conditions:
+                - variable_selector:
+                    - stock_analysis_node
+                    - text
+                  comparison_operator: contains
+                  value: "category: 電化製品"
+                - variable_selector:
+                    - stock_analysis_node
+                    - text
+                  comparison_operator: contains
+                  value: "demand_level: "
+              logical_operator: and
+          selected: false
+          title: "カテゴリー需要チェック"
+        height: 198
+        id: category_demand_check_node
+        position:
+          x: 1550
+          y: 300
+        positionAbsolute:
+          x: 1550
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "食品の賞味期限考慮"
+          model:
+            mode: chat
+            name: gpt-4o
+            provider: openai
+          prompt_template:
+            - id: food-system-1
+              role: system
+              text: |
+                食品カテゴリーで高需要の商品です。
+                賞味期限を考慮した在庫管理を提案してください。
+            - id: food-user-1
+              role: user
+              text: |
+                在庫レベル対応：
+                {{#urgent_order_node.text#}}{{#normal_order_node.text#}}{{#optimal_stock_node.text#}}{{#excess_stock_node.text#}}
+                
+                食品の特性を考慮した追加アドバイスを提供してください。
+          completion_params:
+            temperature: 0.5
+            max_tokens: 500
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          selected: false
+          title: "食品特別対応"
+          type: llm
+        height: 98
+        id: food_expiry_node
+        position:
+          x: 1850
+          y: 150
+        positionAbsolute:
+          x: 1850
+          y: 150
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "電化製品の需要変動対応"
+          model:
+            mode: chat
+            name: gpt-4o
+            provider: openai
+          prompt_template:
+            - id: electronics-system-1
+              role: system
+              text: |
+                電化製品カテゴリーで特殊な需要パターンの商品です。
+                季節変動や新製品サイクルを考慮した管理を提案してください。
+            - id: electronics-user-1
+              role: user
+              text: |
+                在庫レベル対応：
+                {{#urgent_order_node.text#}}{{#normal_order_node.text#}}{{#optimal_stock_node.text#}}{{#excess_stock_node.text#}}
+                
+                電化製品の特性を考慮した追加アドバイスを提供してください。
+          completion_params:
+            temperature: 0.5
+            max_tokens: 500
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          selected: false
+          title: "電化製品特別対応"
+          type: llm
+        height: 98
+        id: electronics_demand_node
+        position:
+          x: 1850
+          y: 300
+        positionAbsolute:
+          x: 1850
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "標準的な在庫管理"
+          model:
+            mode: chat
+            name: gpt-4o
+            provider: openai
+          prompt_template:
+            - id: standard-system-1
+              role: system
+              text: |
+                標準的な在庫管理アプローチを適用します。
+                一般的なベストプラクティスに基づいたアドバイスを提供してください。
+            - id: standard-user-1
+              role: user
+              text: |
+                在庫レベル対応：
+                {{#urgent_order_node.text#}}{{#normal_order_node.text#}}{{#optimal_stock_node.text#}}{{#excess_stock_node.text#}}
+                
+                総合的な在庫管理アドバイスを提供してください。
+          completion_params:
+            temperature: 0.5
+            max_tokens: 500
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          selected: false
+          title: "標準管理"
+          type: llm
+        height: 98
+        id: standard_management_node
+        position:
+          x: 1850
+          y: 450
+        positionAbsolute:
+          x: 1850
+          y: 450
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ## 在庫管理レポート
+            
+            ### 商品情報
+            {{#input_parser_node.text#}}
+            
+            ### 在庫分析結果
+            {{#stock_analysis_node.text#}}
+            
+            ### 推奨アクション
+            {{#food_expiry_node.text#}}{{#electronics_demand_node.text#}}{{#standard_management_node.text#}}
+            
+            ---
+            *このレポートは更新されたIF_ELSEルールに基づいて生成されました*
+          desc: "最終レポートの出力"
+          selected: false
+          title: "回答"
+          type: answer
+          variables: []
+        height: 200
+        id: answer_node
+        position:
+          x: 2150
+          y: 300
+        positionAbsolute:
+          x: 2150
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.6

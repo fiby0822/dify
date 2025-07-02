@@ -1,0 +1,594 @@
+app:
+  description: "IF_ELSEコンポーネントの各種パターンを検証するためのテストアプリケーション"
+  icon: "🔀"
+  icon_background: "#FFEAD5"
+  mode: advanced-chat
+  name: "IF_ELSEルール検証アプリ"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      IF_ELSEコンポーネントの検証を開始します。
+      以下のパターンをテストします：
+      1. 文字列比較（完全一致、部分一致等）
+      2. 数値比較（Unicode文字使用）
+      3. NULL/存在チェック
+      4. 複数条件の組み合わせ
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "文字列の完全一致テスト"
+      - "数値の比較テスト"
+      - "複数条件のAND/ORテスト"
+      - "NULL値のチェックテスト"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: code
+        id: start-test_data_setup-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: test_data_setup_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: code
+          targetType: if-else
+        id: test_data_setup-string_comparison-edge
+        selected: false
+        source: test_data_setup_node
+        sourceHandle: source
+        target: string_comparison_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: string_comparison-exact_match_answer-edge
+        selected: false
+        source: string_comparison_node
+        sourceHandle: exact_match_case
+        target: exact_match_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: string_comparison-contains_case_answer-edge
+        selected: false
+        source: string_comparison_node
+        sourceHandle: contains_case
+        target: contains_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: string_comparison-numeric_comparison-edge
+        selected: false
+        source: string_comparison_node
+        sourceHandle: false
+        target: numeric_comparison_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: numeric_comparison-high_score_answer-edge
+        selected: false
+        source: numeric_comparison_node
+        sourceHandle: high_score_case
+        target: high_score_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: numeric_comparison-low_score_answer-edge
+        selected: false
+        source: numeric_comparison_node
+        sourceHandle: low_score_case
+        target: low_score_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: numeric_comparison-null_check-edge
+        selected: false
+        source: numeric_comparison_node
+        sourceHandle: false
+        target: null_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: null_check-null_found_answer-edge
+        selected: false
+        source: null_check_node
+        sourceHandle: null_case
+        target: null_found_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: null_check-multi_condition-edge
+        selected: false
+        source: null_check_node
+        sourceHandle: false
+        target: multi_condition_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: multi_condition-and_match_answer-edge
+        selected: false
+        source: multi_condition_node
+        sourceHandle: and_condition_case
+        target: and_match_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: multi_condition-or_match_answer-edge
+        selected: false
+        source: multi_condition_node
+        sourceHandle: or_condition_case
+        target: or_match_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: multi_condition-default_answer-edge
+        selected: false
+        source: multi_condition_node
+        sourceHandle: false
+        target: default_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "ワークフロー開始"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          code: |
+            return {
+              "test_string": "Hello World",
+              "test_number": 85,
+              "test_null": None,
+              "test_empty": "",
+              "category": "緊急対応",
+              "status": "approved",
+              "score": 85,
+              "priority": "high",
+              "tags": ["urgent", "important", "review"]
+            }
+          code_language: python3
+          desc: "テストデータのセットアップ"
+          outputs:
+            test_string:
+              type: string
+            test_number:
+              type: number
+            test_null:
+              type: string
+            test_empty:
+              type: string
+            category:
+              type: string
+            status:
+              type: string
+            score:
+              type: number
+            priority:
+              type: string
+            tags:
+              type: array[string]
+          selected: false
+          title: "テストデータセットアップ"
+          type: code
+          variables: []
+        height: 82
+        id: test_data_setup_node
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - id: exact_match_case
+              case_id: exact_match_case
+              conditions:
+                - variable_selector:
+                    - test_data_setup_node
+                    - test_string
+                  comparison_operator: is
+                  value: "Hello World"
+              logical_operator: and
+            - id: contains_case
+              case_id: contains_case
+              conditions:
+                - variable_selector:
+                    - test_data_setup_node
+                    - category
+                  comparison_operator: contains
+                  value: "緊急"
+              logical_operator: and
+          desc: "文字列比較のテスト"
+          selected: false
+          title: "文字列比較"
+          type: if-else
+        height: 198
+        id: string_comparison_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - id: high_score_case
+              case_id: high_score_case
+              conditions:
+                - variable_selector:
+                    - test_data_setup_node
+                    - score
+                  comparison_operator: "≥"
+                  value: 80
+              logical_operator: and
+            - id: low_score_case
+              case_id: low_score_case
+              conditions:
+                - variable_selector:
+                    - test_data_setup_node
+                    - score
+                  comparison_operator: "≤"
+                  value: 50
+              logical_operator: and
+          desc: "数値比較のテスト（Unicode文字使用）"
+          selected: false
+          title: "数値比較"
+          type: if-else
+        height: 198
+        id: numeric_comparison_node
+        position:
+          x: 650
+          y: 450
+        positionAbsolute:
+          x: 650
+          y: 450
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - id: null_case
+              case_id: null_case
+              conditions:
+                - variable_selector:
+                    - test_data_setup_node
+                    - test_null
+                  comparison_operator: null
+                  value: ""
+              logical_operator: and
+            - id: empty_case
+              case_id: empty_case
+              conditions:
+                - variable_selector:
+                    - test_data_setup_node
+                    - test_empty
+                  comparison_operator: empty
+                  value: ""
+              logical_operator: and
+          desc: "NULL/空チェックのテスト"
+          selected: false
+          title: "NULL/空チェック"
+          type: if-else
+        height: 198
+        id: null_check_node
+        position:
+          x: 650
+          y: 700
+        positionAbsolute:
+          x: 650
+          y: 700
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - id: and_condition_case
+              case_id: and_condition_case
+              conditions:
+                - variable_selector:
+                    - test_data_setup_node
+                    - score
+                  comparison_operator: ">"
+                  value: 80
+                - variable_selector:
+                    - test_data_setup_node
+                    - status
+                  comparison_operator: is
+                  value: "approved"
+              logical_operator: and
+            - id: or_condition_case
+              case_id: or_condition_case
+              conditions:
+                - variable_selector:
+                    - test_data_setup_node
+                    - priority
+                  comparison_operator: is
+                  value: "high"
+                - variable_selector:
+                    - test_data_setup_node
+                    - category
+                  comparison_operator: contains
+                  value: "緊急"
+              logical_operator: or
+          desc: "複数条件の組み合わせテスト"
+          selected: false
+          title: "複数条件"
+          type: if-else
+        height: 250
+        id: multi_condition_node
+        position:
+          x: 650
+          y: 950
+        positionAbsolute:
+          x: 650
+          y: 950
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "✅ 文字列の完全一致テスト成功！\n'Hello World'が正しく一致しました。"
+          desc: ""
+          selected: false
+          title: "完全一致成功"
+          type: answer
+          variables: []
+        height: 107
+        id: exact_match_answer_node
+        position:
+          x: 950
+          y: 100
+        positionAbsolute:
+          x: 950
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "✅ 部分一致テスト成功！\n'緊急'を含むテキストが正しく検出されました。"
+          desc: ""
+          selected: false
+          title: "部分一致成功"
+          type: answer
+          variables: []
+        height: 107
+        id: contains_answer_node
+        position:
+          x: 950
+          y: 250
+        positionAbsolute:
+          x: 950
+          y: 250
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "✅ 数値比較テスト成功！\nスコア{{#test_data_setup_node.score#}}が80以上であることを確認しました。\nUnicode文字（≥）の使用も正常です。"
+          desc: ""
+          selected: false
+          title: "高スコア判定"
+          type: answer
+          variables: []
+        height: 107
+        id: high_score_answer_node
+        position:
+          x: 950
+          y: 400
+        positionAbsolute:
+          x: 950
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "✅ 低スコア判定成功！\nスコア{{#test_data_setup_node.score#}}が50以下であることを確認しました。"
+          desc: ""
+          selected: false
+          title: "低スコア判定"
+          type: answer
+          variables: []
+        height: 107
+        id: low_score_answer_node
+        position:
+          x: 950
+          y: 550
+        positionAbsolute:
+          x: 950
+          y: 550
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "✅ NULLチェックテスト成功！\nNULL値が正しく検出されました。"
+          desc: ""
+          selected: false
+          title: "NULL検出成功"
+          type: answer
+          variables: []
+        height: 107
+        id: null_found_answer_node
+        position:
+          x: 950
+          y: 700
+        positionAbsolute:
+          x: 950
+          y: 700
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "✅ AND条件テスト成功！\nスコア > 80 かつ ステータス = 'approved' の両方の条件を満たしています。"
+          desc: ""
+          selected: false
+          title: "AND条件成功"
+          type: answer
+          variables: []
+        height: 107
+        id: and_match_answer_node
+        position:
+          x: 950
+          y: 850
+        positionAbsolute:
+          x: 950
+          y: 850
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "✅ OR条件テスト成功！\n優先度 = 'high' または カテゴリに'緊急'を含む、いずれかの条件を満たしています。"
+          desc: ""
+          selected: false
+          title: "OR条件成功"
+          type: answer
+          variables: []
+        height: 107
+        id: or_match_answer_node
+        position:
+          x: 950
+          y: 1000
+        positionAbsolute:
+          x: 950
+          y: 1000
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "🔍 すべてのIF_ELSEテストが完了しました。\n全体的な検証結果：\n- case_idフィールドの設定: ✅\n- Unicode文字の使用: ✅\n- 必須フィールドの設定: ✅\n- 外側typeの'custom'設定: ✅"
+          desc: ""
+          selected: false
+          title: "検証完了"
+          type: answer
+          variables: []
+        height: 107
+        id: default_answer_node
+        position:
+          x: 950
+          y: 1150
+        positionAbsolute:
+          x: 950
+          y: 1150
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.6

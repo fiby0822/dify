@@ -1,0 +1,413 @@
+app:
+  description: LLMコンポーネントの各種パラメータと機能をテストするアプリケーション。異なるtemperature設定での応答を比較できます。
+  icon: 🤖
+  icon_background: "#FFEAD5"
+  mode: advanced-chat
+  name: LLM機能検証テストアプリ
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      このアプリはLLMコンポーネントの機能をテストするためのものです。
+      
+      あなたの質問や相談内容に対して、3つの異なる設定で応答を生成します：
+      1. 通常の応答（バランス型）
+      2. 事実重視の応答（正確性重視）
+      3. 創造的な応答（アイデア重視）
+      
+      質問や相談内容を入力してください。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - 日本の四季について教えてください
+      - 効果的な時間管理の方法を3つ提案してください
+      - 架空の新しいスポーツを考案してください
+      - プログラミングを学ぶメリットは何ですか？
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-normal-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: normal_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-factual-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: factual_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-creative-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: creative_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: llm
+        id: normal-integration-edge
+        selected: false
+        source: normal_llm_node
+        sourceHandle: source
+        target: integration_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: llm
+        id: factual-integration-edge
+        selected: false
+        source: factual_llm_node
+        sourceHandle: source
+        target: integration_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: llm
+        id: creative-integration-edge
+        selected: false
+        source: creative_llm_node
+        sourceHandle: source
+        target: integration_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: integration-answer-edge
+        selected: false
+        source: integration_llm_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: ユーザーからの入力を受け付ける開始ノード
+          selected: false
+          title: 開始
+          type: start
+          variables:
+            - label: ユーザー入力
+              max_length: 5000
+              options: []
+              required: true
+              type: text-input
+              variable: user_input
+        height: 116
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: 通常のバランス型応答を生成
+          memory:
+            enabled: false
+          model:
+            completion_params:
+              max_tokens: 1000
+              temperature: 0.7
+              top_p: 0.9
+            mode: chat
+            name: gpt-4o
+            provider: openai
+          prompt_template:
+            - id: system-normal
+              role: system
+              text: |
+                あなたは知識豊富なAIアシスタントです。
+                ユーザーの質問に対して、バランスの取れた応答を提供してください。
+                正確性と創造性のバランスを保ちながら、わかりやすく説明してください。
+            - id: user-normal
+              role: user
+              text: |
+                {{#start_node.user_input#}}
+          selected: false
+          structured_output_enabled: false
+          title: 通常応答LLM
+          type: llm
+          vision:
+            enabled: false
+        height: 98
+        id: normal_llm_node
+        position:
+          x: 350
+          y: 50
+        positionAbsolute:
+          x: 350
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: 事実重視の正確な応答を生成
+          memory:
+            enabled: false
+          model:
+            completion_params:
+              max_tokens: 1000
+              temperature: 0.1
+              top_p: 0.5
+            mode: chat
+            name: gpt-4o
+            provider: openai
+          prompt_template:
+            - id: system-factual
+              role: system
+              text: |
+                あなたは正確性を重視するAIアシスタントです。
+                事実に基づいた、正確で信頼性の高い情報を提供してください。
+                推測や創造的な内容は避け、確実な情報のみを伝えてください。
+            - id: user-factual
+              role: user
+              text: |
+                {{#start_node.user_input#}}
+          selected: false
+          structured_output_enabled: false
+          title: 事実ベースLLM
+          type: llm
+          vision:
+            enabled: false
+        height: 98
+        id: factual_llm_node
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: 創造的でアイデア豊富な応答を生成
+          memory:
+            enabled: false
+          model:
+            completion_params:
+              max_tokens: 1500
+              temperature: 0.9
+              top_p: 0.95
+            mode: chat
+            name: gpt-4o
+            provider: openai
+          prompt_template:
+            - id: system-creative
+              role: system
+              text: |
+                あなたは創造性豊かなAIアシスタントです。
+                独創的で革新的なアイデアを提供してください。
+                型にはまらない発想で、新しい視点や可能性を探求してください。
+            - id: user-creative
+              role: user
+              text: |
+                {{#start_node.user_input#}}
+          selected: false
+          structured_output_enabled: false
+          title: 創造的LLM
+          type: llm
+          vision:
+            enabled: false
+        height: 98
+        id: creative_llm_node
+        position:
+          x: 350
+          y: 350
+        positionAbsolute:
+          x: 350
+          y: 350
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: 3つの応答を統合して比較結果を生成
+          memory:
+            enabled: false
+          model:
+            completion_params:
+              max_tokens: 2000
+              temperature: 0.5
+            mode: chat
+            name: gpt-4o
+            provider: openai
+          prompt_template:
+            - id: system-integration
+              role: system
+              text: |
+                あなたは分析的なAIアシスタントです。
+                3つの異なる観点からの応答を統合し、それぞれの特徴を明確に示してください。
+                各応答の特色を活かしながら、総合的な回答を提供してください。
+                
+                出力形式：
+                JSON形式で以下の構造で出力してください：
+                {
+                  "summary": "総合的な回答",
+                  "comparison": {
+                    "normal": "通常応答の特徴",
+                    "factual": "事実ベース応答の特徴",
+                    "creative": "創造的応答の特徴"
+                  },
+                  "recommendation": "最適な回答の選択理由"
+                }
+                
+                エラーが発生した場合は、その旨を明記してください。
+            - id: user-integration
+              role: user
+              text: |
+                ユーザーの質問：
+                {{#start_node.user_input#}}
+                
+                【通常の応答（バランス型）】
+                {{#normal_llm_node.text#}}
+                
+                【事実重視の応答】
+                {{#factual_llm_node.text#}}
+                
+                【創造的な応答】
+                {{#creative_llm_node.text#}}
+                
+                上記の3つの応答を統合し、それぞれの特徴を明示しながら、
+                ユーザーに最も価値のある総合的な回答を作成してください。
+          selected: false
+          structured_output_enabled: false
+          title: 結果統合LLM
+          type: llm
+          vision:
+            enabled: false
+        height: 98
+        id: integration_llm_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+
+      - data:
+          answer: |
+            ## LLMコンポーネント機能テスト結果
+            
+            ### 統合分析結果
+            {{#integration_llm_node.text#}}
+            
+            ---
+            
+            ### 詳細な応答内容
+            
+            #### 1. 通常応答（Temperature: 0.7）
+            {{#normal_llm_node.text#}}
+            
+            #### 2. 事実ベース応答（Temperature: 0.1）
+            {{#factual_llm_node.text#}}
+            
+            #### 3. 創造的応答（Temperature: 0.9）
+            {{#creative_llm_node.text#}}
+            
+            ---
+            
+            このテストにより、LLMコンポーネントの異なるパラメータ設定による応答の違いを確認できました。
+          desc: 統合された最終結果を表示
+          selected: false
+          title: 回答
+          type: answer
+          variables: []
+        height: 461
+        id: answer_node
+        position:
+          x: 950
+          y: 200
+        positionAbsolute:
+          x: 950
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

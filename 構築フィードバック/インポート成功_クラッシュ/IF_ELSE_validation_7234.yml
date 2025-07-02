@@ -1,0 +1,681 @@
+app:
+  description: IF/ELSEコンポーネントの動作検証用ワークフロー
+  icon: 📊
+  icon_background: '#D5F5F6'
+  mode: advanced-chat
+  name: IF_ELSE検証ワークフロー_7234
+  use_icon_as_answer_icon: true
+kind: app
+version: 0.1.2
+workflow:
+  edges:
+    # Start to Variable Init
+    - data:
+        isInIteration: false
+        sourceType: start
+        targetType: code
+      id: start-init_vars
+      source: START
+      sourceHandle: source
+      target: init_vars_node
+      targetHandle: target
+      type: custom
+    
+    # Variable Init to String Test
+    - data:
+        isInIteration: false
+        sourceType: code
+        targetType: custom
+      id: init-string_test
+      source: init_vars_node
+      sourceHandle: source
+      target: string_comparison_test
+      targetHandle: target
+      type: custom
+    
+    # String Test branches
+    - data:
+        isInIteration: false
+        sourceType: custom
+        targetType: answer
+      id: string_contains_edge
+      source: string_comparison_test
+      sourceHandle: contains_case
+      target: string_result_1
+      targetHandle: target
+      type: custom
+    
+    - data:
+        isInIteration: false
+        sourceType: custom
+        targetType: answer
+      id: string_startswith_edge
+      source: string_comparison_test
+      sourceHandle: startswith_case
+      target: string_result_2
+      targetHandle: target
+      type: custom
+    
+    - data:
+        isInIteration: false
+        sourceType: custom
+        targetType: custom
+      id: string_false_edge
+      source: string_comparison_test
+      sourceHandle: 'false'
+      target: numeric_comparison_test
+      targetHandle: target
+      type: custom
+    
+    # Numeric Test branches
+    - data:
+        isInIteration: false
+        sourceType: custom
+        targetType: answer
+      id: numeric_high_edge
+      source: numeric_comparison_test
+      sourceHandle: high_score_case
+      target: numeric_result_1
+      targetHandle: target
+      type: custom
+    
+    - data:
+        isInIteration: false
+        sourceType: custom
+        targetType: answer
+      id: numeric_mid_edge
+      source: numeric_comparison_test
+      sourceHandle: mid_score_case
+      target: numeric_result_2
+      targetHandle: target
+      type: custom
+    
+    - data:
+        isInIteration: false
+        sourceType: custom
+        targetType: custom
+      id: numeric_false_edge
+      source: numeric_comparison_test
+      sourceHandle: 'false'
+      target: null_check_test
+      targetHandle: target
+      type: custom
+    
+    # Null Test branches
+    - data:
+        isInIteration: false
+        sourceType: custom
+        targetType: answer
+      id: null_empty_edge
+      source: null_check_test
+      sourceHandle: empty_case
+      target: null_result_1
+      targetHandle: target
+      type: custom
+    
+    - data:
+        isInIteration: false
+        sourceType: custom
+        targetType: answer
+      id: null_exists_edge
+      source: null_check_test
+      sourceHandle: exists_case
+      target: null_result_2
+      targetHandle: target
+      type: custom
+    
+    - data:
+        isInIteration: false
+        sourceType: custom
+        targetType: custom
+      id: null_false_edge
+      source: null_check_test
+      sourceHandle: 'false'
+      target: complex_condition_test
+      targetHandle: target
+      type: custom
+    
+    # Complex condition branches
+    - data:
+        isInIteration: false
+        sourceType: custom
+        targetType: answer
+      id: complex_and_edge
+      source: complex_condition_test
+      sourceHandle: and_case
+      target: complex_result_1
+      targetHandle: target
+      type: custom
+    
+    - data:
+        isInIteration: false
+        sourceType: custom
+        targetType: answer
+      id: complex_or_edge
+      source: complex_condition_test
+      sourceHandle: or_case
+      target: complex_result_2
+      targetHandle: target
+      type: custom
+    
+    - data:
+        isInIteration: false
+        sourceType: custom
+        targetType: answer
+      id: complex_false_edge
+      source: complex_condition_test
+      sourceHandle: 'false'
+      target: final_result
+      targetHandle: target
+      type: custom
+  
+  environment_variables: []
+  features:
+    file_upload:
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+          - local_file
+          - remote_url
+    opening_statement: ''
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  
+  graph:
+    edges: []
+    nodes:
+      - data:
+          iterator: []
+          title: 開始
+          type: start
+          variables: []
+        height: 54
+        id: START
+        position:
+          x: 30
+          y: 282
+        positionAbsolute:
+          x: 30
+          y: 282
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: start
+        width: 70
+      
+      # 変数初期化ノード
+      - data:
+          code: "# テスト用変数の初期化\n\n# 文字列変数\ntest_string = \"緊急対応が必要なタスクです\"\nshort_string = \"ABC\"\nempty_string = \"\"\nkeyword_list = [\"urgent\", \"critical\", \"important\"]\n\n# 数値変数\nhigh_score = 95\nmid_score = 75\nlow_score = 45\nnegative_num = -10\nzero_num = 0\n\n# NULL/空チェック用\nnull_var = None\nempty_list = []\nfilled_list = [1, 2, 3]\nexist_var = \"exists\"\n\n# 複合条件用\nstatus = \"approved\"\npriority = \"high\"\ncategory = \"development\"\n\nreturn {\n    \"test_string\": test_string,\n    \"short_string\": short_string,\n    \"empty_string\": empty_string,\n    \"keyword_list\": keyword_list,\n    \"high_score\": high_score,\n    \"mid_score\": mid_score,\n    \"low_score\": low_score,\n    \"negative_num\": negative_num,\n    \"zero_num\": zero_num,\n    \"null_var\": null_var,\n    \"empty_list\": empty_list,\n    \"filled_list\": filled_list,\n    \"exist_var\": exist_var,\n    \"status\": status,\n    \"priority\": priority,\n    \"category\": category\n}"
+          code_language: python3
+          dependencies: []
+          desc: テスト用の各種変数を設定
+          outputs:
+            test_string:
+              type: string
+            short_string:
+              type: string
+            empty_string:
+              type: string
+            keyword_list:
+              type: array[string]
+            high_score:
+              type: number
+            mid_score:
+              type: number
+            low_score:
+              type: number
+            negative_num:
+              type: number
+            zero_num:
+              type: number
+            null_var:
+              type: string
+            empty_list:
+              type: array[any]
+            filled_list:
+              type: array[number]
+            exist_var:
+              type: string
+            status:
+              type: string
+            priority:
+              type: string
+            category:
+              type: string
+          selected: false
+          title: 変数初期化
+          type: code
+          variables: []
+        height: 54
+        id: init_vars_node
+        position:
+          x: 200
+          y: 282
+        positionAbsolute:
+          x: 200
+          y: 282
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      
+      # 文字列比較テスト
+      - data:
+          type: if-else  # data内のtype
+          cases:
+            # contains test
+            - id: contains_case
+              case_id: contains_case  # 必須：idと同じ値
+              conditions:
+                - variable_selector:
+                    - init_vars_node
+                    - test_string
+                  comparison_operator: contains
+                  value: "緊急"
+              logical_operator: and
+            
+            # start with test
+            - id: startswith_case
+              case_id: startswith_case  # 必須：idと同じ値
+              conditions:
+                - variable_selector:
+                    - init_vars_node
+                    - short_string
+                  comparison_operator: "start with"
+                  value: "AB"
+              logical_operator: and
+          desc: "文字列比較演算子のテスト"
+          selected: false  # 必須
+          title: "文字列比較テスト"  # 必須
+        height: 154  # 必須
+        id: string_comparison_test
+        position:
+          x: 500
+          y: 282
+        positionAbsolute:  # 必須
+          x: 500
+          y: 282
+        selected: false  # 必須
+        sourcePosition: right  # 必須
+        targetPosition: left  # 必須
+        type: custom  # 必須：外側は"custom"
+        width: 244  # 必須
+      
+      # 数値比較テスト（Unicode文字使用）
+      - data:
+          type: if-else  # data内のtype
+          cases:
+            # 高スコアケース
+            - id: high_score_case
+              case_id: high_score_case  # 必須：idと同じ値
+              conditions:
+                - variable_selector:
+                    - init_vars_node
+                    - high_score
+                  comparison_operator: "≥"  # Unicodeの大なり等号
+                  value: 90
+              logical_operator: and
+            
+            # 中スコアケース
+            - id: mid_score_case
+              case_id: mid_score_case  # 必須：idと同じ値
+              conditions:
+                - variable_selector:
+                    - init_vars_node
+                    - mid_score
+                  comparison_operator: ">"
+                  value: 70
+                - variable_selector:
+                    - init_vars_node
+                    - mid_score
+                  comparison_operator: "≤"  # Unicodeの小なり等号
+                  value: 80
+              logical_operator: and
+          desc: "数値比較演算子のテスト（Unicode）"
+          selected: false  # 必須
+          title: "数値比較テスト"  # 必須
+        height: 176  # 必須
+        id: numeric_comparison_test
+        position:
+          x: 500
+          y: 500
+        positionAbsolute:  # 必須
+          x: 500
+          y: 500
+        selected: false  # 必須
+        sourcePosition: right  # 必須
+        targetPosition: left  # 必須
+        type: custom  # 必須：外側は"custom"
+        width: 244  # 必須
+      
+      # NULL/存在チェックテスト
+      - data:
+          type: if-else  # data内のtype
+          cases:
+            # 空チェック
+            - id: empty_case
+              case_id: empty_case  # 必須：idと同じ値
+              conditions:
+                - variable_selector:
+                    - init_vars_node
+                    - empty_string
+                  comparison_operator: empty
+                  value: ""
+              logical_operator: and
+            
+            # 存在チェック
+            - id: exists_case
+              case_id: exists_case  # 必須：idと同じ値
+              conditions:
+                - variable_selector:
+                    - init_vars_node
+                    - exist_var
+                  comparison_operator: "not empty"
+                  value: ""
+              logical_operator: and
+          desc: "NULL/存在チェックのテスト"
+          selected: false  # 必須
+          title: "NULL/存在チェック"  # 必須
+        height: 154  # 必須
+        id: null_check_test
+        position:
+          x: 500
+          y: 750
+        positionAbsolute:  # 必須
+          x: 500
+          y: 750
+        selected: false  # 必須
+        sourcePosition: right  # 必須
+        targetPosition: left  # 必須
+        type: custom  # 必須：外側は"custom"
+        width: 244  # 必須
+      
+      # 複合条件テスト
+      - data:
+          type: if-else  # data内のtype
+          cases:
+            # AND条件
+            - id: and_case
+              case_id: and_case  # 必須：idと同じ値
+              conditions:
+                - variable_selector:
+                    - init_vars_node
+                    - status
+                  comparison_operator: is
+                  value: "approved"
+                - variable_selector:
+                    - init_vars_node
+                    - priority
+                  comparison_operator: is
+                  value: "high"
+              logical_operator: and
+            
+            # OR条件
+            - id: or_case
+              case_id: or_case  # 必須：idと同じ値
+              conditions:
+                - variable_selector:
+                    - init_vars_node
+                    - category
+                  comparison_operator: is
+                  value: "development"
+                - variable_selector:
+                    - init_vars_node
+                    - category
+                  comparison_operator: is
+                  value: "testing"
+              logical_operator: or
+          desc: "複合条件（AND/OR）のテスト"
+          selected: false  # 必須
+          title: "複合条件テスト"  # 必須
+        height: 198  # 必須
+        id: complex_condition_test
+        position:
+          x: 500
+          y: 1000
+        positionAbsolute:  # 必須
+          x: 500
+          y: 1000
+        selected: false  # 必須
+        sourcePosition: right  # 必須
+        targetPosition: left  # 必須
+        type: custom  # 必須：外側は"custom"
+        width: 244  # 必須
+      
+      # 結果出力ノード群
+      - data:
+          answer: "文字列比較テスト成功: containsオペレータが正常に動作しました"
+          selected: false
+          title: 文字列結果1
+          type: answer
+          variables: []
+        height: 107
+        id: string_result_1
+        position:
+          x: 850
+          y: 200
+        positionAbsolute:
+          x: 850
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: answer
+        width: 244
+      
+      - data:
+          answer: "文字列比較テスト成功: start withオペレータが正常に動作しました"
+          selected: false
+          title: 文字列結果2
+          type: answer
+          variables: []
+        height: 107
+        id: string_result_2
+        position:
+          x: 850
+          y: 350
+        positionAbsolute:
+          x: 850
+          y: 350
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: answer
+        width: 244
+      
+      - data:
+          answer: "数値比較テスト成功: ≥（Unicode）オペレータが正常に動作しました"
+          selected: false
+          title: 数値結果1
+          type: answer
+          variables: []
+        height: 107
+        id: numeric_result_1
+        position:
+          x: 850
+          y: 450
+        positionAbsolute:
+          x: 850
+          y: 450
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: answer
+        width: 244
+      
+      - data:
+          answer: "数値比較テスト成功: 複合条件（>と≤）が正常に動作しました"
+          selected: false
+          title: 数値結果2
+          type: answer
+          variables: []
+        height: 107
+        id: numeric_result_2
+        position:
+          x: 850
+          y: 600
+        positionAbsolute:
+          x: 850
+          y: 600
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: answer
+        width: 244
+      
+      - data:
+          answer: "NULL/存在チェック成功: emptyオペレータが正常に動作しました"
+          selected: false
+          title: NULL結果1
+          type: answer
+          variables: []
+        height: 107
+        id: null_result_1
+        position:
+          x: 850
+          y: 700
+        positionAbsolute:
+          x: 850
+          y: 700
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: answer
+        width: 244
+      
+      - data:
+          answer: "NULL/存在チェック成功: not emptyオペレータが正常に動作しました"
+          selected: false
+          title: NULL結果2
+          type: answer
+          variables: []
+        height: 107
+        id: null_result_2
+        position:
+          x: 850
+          y: 850
+        positionAbsolute:
+          x: 850
+          y: 850
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: answer
+        width: 244
+      
+      - data:
+          answer: "複合条件テスト成功: AND条件が正常に動作しました"
+          selected: false
+          title: 複合結果1
+          type: answer
+          variables: []
+        height: 107
+        id: complex_result_1
+        position:
+          x: 850
+          y: 950
+        positionAbsolute:
+          x: 850
+          y: 950
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: answer
+        width: 244
+      
+      - data:
+          answer: "複合条件テスト成功: OR条件が正常に動作しました"
+          selected: false
+          title: 複合結果2
+          type: answer
+          variables: []
+        height: 107
+        id: complex_result_2
+        position:
+          x: 850
+          y: 1100
+        positionAbsolute:
+          x: 850
+          y: 1100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: answer
+        width: 244
+      
+      - data:
+          answer: "すべてのIF/ELSEテストが完了しました（デフォルトケース）"
+          selected: false
+          title: 最終結果
+          type: answer
+          variables: []
+        height: 107
+        id: final_result
+        position:
+          x: 850
+          y: 1250
+        positionAbsolute:
+          x: 850
+          y: 1250
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: answer
+        width: 244
+  
+  # エラーケースの例（コメントアウト）
+  # 以下は意図的なエラー例です。実際のワークフローでは使用しないでください。
+  
+  # エラー例1: case_idの欠落
+  # - data:
+  #     type: if-else
+  #     cases:
+  #       - id: error_case_1
+  #         # case_id: error_case_1  # エラー：case_idが欠落している
+  #         conditions:
+  #           - variable_selector:
+  #               - some_node
+  #               - value
+  #             comparison_operator: is
+  #             value: "test"
+  #         logical_operator: and
+  
+  # エラー例2: ASCII文字の使用（Unicodeの代わり）
+  # - data:
+  #     type: if-else
+  #     cases:
+  #       - id: error_case_2
+  #         case_id: error_case_2
+  #         conditions:
+  #           - variable_selector:
+  #               - some_node
+  #               - score
+  #             comparison_operator: ">="  # エラー：Unicodeの≥を使うべき
+  #             value: 80
+  
+  # エラー例3: 外側のtypeが間違っている
+  # - data:
+  #     type: if-else
+  #   type: if-else  # エラー：外側のtypeは"custom"であるべき
+  
+  # エラー例4: 必須フィールドの欠落
+  # - data:
+  #     type: if-else
+  #     cases: []
+  #     # selected: false  # エラー：必須フィールドが欠落
+  #     # title: "タイトル"  # エラー：必須フィールドが欠落
+  
+  hash: 'IF_ELSE_validation_7234_hash'

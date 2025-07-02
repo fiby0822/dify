@@ -1,0 +1,999 @@
+app:
+  description: 問い合わせ内容を効率的に処理し、適切な回答を生成するワークフロー
+  icon: 🔍
+  icon_background: '#FFEAD5'
+  mode: advanced-chat
+  name: ゼット様_問い合わせ返答効率化
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/openai:0.0.26@c1e643ac6a7732f6333a783320b4d3026fa5e31d8e7026375b98d44418d33f26
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        image_file_size_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: 'お問い合わせ内容をお聞かせください。
+
+      - 商品仕様について
+
+      - 在庫状況について
+
+      など、どのようなことでもお答えします。
+
+      '
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+    - カシオのG-SQUADの商品仕様を教えて下さい
+    - SEIKOのSC-300CTLの仕様について教えて
+    - バッティンググラブ プロステイタス BG13011 ホワイト×シルバー Mサイズ は在庫ありますか
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: classify-identify-spec-edge
+      selected: false
+      source: classify_inquiry_node
+      sourceHandle: spec_case
+      target: identify_product_spec_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: classify-identify-stock-edge
+      selected: false
+      source: classify_inquiry_node
+      sourceHandle: stock_case
+      target: identify_product_stock_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: answer
+      id: classify-other-edge
+      selected: false
+      source: classify_inquiry_node
+      sourceHandle: 'false'
+      target: other_answer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: check-answer-edge
+      selected: false
+      source: check_search_result_node
+      sourceHandle: found_case
+      target: generate_answer_spec_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: check-inquiry-edge
+      selected: false
+      source: check_search_result_node
+      sourceHandle: 'false'
+      target: generate_inquiry_spec_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: llm
+      id: identify-db-edge
+      selected: false
+      source: identify_product_stock_node
+      sourceHandle: source
+      target: db_search_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: spec-answer-final-edge
+      selected: false
+      source: generate_answer_spec_node
+      sourceHandle: source
+      target: spec_answer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: spec-inquiry-final-edge
+      selected: false
+      source: generate_inquiry_spec_node
+      sourceHandle: source
+      target: spec_inquiry_answer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: llm
+      id: start_node-source-1751406357778-target
+      selected: false
+      source: start_node
+      sourceHandle: source
+      target: '1751406357778'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: if-else
+      id: 1751406357778-source-classify_inquiry_node-target
+      selected: false
+      source: '1751406357778'
+      sourceHandle: source
+      target: classify_inquiry_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: knowledge-retrieval
+      id: identify_product_spec_node-source-1751407483153-target
+      source: identify_product_spec_node
+      sourceHandle: source
+      target: '1751407483153'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: llm
+      id: db_search_node-source-generate_inquiry_stock_node-target
+      source: db_search_node
+      sourceHandle: source
+      target: generate_inquiry_stock_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: llm
+      id: generate_inquiry_stock_node-source-1751408483201-target
+      source: generate_inquiry_stock_node
+      sourceHandle: source
+      target: '1751408483201'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1751408483201-source-stock_inquiry_answer_node-target
+      source: '1751408483201'
+      sourceHandle: source
+      target: stock_inquiry_answer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: llm
+      id: 1751407483153-source-1751409569286-target
+      source: '1751407483153'
+      sourceHandle: source
+      target: '1751409569286'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: if-else
+      id: 1751409569286-source-check_search_result_node-target
+      source: '1751409569286'
+      sourceHandle: source
+      target: check_search_result_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: ユーザーからの問い合わせを受け付ける
+        selected: false
+        title: 開始
+        type: start
+        variables: []
+      height: 98
+      id: start_node
+      position:
+        x: -208.10070690442814
+        y: 400
+      positionAbsolute:
+        x: -208.10070690442814
+        y: 400
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        cases:
+        - case_id: spec_case
+          conditions:
+          - comparison_operator: contains
+            id: spec_condition_1
+            value: 仕様
+            varType: string
+            variable_selector:
+            - '1751406357778'
+            - text
+          id: spec_case
+          logical_operator: and
+        - case_id: stock_case
+          conditions:
+          - comparison_operator: contains
+            id: stock_condition_1
+            value: 在庫
+            varType: string
+            variable_selector:
+            - '1751406357778'
+            - text
+          id: stock_case
+          logical_operator: and
+        desc: 問い合わせ内容を分類
+        selected: false
+        title: 問い合わせ分類
+        type: if-else
+      height: 202
+      id: classify_inquiry_node
+      position:
+        x: 650
+        y: 400
+      positionAbsolute:
+        x: 650
+        y: 400
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        completion_params:
+          max_tokens: 200
+          temperature: 0.3
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 商品仕様問い合わせ用の商品特定
+        model:
+          mode: chat
+          name: gpt-4o
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: system-prompt-spec
+          role: system
+          text: 'あなたは商品情報の分析専門家です。
+
+            ユーザーの問い合わせから商品名とメーカー名を特定してください。
+
+            出力形式：
+
+            商品名：〇〇
+
+            メーカー名：〇〇
+
+            '
+        - id: user-prompt-spec
+          role: user
+          text: '問い合わせ内容：
+
+            {{#sys.query#}}
+
+            '
+        selected: false
+        structured_output_enabled: false
+        title: 商品特定（仕様）
+        type: llm
+        vision:
+          enabled: false
+      height: 118
+      id: identify_product_spec_node
+      position:
+        x: 950
+        y: 200
+      positionAbsolute:
+        x: 950
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        completion_params:
+          max_tokens: 200
+          temperature: 0.3
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 在庫問い合わせ用の商品特定
+        model:
+          mode: chat
+          name: gpt-4o
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: system-prompt-stock
+          role: system
+          text: "あなたは「注文情報抽出アシスタント」です。\nユーザーから渡される入力テキスト（電話問い合わせの文字起こし、またはメール本文）には、商品に関する質問や注文内容が含まれています。\n\
+            あなたのタスクは 商品名 と 個数 を抽出し、わかりやすく構造化して返すことです。\n出力フォーマット\n必ず JSON 形式で返すこと。\n\
+            ルートは items 配列とし、各要素は下記のキーを持つオブジェクト。\njson\nコピーする編集する{\n  \"items\": [\n\
+            \    {\n      \"商品名\": \"string\",\n      \"個数\": integer\n    },\n  \
+            \  ...\n  ]\n}\n\n抽出できなかった場合は、空の配列 [] を返す。\nJSON 以外の文字（解説・挨拶・改行など）を一切含めない。\n\
+            抽出ルール\n商品名\nユーザーが購入・在庫確認・見積もり等を希望している対象を指す語句を取得。\n型番やサイズ、色などが付随していてもそのまま含める。\n\
+            個数\n数字は半角・全角・漢数字を問わず整数へ正規化。\n明示されていない場合は 1 とみなす。\n同一商品が複数行・複数表現で言及されていても、合算せず個別に列挙する。\n\
+            不要な語（接続詞、助詞、敬語など）は無視し、対象の語句だけを抜き出す。\n抽出対象が日本語以外（英語の商品名など）の場合もそのまま記載。\n\
+            例\n入力\n「えっと、先日紹介いただいた“ハイブリッド加湿空気清浄機 UA-P50”を2台と、あと交換用フィルターを3つお願いします。」\n\
+            出力\njson\nコピーする編集する{\n  \"items\": [\n    { \"商品名\": \"ハイブリッド加湿空気清浄機 UA-P50\"\
+            , \"個数\": 2 },\n    { \"商品名\": \"交換用フィルター\", \"個数\": 3 }\n  ]\n}\n\nこの指示に厳密に従い、常に上記フォーマットだけを返してください。"
+        - id: user-prompt-stock
+          role: user
+          text: '問い合わせ内容：
+
+            {{#sys.query#}}
+
+            '
+        selected: false
+        structured_output_enabled: false
+        title: 商品特定（在庫）
+        type: llm
+        vision:
+          enabled: false
+      height: 118
+      id: identify_product_stock_node
+      position:
+        x: 950
+        y: 600
+      positionAbsolute:
+        x: 950
+        y: 600
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        cases:
+        - case_id: found_case
+          conditions:
+          - comparison_operator: contains
+            id: found_condition_1
+            value: 知識あり
+            varType: string
+            variable_selector:
+            - '1751409569286'
+            - text
+          id: found_case
+          logical_operator: and
+        desc: 検索結果の確認
+        selected: false
+        title: 検索結果確認
+        type: if-else
+      height: 154
+      id: check_search_result_node
+      position:
+        x: 2212.46652445075
+        y: 200
+      positionAbsolute:
+        x: 2212.46652445075
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        completion_params:
+          max_tokens: 200
+          temperature: 0.3
+        context:
+          enabled: false
+          variable_selector: []
+        desc: DB検索シミュレーション
+        model:
+          mode: chat
+          name: gpt-4o
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: system-prompt-db
+          role: system
+          text: "あなたは「受注センター AI 在庫確認アシスタント」です。\n\n# \U0001F3AF 目的\n{{#identify_product_stock_node.text#}}を解析し、社内基幹\
+            \ API 《get_inventory》で在庫・納期を取得。  \n最終出力は **人が読む文書** として下記 2 ブロックのみを返してください。\
+            \  \n1. **在庫照会結果** … Markdown のテーブル  \n2. **顧客向けメール草案** … 件名＋本文（プレーンテキスト）\n\
+            \n# ✅ 入力仕様\n```json\n{\n  \"items\":[\n    { \"商品名\": \"string\", \"個数\"\
+            : integer },\n    ...\n  ]\n}\n\U0001F6E0 利用ツール\nget_inventory\n\ninputs\
+            \ : { \"product_name\": string }\n\nreturns : { \"stock\": integer, \"\
+            lead_time\": \"YYYY-MM-DD | 即日出荷\" }\n\n※デモ環境のダミーデータ\n\n商品名\tstock\tlead_time\n\
+            硬式グラブ プロステイタスSE BPROG560S ブラック\t10\t即日出荷\nバッティンググラブ プロステイタス BG13011 ホワイト×シルバー\
+            \ Mサイズ\t0\t確認中\nウイニングロードシリーズ 軟式グラブ BRGB33510R 源田タイプ\t5\t即日出荷\n\n\U0001F504\
+            \ 手順\n受信 JSON の items をパース。\n\n各商品について get_inventory を呼び出し、在庫 (stock)\
+            \ と リードタイム (lead_time) を取得。\n\nshortage = max(0, 個数 - stock) を算出し、取り寄せが必要な場合は不足数を示す。\n\
+            SAPヘルプポータル\n\n結果を Markdown テーブル で整形。列は\n| 商品名 | 注文数 | 在庫 | 欠品 | 納期/出荷目安\
+            \ |\n\n欠品列は不足数が 0 のとき - を表示。\n\n納期列は 即日出荷 または YYYY-MM-DD。\n\n顧客向けメール草案を作成（日本語、敬語）。構成:\n\
+            \n件名: 「ご注文商品の在庫および納期のご案内（ZETT）」\n\n本文:\n\n挨拶・感謝\n\n在庫結果を箇条書きで再掲 （在庫切れ品は納期案内）\n\
+            \n注意書き: 在庫変動・分納可否・質問窓口\n\n署名: 部署、担当、連絡先\nビジネスメールの確定表現・丁寧語を遵守\nPipedrive\n\
+            Wasabi\n。在庫不足時は前向きかつ具体的なリードタイム提示が顧客満足を高める\nGetsitecontrol\nblog.convergentis.com\n\
+            。\n\n出力は以下のフォーマットのみ。不要な JSON、余計な解説、コードブロック、囲み枠は出力しない。\n\nshell\nコピーする\n\
+            編集する\n## 在庫照会結果\n| 商品名 | 注文数 | 在庫 | 欠品 | 納期/出荷目安 |\n| --- | ---: | ---:\
+            \ | ---: | --- |\n\n## 顧客向けメール草案\n件名：<ここに件名>\n<本文>\n\U0001F6AB 禁則\nJSON\
+            \ を一切出力しない。\n\n項目名・列順序を変更しない。\n\n在庫 API 失敗時は該当行の在庫・納期を空欄にし、メール本文でお詫びする。\n\
+            \nシステムログや開発者向けコメントは含めない。\n\n"
+        - id: user-prompt-db
+          role: user
+          text: '商品情報：
+
+            {{#identify_product_stock_node.text#}}
+
+            '
+        selected: false
+        structured_output_enabled: false
+        title: 顧客への返答作成
+        type: llm
+        vision:
+          enabled: false
+      height: 118
+      id: db_search_node
+      position:
+        x: 1262.5357940543695
+        y: 600
+      positionAbsolute:
+        x: 1262.5357940543695
+        y: 600
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        completion_params:
+          max_tokens: 500
+          temperature: 0.7
+        context:
+          enabled: true
+          variable_selector:
+          - '1751407483153'
+          - result
+        desc: 仕様に関する回答生成
+        model:
+          mode: chat
+          name: gpt-4o
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: system-prompt-answer-spec
+          role: system
+          text: 'あなたは親切なカスタマーサポート担当者です。
+
+            商品仕様に関する問い合わせに対して、分かりやすく丁寧に回答してください。
+
+            '
+        - id: user-prompt-answer-spec
+          role: user
+          text: '元の問い合わせ：
+
+            {{#sys.query#}}
+
+
+            上記の情報を基に、お客様に分かりやすく回答してください。
+
+            '
+        selected: false
+        structured_output_enabled: false
+        title: 解答作成（仕様）
+        type: llm
+        vision:
+          enabled: false
+      height: 118
+      id: generate_answer_spec_node
+      position:
+        x: 2547.021847312494
+        y: 100
+      positionAbsolute:
+        x: 2547.021847312494
+        y: 100
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        completion_params:
+          max_tokens: 500
+          temperature: 0.7
+        context:
+          enabled: false
+          variable_selector: []
+        desc: メーカー問い合わせ文生成（仕様）
+        model:
+          mode: chat
+          name: gpt-4o
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: system-prompt-inquiry-spec
+          role: system
+          text: 'あなたはビジネス文書作成の専門家です。
+
+            商品仕様について詳細な情報が必要な場合の、顧客からの問い合わせを受けて、メーカーへ転送する問い合わせ文を作成してください。
+
+            当該メーカーは普段取引のある仕入先です。
+
+
+            丁寧で具体的な問い合わせ文を作成してください。
+
+            '
+        - id: user-prompt-inquiry-spec
+          role: user
+          text: '元の問い合わせ：
+
+            {{#sys.query#}}
+
+
+            商品情報：
+
+            {{#identify_product_spec_node.text#}}
+
+
+            メーカーへの問い合わせ文を作成してください。
+
+            '
+        selected: false
+        structured_output_enabled: false
+        title: 問い合わせ文作成（仕様）
+        type: llm
+        vision:
+          enabled: false
+      height: 118
+      id: generate_inquiry_spec_node
+      position:
+        x: 2547.021847312494
+        y: 300
+      positionAbsolute:
+        x: 2547.021847312494
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        completion_params:
+          max_tokens: 500
+          temperature: 0.7
+        context:
+          enabled: false
+          variable_selector: []
+        desc: メーカー問い合わせ文生成（在庫）
+        model:
+          mode: chat
+          name: gpt-4o
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: system-prompt-inquiry-stock
+          role: system
+          text: 'あなたはビジネス文書作成の専門家です。
+
+            欠品している商品について、入荷可能日を確認するためのメーカーへの問い合わせ文を作成してください。
+
+            丁寧で具体的な問い合わせ文を作成してください。
+
+            '
+        - id: user-prompt-inquiry-stock
+          role: user
+          text: '元の問い合わせ：
+
+            {{#sys.query#}}
+
+
+            顧客返答：
+
+            {{#db_search_node.text#}}'
+        selected: false
+        structured_output_enabled: false
+        title: 問い合わせ文作成（メーカー）
+        type: llm
+        vision:
+          enabled: false
+      height: 118
+      id: generate_inquiry_stock_node
+      position:
+        x: 1606.2884542958163
+        y: 600
+      positionAbsolute:
+        x: 1606.2884542958163
+        y: 600
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '{{#generate_answer_spec_node.text#}}'
+        desc: 仕様に関する回答
+        selected: false
+        title: 回答（仕様）
+        type: answer
+        variables: []
+      height: 133
+      id: spec_answer_node
+      position:
+        x: 2905.412822743146
+        y: 100
+      positionAbsolute:
+        x: 2905.412822743146
+        y: 100
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '{{#generate_inquiry_spec_node.text#}}'
+        desc: 仕様問い合わせ文
+        selected: false
+        title: 回答（仕様問い合わせ）
+        type: answer
+        variables: []
+      height: 133
+      id: spec_inquiry_answer_node
+      position:
+        x: 2905.412822743146
+        y: 300
+      positionAbsolute:
+        x: 2905.412822743146
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '{{#1751408483201.text#}}'
+        desc: 在庫問い合わせ文
+        selected: false
+        title: 回答（在庫問い合わせ）
+        type: answer
+        variables: []
+      height: 133
+      id: stock_inquiry_answer_node
+      position:
+        x: 2247.021847312494
+        y: 615.2066703096282
+      positionAbsolute:
+        x: 2247.021847312494
+        y: 615.2066703096282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: 申し訳ございません。商品仕様や在庫以外のお問い合わせについては、別途お問い合わせください。
+        desc: その他の問い合わせへの回答
+        selected: false
+        title: 回答（その他）
+        type: answer
+        variables: []
+      height: 162
+      id: other_answer_node
+      position:
+        x: 950
+        y: 860.8099378978604
+      positionAbsolute:
+        x: 950
+        y: 860.8099378978604
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: ''
+        model:
+          completion_params: {}
+          mode: chat
+          name: gpt-4o
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: ed70abcc-e173-4f82-9655-c35d9b3754a7
+          role: system
+          text: 'あなたは質問分類の専門家です。
+
+            ユーザーの質問を以下のカテゴリのいずれかに分類してください：
+
+
+            1. 製品・サービス - 製品の機能、使い方、仕様に関する質問
+
+            カテゴリ名：仕様
+
+
+            2. 在庫に関する質問
+
+            カテゴリ名：在庫
+
+
+            出力は以下の形式で返してください：
+
+            [カテゴリ名]
+
+            '
+        - id: 7ff9b5ef-90b2-4d54-9f61-f4a745080ff4
+          role: user
+          text: '以下の質問を分類してください：
+
+            {{#sys.query#}}
+
+            '
+        selected: false
+        structured_output_enabled: false
+        title: 質問カテゴリ分類
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 90
+      id: '1751406357778'
+      position:
+        x: 200.3251608362449
+        y: 400
+      positionAbsolute:
+        x: 200.3251608362449
+        y: 400
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        dataset_ids:
+        - 7ccfkMYSp7EbvPLfz84xM+MGWesznlJf6laOpWdSR4vOjJa6XZ3W7JdALMg/4IRY
+        desc: ''
+        multiple_retrieval_config:
+          reranking_enable: true
+          reranking_mode: weighted_score
+          top_k: 4
+          weights:
+            keyword_setting:
+              keyword_weight: 0
+            vector_setting:
+              embedding_model_name: text-embedding-3-large
+              embedding_provider_name: langgenius/openai/openai
+              vector_weight: 1
+        query_variable_selector:
+        - identify_product_spec_node
+        - text
+        retrieval_mode: multiple
+        selected: false
+        title: 知識検索
+        type: knowledge-retrieval
+      height: 92
+      id: '1751407483153'
+      position:
+        x: 1275.0715881087394
+        y: 200
+      positionAbsolute:
+        x: 1275.0715881087394
+        y: 200
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: ''
+        model:
+          completion_params: {}
+          mode: chat
+          name: gpt-4o
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: ff07d90d-7d40-4f68-80e3-29803d7566cc
+          role: system
+          text: '{{#db_search_node.text#}} {{#generate_inquiry_stock_node.text#}}をブロックに分け、わかりやすく出力して下さい
+
+
+            -出力例-
+
+            顧客向けメール草案
+
+            件名：ご注文商品の在庫および納期のご案内（ZETT）
+
+            平素より格別のお引き立てを賜り、厚く御礼申し上げます。
+
+            以下のご注文商品について、在庫および納期をご案内申し上げます。
+
+            商品名: バッティンググラブ プロステイタス BG13011 ホワイト×シルバー Mサイズ
+
+            状況: 現在在庫切れ
+
+            納期: 確認中
+
+            なお、在庫状況は常に変動しておりますので、完売の場合や納期が遅延する場合がございます。分納も可能な範囲で対応いたしますので、ご希望の際はご相談くださいませ。
+
+            何かご不明な点がございましたら、どうぞお気軽にお問い合わせください。
+
+            株式会社 ZETT
+
+            受注センター
+
+            担当: 山田太郎
+
+            電話: 03-1234-5678
+
+            メール: order@zett.co.jp
+
+            メーカーへの在庫確認依頼メール
+
+            件名: バッティンググラブ プロステイタス BG13011 入荷予定日の確認について
+
+            株式会社 [メーカー名] 御中
+
+            [あなたの会社名]の[あなたの名前]と申します。いつも大変変お世話になっております。
+
+            このたび、お客様より「バッティンググラブ プロステイタス BG13011 ホワイト×シルバー Mサイズ」のご注文をいただきましたが、現在こちらの商品の在庫が不足している状況です。納期のご案内をお客様に差し上げるため、貴社にて本商品の次回入荷予定日についてご確認を賜りたく、ご連絡を差し上げました。
+
+            つきましては、以下の事項についてご教示いただけますと幸いです。
+
+            次回入荷予定日
+
+            入荷予定数の目安
+
+            その他関連情報（遅延の可能性や代替案など）
+
+            お手数をおかけいたしますが、早急にご確認いただき、可能な限り迅速にご回答いただけますようお願い申し上げます。
+
+            何卒よろしくお願い申し上げます。
+
+            [あなたの会社名]
+
+            [あなたの部署名/役職名]
+
+            [あなたの名前]
+
+            電話: [あなたの電話番号]
+
+            メール: [あなたのメールアドレス]
+
+            住所: [会社の住所]'
+        selected: false
+        title: 回答作成
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 90
+      id: '1751408483201'
+      position:
+        x: 1912.46652445075
+        y: 615.2066703096282
+      positionAbsolute:
+        x: 1912.46652445075
+        y: 615.2066703096282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1751407483153'
+          - result
+        desc: ''
+        model:
+          completion_params: {}
+          mode: chat
+          name: gpt-4o
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: 85c49599-0d0c-429c-8ad3-3da2c8137ba0
+          role: system
+          text: '問い合わせ内容{{#sys.query#}}に答えられる情報を得られることができたかを、判定してください
+
+
+            返却値：知識あり or 知識なし'
+        selected: false
+        title: 知識検索結果
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 90
+      id: '1751409569286'
+      position:
+        x: 1724.4404364248844
+        y: 200
+      positionAbsolute:
+        x: 1724.4404364248844
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: -1136.2807972519463
+      y: 171.21928161348785
+      zoom: 0.660317793083951

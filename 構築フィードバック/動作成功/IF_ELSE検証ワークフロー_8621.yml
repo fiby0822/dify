@@ -1,0 +1,464 @@
+app:
+  description: "IF_ELSEコンポーネントの動作検証用ワークフロー。年収に基づいて税率区分を判定し、適切な節税アドバイスを提供します。"
+  icon: "💰"
+  icon_background: "#FFF5E1"
+  mode: advanced-chat
+  name: "年収別税率アドバイスシステム"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      年収を入力してください。税率区分を判定し、適切な節税アドバイスをご提供します。
+      
+      例：「年収400万円です」「私の年収は250万円です」
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "年収180万円の場合の節税方法を教えてください"
+      - "年収300万円ですが、どんな節税対策がありますか？"
+      - "年収500万円での効果的な節税方法は？"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-analyzer-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: income_analyzer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: if-else
+        id: analyzer-condition-edge
+        selected: false
+        source: income_analyzer_node
+        sourceHandle: source
+        target: income_condition_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: condition-low-income-edge
+        selected: false
+        source: income_condition_node
+        sourceHandle: low_income_case
+        target: low_income_advice_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: condition-middle-income-edge
+        selected: false
+        source: income_condition_node
+        sourceHandle: middle_income_case
+        target: middle_income_advice_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: condition-high-income-edge
+        selected: false
+        source: income_condition_node
+        sourceHandle: false
+        target: high_income_advice_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: low-income-answer-edge
+        selected: false
+        source: low_income_advice_node
+        sourceHandle: source
+        target: low_income_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: middle-income-answer-edge
+        selected: false
+        source: middle_income_advice_node
+        sourceHandle: source
+        target: middle_income_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: high-income-answer-edge
+        selected: false
+        source: high_income_advice_node
+        sourceHandle: source
+        target: high_income_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "ユーザーからの年収情報を受け取る開始ノード"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 300
+        positionAbsolute:
+          x: 50
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "入力された年収情報を解析し、数値を抽出"
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+            completion_params:
+              temperature: 0.3
+              max_tokens: 100
+          prompt_template:
+            - id: system-prompt-1
+              role: system
+              text: |
+                あなたは年収情報を解析して税率区分を判定する専門家です。
+                ユーザーの入力から年収を理解し、以下の区分のいずれかを判定してください：
+                
+                - 低所得層：年収195万円以下の場合
+                - 中所得層：年収195万円超〜330万円以下の場合  
+                - 高所得層：年収330万円超の場合
+                
+                必ず「低所得層」「中所得層」「高所得層」のいずれか1つのみを出力してください。
+                
+                例：
+                - 入力「年収180万円」→ 出力「低所得層」
+                - 入力「年収250万円」→ 出力「中所得層」
+                - 入力「年収500万円」→ 出力「高所得層」
+            - id: user-prompt-1
+              role: user
+              text: |
+                以下の入力から年収を判定し、適切な税率区分を出力してください：
+                {{#sys.query#}}
+          selected: false
+          structured_output_enabled: false
+          title: "年収区分判定"
+          type: llm
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+        height: 98
+        id: income_analyzer_node
+        position:
+          x: 350
+          y: 300
+        positionAbsolute:
+          x: 350
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "年収に基づいて税率区分を判定"
+          type: if-else
+          cases:
+            - id: low_income_case
+              case_id: low_income_case
+              conditions:
+                - variable_selector:
+                    - income_analyzer_node
+                    - text
+                  comparison_operator: contains
+                  value: "低所得層"
+              logical_operator: and
+            - id: middle_income_case
+              case_id: middle_income_case
+              conditions:
+                - variable_selector:
+                    - income_analyzer_node
+                    - text
+                  comparison_operator: contains
+                  value: "中所得層"
+              logical_operator: and
+          selected: false
+          title: "税率区分判定"
+        height: 198
+        id: income_condition_node
+        position:
+          x: 650
+          y: 300
+        positionAbsolute:
+          x: 650
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "低所得層向けの節税アドバイスを生成"
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+            completion_params:
+              temperature: 0.7
+              max_tokens: 1000
+          prompt_template:
+            - id: system-prompt-2
+              role: system
+              text: |
+                あなたは税務の専門家です。
+                低所得層（年収195万円以下）の方向けに、わかりやすく実践的な節税アドバイスを提供してください。
+                
+                以下の観点を含めてください：
+                1. 基礎控除の活用方法
+                2. 社会保険料控除の確認
+                3. 医療費控除の活用
+                4. ふるさと納税の少額活用
+                5. 住民税非課税世帯の場合のメリット
+                6. 各種給付金や支援制度の紹介
+            - id: user-prompt-2
+              role: user
+              text: |
+                低所得層（年収195万円以下）の方に適切な節税アドバイスをお願いします。
+          selected: false
+          structured_output_enabled: false
+          title: "低所得層アドバイス"
+          type: llm
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+        height: 98
+        id: low_income_advice_node
+        position:
+          x: 950
+          y: 100
+        positionAbsolute:
+          x: 950
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "中所得層向けの節税アドバイスを生成"
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+            completion_params:
+              temperature: 0.7
+              max_tokens: 1000
+          prompt_template:
+            - id: system-prompt-3
+              role: system
+              text: |
+                あなたは税務の専門家です。
+                中所得層（年収195万円超〜330万円以下）の方向けに、効果的な節税アドバイスを提供してください。
+                
+                以下の観点を含めてください：
+                1. ふるさと納税の活用（限度額の目安も提示）
+                2. iDeCo（個人型確定拠出年金）の活用
+                3. 生命保険料控除の最適化
+                4. 地震保険料控除
+                5. 特定支出控除の活用
+                6. 副業収入がある場合の注意点
+            - id: user-prompt-3
+              role: user
+              text: |
+                中所得層（年収195万円超〜330万円以下）の方に適切な節税アドバイスをお願いします。
+          selected: false
+          structured_output_enabled: false
+          title: "中所得層アドバイス"
+          type: llm
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+        height: 98
+        id: middle_income_advice_node
+        position:
+          x: 950
+          y: 300
+        positionAbsolute:
+          x: 950
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "高所得層向けの節税アドバイスを生成"
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+            completion_params:
+              temperature: 0.7
+              max_tokens: 1000
+          prompt_template:
+            - id: system-prompt-4
+              role: system
+              text: |
+                あなたは税務の専門家です。
+                高所得層（年収330万円超）の方向けに、高度な節税アドバイスを提供してください。
+                
+                以下の観点を含めてください：
+                1. ふるさと納税の積極活用（限度額計算）
+                2. iDeCoとNISAの併用戦略
+                3. 小規模企業共済等掛金控除
+                4. 不動産投資による節税
+                5. 法人設立の検討（個人事業主の場合）
+                6. 所得分散の手法
+                7. 配偶者控除・扶養控除の最適化
+            - id: user-prompt-4
+              role: user
+              text: |
+                高所得層（年収330万円超）の方に適切な節税アドバイスをお願いします。
+          selected: false
+          structured_output_enabled: false
+          title: "高所得層アドバイス"
+          type: llm
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+        height: 98
+        id: high_income_advice_node
+        position:
+          x: 950
+          y: 500
+        positionAbsolute:
+          x: 950
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#low_income_advice_node.text#}}"
+          desc: "低所得層向けアドバイスの出力"
+          selected: false
+          title: "低所得層向け回答"
+          type: answer
+          variables: []
+        height: 107
+        id: low_income_answer_node
+        position:
+          x: 1250
+          y: 100
+        positionAbsolute:
+          x: 1250
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#middle_income_advice_node.text#}}"
+          desc: "中所得層向けアドバイスの出力"
+          selected: false
+          title: "中所得層向け回答"
+          type: answer
+          variables: []
+        height: 107
+        id: middle_income_answer_node
+        position:
+          x: 1250
+          y: 300
+        positionAbsolute:
+          x: 1250
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#high_income_advice_node.text#}}"
+          desc: "高所得層向けアドバイスの出力"
+          selected: false
+          title: "高所得層向け回答"
+          type: answer
+          variables: []
+        height: 107
+        id: high_income_answer_node
+        position:
+          x: 1250
+          y: 500
+        positionAbsolute:
+          x: 1250
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

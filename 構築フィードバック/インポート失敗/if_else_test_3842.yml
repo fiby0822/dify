@@ -1,0 +1,200 @@
+mode: advanced-chat
+fiby_version: 2.0
+system_prompt: あなたはIF/ELSE条件処理の検証を行うアシスタントです。様々な条件分岐をテストします。
+
+graph:
+  - node_id: start
+    node_name: 開始ノード
+    edges:
+      - edge_id: check_number
+        edge_name: 数値チェック
+        destination_node: number_check
+  
+  - node_id: number_check
+    node_name: 数値判定
+    prompt: ユーザーが入力した数値を判定します。数値は {{user_input}} です。
+    edges:
+      - edge_id: if_large
+        edge_name: 大きい数値
+        destination_node: large_number
+        condition:
+          if: "{{user_input}} >= 100"
+      - edge_id: if_medium
+        edge_name: 中間の数値
+        destination_node: medium_number
+        condition:
+          if: "{{user_input}} < 100 AND {{user_input}} > 10"
+      - edge_id: if_small
+        edge_name: 小さい数値
+        destination_node: small_number
+        condition:
+          if: "{{user_input}} <= 10"
+  
+  - node_id: large_number
+    node_name: 大きい数値の処理
+    prompt: 100以上の大きな数値が入力されました。値は {{user_input}} です。
+    edges:
+      - edge_id: to_string_check
+        edge_name: 文字列チェックへ
+        destination_node: string_comparison
+  
+  - node_id: medium_number
+    node_name: 中間数値の処理
+    prompt: 10より大きく100未満の数値が入力されました。値は {{user_input}} です。
+    edges:
+      - edge_id: to_string_check2
+        edge_name: 文字列チェックへ
+        destination_node: string_comparison
+  
+  - node_id: small_number
+    node_name: 小さい数値の処理
+    prompt: 10以下の小さな数値が入力されました。値は {{user_input}} です。
+    edges:
+      - edge_id: to_string_check3
+        edge_name: 文字列チェックへ
+        destination_node: string_comparison
+  
+  - node_id: string_comparison
+    node_name: 文字列比較
+    prompt: 次に文字列の比較を行います。ユーザーのステータスは {{user_status}} です。
+    edges:
+      - edge_id: if_active
+        edge_name: アクティブユーザー
+        destination_node: active_user
+        condition:
+          if: '{{user_status}} = "active"'
+      - edge_id: if_pending
+        edge_name: 保留中ユーザー
+        destination_node: pending_user
+        condition:
+          if: '{{user_status}} = "pending"'
+      - edge_id: else_inactive
+        edge_name: その他のユーザー
+        destination_node: inactive_user
+        condition:
+          else: true
+  
+  - node_id: active_user
+    node_name: アクティブユーザー処理
+    prompt: アクティブなユーザーです。優先的なサービスを提供します。
+    edges:
+      - edge_id: to_bool_check
+        edge_name: ブール値チェックへ
+        destination_node: boolean_test
+  
+  - node_id: pending_user
+    node_name: 保留中ユーザー処理
+    prompt: 保留中のユーザーです。確認が必要です。
+    edges:
+      - edge_id: to_bool_check2
+        edge_name: ブール値チェックへ
+        destination_node: boolean_test
+  
+  - node_id: inactive_user
+    node_name: 非アクティブユーザー処理
+    prompt: 非アクティブなユーザーです。再アクティベーションを提案します。
+    edges:
+      - edge_id: to_bool_check3
+        edge_name: ブール値チェックへ
+        destination_node: boolean_test
+  
+  - node_id: boolean_test
+    node_name: ブール値テスト
+    prompt: プレミアムユーザーかどうかを確認します。プレミアムステータス：{{is_premium}}
+    edges:
+      - edge_id: if_premium
+        edge_name: プレミアムユーザー
+        destination_node: premium_benefits
+        condition:
+          if: "{{is_premium}} = true"
+      - edge_id: else_regular
+        edge_name: 通常ユーザー
+        destination_node: regular_benefits
+        condition:
+          else: true
+  
+  - node_id: premium_benefits
+    node_name: プレミアム特典
+    prompt: プレミアムユーザーの特典をご案内します。すべての機能が利用可能です。
+    edges:
+      - edge_id: to_complex_check
+        edge_name: 複合条件チェックへ
+        destination_node: complex_condition
+  
+  - node_id: regular_benefits
+    node_name: 通常特典
+    prompt: 通常ユーザーの基本機能をご案内します。アップグレードもご検討ください。
+    edges:
+      - edge_id: to_complex_check2
+        edge_name: 複合条件チェックへ
+        destination_node: complex_condition
+  
+  - node_id: complex_condition
+    node_name: 複合条件テスト
+    prompt: 最後に複合的な条件をテストします。ポイント：{{points}}、レベル：{{level}}
+    edges:
+      - edge_id: if_vip
+        edge_name: VIPユーザー
+        destination_node: vip_treatment
+        condition:
+          if: "{{points}} >= 1000 AND {{level}} >= 10"
+      - edge_id: if_advanced
+        edge_name: 上級ユーザー
+        destination_node: advanced_treatment
+        condition:
+          if: "{{points}} >= 500 OR {{level}} >= 5"
+      - edge_id: else_beginner
+        edge_name: 初心者
+        destination_node: beginner_treatment
+        condition:
+          else: true
+  
+  - node_id: vip_treatment
+    node_name: VIP待遇
+    prompt: VIPユーザーとして最高級のサービスを提供します。専属サポートが利用可能です。
+    edges:
+      - edge_id: to_end
+        edge_name: 終了
+        destination_node: end
+  
+  - node_id: advanced_treatment
+    node_name: 上級者待遇
+    prompt: 上級ユーザーとして高度な機能が利用可能です。さらなる成長を応援します。
+    edges:
+      - edge_id: to_end2
+        edge_name: 終了
+        destination_node: end
+  
+  - node_id: beginner_treatment
+    node_name: 初心者サポート
+    prompt: 初心者向けのガイドとチュートリアルを提供します。一緒に成長しましょう。
+    edges:
+      - edge_id: to_end3
+        edge_name: 終了
+        destination_node: end
+  
+  - node_id: end
+    node_name: 終了
+    prompt: すべての条件チェックが完了しました。ご利用ありがとうございました。
+
+variables:
+  user_input:
+    type: number
+    description: テスト用の数値
+    default: 50
+  user_status:
+    type: string
+    description: ユーザーのステータス
+    default: active
+  is_premium:
+    type: boolean
+    description: プレミアムユーザーかどうか
+    default: false
+  points:
+    type: number
+    description: ユーザーのポイント
+    default: 750
+  level:
+    type: number
+    description: ユーザーのレベル
+    default: 7

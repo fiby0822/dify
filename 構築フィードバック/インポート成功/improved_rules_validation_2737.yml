@@ -1,0 +1,255 @@
+app:
+  description: "更新されたLLMコンポーネントルールの検証用アプリケーション。質問分析と回答生成の2段階LLM処理を実装。"
+  icon: "🔧"
+  icon_background: "#FFE4B5"
+  mode: advanced-chat
+  name: "改善ルール検証LLMアプリ"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      改善されたLLMコンポーネントルールの検証アプリです。
+      
+      あなたの質問を以下の手順で処理します：
+      1. 質問内容を分析・整理
+      2. 整理された内容に基づいて詳細な回答を生成
+      
+      どんな質問でもお聞かせください。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "Difyとは何ですか？その特徴を教えてください"
+      - "機械学習と深層学習の違いを説明してください"
+      - "効果的なプロンプトエンジニアリングのコツは？"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-analysis-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: analysis_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: llm
+        id: analysis-answer-edge
+        selected: false
+        source: analysis_llm_node
+        sourceHandle: source
+        target: answer_generation_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: llm-answer-edge
+        selected: false
+        source: answer_generation_llm_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "ユーザーからの質問を受け取る"
+          selected: false
+          title: "質問入力"
+          type: start
+          variables:
+            - label: "あなたの質問"
+              max_length: 3000
+              options: []
+              required: true
+              type: text-input
+              variable: user_question
+        height: 116
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "質問内容を分析・整理する第1段階のLLM"
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+            completion_params:
+              temperature: 0.3
+              max_tokens: 800
+              top_p: 0.9
+          prompt_template:
+            - id: system-analysis-prompt
+              role: system
+              text: |
+                あなたは質問分析の専門家です。
+                ユーザーの質問を以下の観点で分析し、構造化してください：
+                
+                1. 質問の主題（メイントピック）
+                2. 質問の意図（何を知りたいか）
+                3. 必要な背景知識
+                4. 回答に含めるべき要素
+                5. 想定される追加質問
+                
+                分析結果は箇条書きで簡潔にまとめてください。
+            - id: user-analysis-prompt
+              role: user
+              text: |
+                以下の質問を分析してください：
+                
+                {{#start_node.user_question#}}
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          memory:
+            enabled: false
+          selected: false
+          title: "質問分析LLM"
+          type: llm
+        height: 98
+        id: analysis_llm_node
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "分析結果を基に詳細な回答を生成する第2段階のLLM"
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+            completion_params:
+              temperature: 0.7
+              max_tokens: 1500
+              top_p: 0.95
+          prompt_template:
+            - id: system-answer-prompt
+              role: system
+              text: |
+                あなたは知識豊富で親切なAIアシスタントです。
+                質問分析結果を参考に、以下の点に注意して回答してください：
+                
+                1. 正確で信頼できる情報を提供する
+                2. 段階的で理解しやすい説明をする
+                3. 具体例や比喩を適切に使用する
+                4. 専門用語は平易な言葉で説明する
+                5. 回答の最後に要点をまとめる
+                
+                ユーザーの知識レベルに合わせて、適切な詳細度で回答してください。
+            - id: user-answer-prompt
+              role: user
+              text: |
+                ## 元の質問
+                {{#start_node.user_question#}}
+                
+                ## 質問の分析結果
+                {{#analysis_llm_node.text#}}
+                
+                上記の分析結果を踏まえて、元の質問に対する包括的で分かりやすい回答を作成してください。
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          memory:
+            enabled: false
+          selected: false
+          title: "回答生成LLM"
+          type: llm
+        height: 98
+        id: answer_generation_llm_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ## あなたの質問
+            {{#start_node.user_question#}}
+            
+            ---
+            
+            ## 回答
+            {{#answer_generation_llm_node.text#}}
+            
+            ---
+            
+            ### 質問の分析内容
+            {{#analysis_llm_node.text#}}
+          desc: "最終的な回答を表示"
+          selected: false
+          title: "回答表示"
+          type: answer
+          variables: []
+        height: 374
+        id: answer_node
+        position:
+          x: 950
+          y: 200
+        positionAbsolute:
+          x: 950
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

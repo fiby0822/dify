@@ -1,0 +1,881 @@
+app:
+  description: "問い合わせ内容を効率的に処理し、適切な回答を生成するワークフロー"
+  icon: "🔍"
+  icon_background: "#FFEAD5"
+  mode: advanced-chat
+  name: "問い合わせ処理ワークフロー"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      お問い合わせ内容をお聞かせください。
+      - 商品仕様について
+      - 在庫状況について
+      など、どのようなことでもお答えします。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "この商品の詳しい仕様を教えてください"
+      - "在庫状況を確認したいです"
+      - "納期について知りたいです"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: if-else
+        id: start-classify-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: classify_inquiry_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: classify-identify-spec-edge
+        selected: false
+        source: classify_inquiry_node
+        sourceHandle: spec_case
+        target: identify_product_spec_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: classify-identify-stock-edge
+        selected: false
+        source: classify_inquiry_node
+        sourceHandle: stock_case
+        target: identify_product_stock_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: classify-other-edge
+        selected: false
+        source: classify_inquiry_node
+        sourceHandle: "false"
+        target: other_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: llm
+        id: identify-url-edge
+        selected: false
+        source: identify_product_spec_node
+        sourceHandle: source
+        target: get_url_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: llm
+        id: url-search-edge
+        selected: false
+        source: get_url_node
+        sourceHandle: source
+        target: web_search_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: if-else
+        id: search-check-edge
+        selected: false
+        source: web_search_node
+        sourceHandle: source
+        target: check_search_result_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: check-answer-edge
+        selected: false
+        source: check_search_result_node
+        sourceHandle: found_case
+        target: generate_answer_spec_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: check-inquiry-edge
+        selected: false
+        source: check_search_result_node
+        sourceHandle: "false"
+        target: generate_inquiry_spec_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: llm
+        id: identify-db-edge
+        selected: false
+        source: identify_product_stock_node
+        sourceHandle: source
+        target: db_search_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: if-else
+        id: db-check-edge
+        selected: false
+        source: db_search_node
+        sourceHandle: source
+        target: check_stock_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: stock-answer-edge
+        selected: false
+        source: check_stock_node
+        sourceHandle: in_stock_case
+        target: generate_answer_stock_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: stock-inquiry-edge
+        selected: false
+        source: check_stock_node
+        sourceHandle: "false"
+        target: generate_inquiry_stock_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: spec-answer-final-edge
+        selected: false
+        source: generate_answer_spec_node
+        sourceHandle: source
+        target: spec_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: spec-inquiry-final-edge
+        selected: false
+        source: generate_inquiry_spec_node
+        sourceHandle: source
+        target: spec_inquiry_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: stock-answer-final-edge
+        selected: false
+        source: generate_answer_stock_node
+        sourceHandle: source
+        target: stock_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: stock-inquiry-final-edge
+        selected: false
+        source: generate_inquiry_stock_node
+        sourceHandle: source
+        target: stock_inquiry_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "ユーザーからの問い合わせを受け付ける"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 400
+        positionAbsolute:
+          x: 50
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: spec_case
+              case_id: spec_case
+              conditions:
+                - id: spec_condition_1
+                  variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "仕様"
+              logical_operator: and
+            - id: stock_case
+              case_id: stock_case
+              conditions:
+                - id: stock_condition_1
+                  variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "在庫"
+              logical_operator: and
+          desc: "問い合わせ内容を分類"
+          selected: false
+          title: "問い合わせ分類"
+        height: 154
+        id: classify_inquiry_node
+        position:
+          x: 350
+          y: 400
+        positionAbsolute:
+          x: 350
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-prompt-spec
+              role: system
+              text: |
+                あなたは商品情報の分析専門家です。
+                ユーザーの問い合わせから商品名とメーカー名を特定してください。
+                出力形式：
+                商品名：〇〇
+                メーカー名：〇〇
+            - id: user-prompt-spec
+              role: user
+              text: |
+                問い合わせ内容：
+                {{#sys.query#}}
+          completion_params:
+            temperature: 0.3
+            max_tokens: 200
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "商品仕様問い合わせ用の商品特定"
+          selected: false
+          title: "商品特定（仕様）"
+          type: llm
+        height: 98
+        id: identify_product_spec_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-prompt-stock
+              role: system
+              text: |
+                あなたは商品情報の分析専門家です。
+                ユーザーの問い合わせから商品名とメーカー名を特定してください。
+                出力形式：
+                商品名：〇〇
+                メーカー名：〇〇
+            - id: user-prompt-stock
+              role: user
+              text: |
+                問い合わせ内容：
+                {{#sys.query#}}
+          completion_params:
+            temperature: 0.3
+            max_tokens: 200
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "在庫問い合わせ用の商品特定"
+          selected: false
+          title: "商品特定（在庫）"
+          type: llm
+        height: 98
+        id: identify_product_stock_node
+        position:
+          x: 650
+          y: 600
+        positionAbsolute:
+          x: 650
+          y: 600
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-prompt-url
+              role: system
+              text: |
+                あなたは商品情報の検索専門家です。
+                商品名とメーカー名から、その商品の詳細情報が掲載されているURLを特定してください。
+                実在するメーカーの公式サイトのURLを出力してください。
+                出力形式：
+                URL：https://example.com/product/details
+            - id: user-prompt-url
+              role: user
+              text: |
+                {{#identify_product_spec_node.text#}}
+          completion_params:
+            temperature: 0.3
+            max_tokens: 200
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "商品情報URLの取得"
+          selected: false
+          title: "調査先URL取得"
+          type: llm
+        height: 98
+        id: get_url_node
+        position:
+          x: 950
+          y: 200
+        positionAbsolute:
+          x: 950
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-prompt-search
+              role: system
+              text: |
+                あなたはWEB検索シミュレーターです。
+                商品情報とURLが与えられたら、その商品の詳細仕様を検索した結果を返してください。
+                実際の検索結果のように具体的な仕様を含めて回答してください。
+            - id: user-prompt-search
+              role: user
+              text: |
+                商品情報：
+                {{#identify_product_spec_node.text#}}
+                
+                調査URL：
+                {{#get_url_node.text#}}
+          completion_params:
+            temperature: 0.7
+            max_tokens: 500
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "WEB検索シミュレーション"
+          selected: false
+          title: "WEB検索"
+          type: llm
+        height: 98
+        id: web_search_node
+        position:
+          x: 1250
+          y: 200
+        positionAbsolute:
+          x: 1250
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: found_case
+              case_id: found_case
+              conditions:
+                - id: found_condition_1
+                  variable_selector:
+                    - web_search_node
+                    - text
+                  comparison_operator: contains
+                  value: "仕様"
+              logical_operator: and
+          desc: "検索結果の確認"
+          selected: false
+          title: "検索結果確認"
+        height: 154
+        id: check_search_result_node
+        position:
+          x: 1550
+          y: 200
+        positionAbsolute:
+          x: 1550
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-prompt-db
+              role: system
+              text: |
+                あなたは商品データベース検索シミュレーターです。
+                商品情報が与えられたら、その商品の在庫状況を返してください。
+                シミュレーションとして、在庫あり（100個）または在庫なしのいずれかを返してください。
+            - id: user-prompt-db
+              role: user
+              text: |
+                商品情報：
+                {{#identify_product_stock_node.text#}}
+          completion_params:
+            temperature: 0.3
+            max_tokens: 200
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "DB検索シミュレーション"
+          selected: false
+          title: "商品DB検索"
+          type: llm
+        height: 98
+        id: db_search_node
+        position:
+          x: 950
+          y: 600
+        positionAbsolute:
+          x: 950
+          y: 600
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: in_stock_case
+              case_id: in_stock_case
+              conditions:
+                - id: stock_condition_1
+                  variable_selector:
+                    - db_search_node
+                    - text
+                  comparison_operator: contains
+                  value: "在庫あり"
+              logical_operator: and
+          desc: "在庫の確認"
+          selected: false
+          title: "在庫確認"
+        height: 154
+        id: check_stock_node
+        position:
+          x: 1250
+          y: 600
+        positionAbsolute:
+          x: 1250
+          y: 600
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-prompt-answer-spec
+              role: system
+              text: |
+                あなたは親切なカスタマーサポート担当者です。
+                商品仕様に関する問い合わせに対して、分かりやすく丁寧に回答してください。
+            - id: user-prompt-answer-spec
+              role: user
+              text: |
+                元の問い合わせ：
+                {{#sys.query#}}
+                
+                検索結果：
+                {{#web_search_node.text#}}
+                
+                上記の情報を基に、お客様に分かりやすく回答してください。
+          completion_params:
+            temperature: 0.7
+            max_tokens: 500
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "仕様に関する回答生成"
+          selected: false
+          title: "解答作成（仕様）"
+          type: llm
+        height: 98
+        id: generate_answer_spec_node
+        position:
+          x: 1850
+          y: 100
+        positionAbsolute:
+          x: 1850
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-prompt-inquiry-spec
+              role: system
+              text: |
+                あなたはビジネス文書作成の専門家です。
+                商品仕様について詳細な情報が必要な場合の、メーカーへの問い合わせ文を作成してください。
+                丁寧で具体的な問い合わせ文を作成してください。
+            - id: user-prompt-inquiry-spec
+              role: user
+              text: |
+                元の問い合わせ：
+                {{#sys.query#}}
+                
+                商品情報：
+                {{#identify_product_spec_node.text#}}
+                
+                メーカーへの問い合わせ文を作成してください。
+          completion_params:
+            temperature: 0.7
+            max_tokens: 500
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "メーカー問い合わせ文生成（仕様）"
+          selected: false
+          title: "問い合わせ文作成（仕様）"
+          type: llm
+        height: 98
+        id: generate_inquiry_spec_node
+        position:
+          x: 1850
+          y: 300
+        positionAbsolute:
+          x: 1850
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-prompt-answer-stock
+              role: system
+              text: |
+                あなたは親切なカスタマーサポート担当者です。
+                在庫状況に関する問い合わせに対して、分かりやすく丁寧に回答してください。
+            - id: user-prompt-answer-stock
+              role: user
+              text: |
+                元の問い合わせ：
+                {{#sys.query#}}
+                
+                在庫情報：
+                {{#db_search_node.text#}}
+                
+                上記の情報を基に、お客様に分かりやすく回答してください。
+          completion_params:
+            temperature: 0.7
+            max_tokens: 500
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "在庫に関する回答生成"
+          selected: false
+          title: "解答作成（在庫）"
+          type: llm
+        height: 98
+        id: generate_answer_stock_node
+        position:
+          x: 1550
+          y: 500
+        positionAbsolute:
+          x: 1550
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-prompt-inquiry-stock
+              role: system
+              text: |
+                あなたはビジネス文書作成の専門家です。
+                在庫状況について確認が必要な場合の、メーカーへの問い合わせ文を作成してください。
+                丁寧で具体的な問い合わせ文を作成してください。
+            - id: user-prompt-inquiry-stock
+              role: user
+              text: |
+                元の問い合わせ：
+                {{#sys.query#}}
+                
+                商品情報：
+                {{#identify_product_stock_node.text#}}
+                
+                在庫確認のメーカーへの問い合わせ文を作成してください。
+          completion_params:
+            temperature: 0.7
+            max_tokens: 500
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "メーカー問い合わせ文生成（在庫）"
+          selected: false
+          title: "問い合わせ文作成（在庫）"
+          type: llm
+        height: 98
+        id: generate_inquiry_stock_node
+        position:
+          x: 1550
+          y: 700
+        positionAbsolute:
+          x: 1550
+          y: 700
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#generate_answer_spec_node.text#}}"
+          desc: "仕様に関する回答"
+          selected: false
+          title: "回答（仕様）"
+          type: answer
+          variables: []
+        height: 107
+        id: spec_answer_node
+        position:
+          x: 2150
+          y: 100
+        positionAbsolute:
+          x: 2150
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#generate_inquiry_spec_node.text#}}"
+          desc: "仕様問い合わせ文"
+          selected: false
+          title: "回答（仕様問い合わせ）"
+          type: answer
+          variables: []
+        height: 107
+        id: spec_inquiry_answer_node
+        position:
+          x: 2150
+          y: 300
+        positionAbsolute:
+          x: 2150
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#generate_answer_stock_node.text#}}"
+          desc: "在庫に関する回答"
+          selected: false
+          title: "回答（在庫）"
+          type: answer
+          variables: []
+        height: 107
+        id: stock_answer_node
+        position:
+          x: 1850
+          y: 500
+        positionAbsolute:
+          x: 1850
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#generate_inquiry_stock_node.text#}}"
+          desc: "在庫問い合わせ文"
+          selected: false
+          title: "回答（在庫問い合わせ）"
+          type: answer
+          variables: []
+        height: 107
+        id: stock_inquiry_answer_node
+        position:
+          x: 1850
+          y: 700
+        positionAbsolute:
+          x: 1850
+          y: 700
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "申し訳ございません。商品仕様や在庫以外のお問い合わせについては、別途お問い合わせください。"
+          desc: "その他の問い合わせへの回答"
+          selected: false
+          title: "回答（その他）"
+          type: answer
+          variables: []
+        height: 107
+        id: other_answer_node
+        position:
+          x: 650
+          y: 400
+        positionAbsolute:
+          x: 650
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

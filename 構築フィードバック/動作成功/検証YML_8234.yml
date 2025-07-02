@@ -1,0 +1,379 @@
+app:
+  description: "LLMコンポーネントのmemory設定ルール検証用アプリ。3つの異なるmemory設定パターンを使用してルールの動作を確認します。"
+  icon: "🧪"
+  icon_background: "#FFE5CC"
+  mode: advanced-chat
+  name: "LLMメモリ設定検証アプリ"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      LLMのmemory設定検証アプリへようこそ！
+      
+      このアプリは3つの異なるmemory設定パターンで動作します：
+      1. memoryフィールド省略（推奨）
+      2. memory無効化（完全構造）
+      3. memory有効化（会話履歴保持）
+      
+      何か質問をしてください。3つのパターンで処理して結果を統合します。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "今日の天気について教えてください"
+      - "プログラミング言語Pythonの特徴は？"
+      - "健康的な生活習慣について教えてください"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-pattern1-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: llm_no_memory_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-pattern2-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: llm_memory_disabled_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-pattern3-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: llm_memory_enabled_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: llm
+        id: pattern1-integrator-edge
+        selected: false
+        source: llm_no_memory_node
+        sourceHandle: source
+        target: response_integrator_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: llm
+        id: pattern2-integrator-edge
+        selected: false
+        source: llm_memory_disabled_node
+        sourceHandle: source
+        target: response_integrator_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: llm
+        id: pattern3-integrator-edge
+        selected: false
+        source: llm_memory_enabled_node
+        sourceHandle: source
+        target: response_integrator_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: integrator-answer-edge
+        selected: false
+        source: response_integrator_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "ユーザー入力の開始点"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 300
+        positionAbsolute:
+          x: 50
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-pattern1-1
+              role: system
+              text: |
+                あなたはパターン1のアシスタントです。
+                memoryフィールドを完全に省略した設定で動作しています。
+                これは推奨されるパターンです。
+                質問に簡潔に回答してください。
+            - id: user-pattern1-1
+              role: user
+              text: |
+                質問: {{#sys.query#}}
+          completion_params:
+            temperature: 0.7
+            max_tokens: 500
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "パターン1: memoryフィールド省略（推奨）"
+          selected: false
+          title: "メモリ設定なし"
+          type: llm
+        height: 98
+        id: llm_no_memory_node
+        position:
+          x: 350
+          y: 100
+        positionAbsolute:
+          x: 350
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-pattern2-1
+              role: system
+              text: |
+                あなたはパターン2のアシスタントです。
+                memory設定を完全な構造で記述し、無効化しています。
+                windowフィールドを含む完全な形式です。
+                質問に簡潔に回答してください。
+            - id: user-pattern2-1
+              role: user
+              text: |
+                質問: {{#sys.query#}}
+          completion_params:
+            temperature: 0.7
+            max_tokens: 500
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          memory:
+            enabled: false
+            window:
+              enabled: false
+              size: 10
+            role_prefix:
+              assistant: ''
+              user: ''
+          desc: "パターン2: memory無効化（完全構造）"
+          selected: false
+          title: "メモリ無効化"
+          type: llm
+        height: 98
+        id: llm_memory_disabled_node
+        position:
+          x: 350
+          y: 300
+        positionAbsolute:
+          x: 350
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-pattern3-1
+              role: system
+              text: |
+                あなたはパターン3のアシスタントです。
+                memory設定を有効化し、会話履歴を保持します。
+                windowサイズは10に設定されています。
+                質問に簡潔に回答してください。
+            - id: user-pattern3-1
+              role: user
+              text: |
+                質問: {{#sys.query#}}
+          completion_params:
+            temperature: 0.7
+            max_tokens: 500
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          memory:
+            enabled: true
+            window:
+              enabled: true
+              size: 10
+            role_prefix:
+              assistant: 'アシスタント'
+              user: 'ユーザー'
+            query_prompt_template: '{{#sys.query#}}'
+          desc: "パターン3: memory有効化（会話履歴保持）"
+          selected: false
+          title: "メモリ有効化"
+          type: llm
+        height: 98
+        id: llm_memory_enabled_node
+        position:
+          x: 350
+          y: 500
+        positionAbsolute:
+          x: 350
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-integrator-1
+              role: system
+              text: |
+                あなたは回答統合担当です。
+                3つの異なるmemory設定パターンからの回答を統合し、
+                検証結果として適切にまとめてください。
+                
+                各パターンの動作状況も含めて報告してください。
+            - id: user-integrator-1
+              role: user
+              text: |
+                元の質問: {{#sys.query#}}
+                
+                パターン1（memory省略）の回答:
+                {{#llm_no_memory_node.text#}}
+                
+                パターン2（memory無効化）の回答:
+                {{#llm_memory_disabled_node.text#}}
+                
+                パターン3（memory有効化）の回答:
+                {{#llm_memory_enabled_node.text#}}
+                
+                これらの回答を統合し、memory設定の検証結果として報告してください。
+          completion_params:
+            temperature: 0.3
+            max_tokens: 1000
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "3つのパターンの回答を統合"
+          selected: false
+          title: "回答統合"
+          type: llm
+        height: 98
+        id: response_integrator_node
+        position:
+          x: 650
+          y: 300
+        positionAbsolute:
+          x: 650
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#response_integrator_node.text#}}"
+          desc: "統合された検証結果を表示"
+          selected: false
+          title: "検証結果"
+          type: answer
+          variables: []
+        height: 107
+        id: answer_node
+        position:
+          x: 950
+          y: 300
+        positionAbsolute:
+          x: 950
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

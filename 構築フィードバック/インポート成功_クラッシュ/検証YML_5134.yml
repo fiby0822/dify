@@ -1,0 +1,564 @@
+app:
+  description: "IF_ELSEコンポーネントのルール検証用アプリケーション。スコアと評価タイプに基づいて総合判定を行います。"
+  icon: "📊"
+  icon_background: "#E8F4FD"
+  mode: advanced-chat
+  name: "総合スコア判定システム"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      総合スコア判定システムへようこそ！
+      
+      以下の情報を入力してください：
+      1. スコア（0-100の数値）
+      2. 評価タイプ（厳格/標準/寛容）
+      
+      例：「スコア: 85, 評価タイプ: 標準」
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "スコア: 95, 評価タイプ: 厳格"
+      - "スコア: 75, 評価タイプ: 標準"
+      - "スコア: 45, 評価タイプ: 寛容"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: code
+        id: start-extract-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: extract_input_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: code
+          targetType: if-else
+        id: extract-condition-edge
+        selected: false
+        source: extract_input_node
+        sourceHandle: source
+        target: score_condition_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: condition-excellent-edge
+        selected: false
+        source: score_condition_node
+        sourceHandle: excellent_case
+        target: excellent_result_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: condition-good-edge
+        selected: false
+        source: score_condition_node
+        sourceHandle: good_case
+        target: good_result_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: condition-average-edge
+        selected: false
+        source: score_condition_node
+        sourceHandle: average_case
+        target: average_result_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: condition-poor-edge
+        selected: false
+        source: score_condition_node
+        sourceHandle: false
+        target: poor_result_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: excellent-answer-edge
+        selected: false
+        source: excellent_result_node
+        sourceHandle: source
+        target: excellent_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: good-answer-edge
+        selected: false
+        source: good_result_node
+        sourceHandle: source
+        target: good_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: average-answer-edge
+        selected: false
+        source: average_result_node
+        sourceHandle: source
+        target: average_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: poor-answer-edge
+        selected: false
+        source: poor_result_node
+        sourceHandle: source
+        target: poor_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "開始ノード"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 300
+        positionAbsolute:
+          x: 50
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: code
+          code: |
+            def main(user_input):
+                import re
+                
+                score_match = re.search(r'スコア[：:\s]*(\d+)', user_input)
+                type_match = re.search(r'評価タイプ[：:\s]*(\S+)', user_input)
+                
+                score = 0
+                eval_type = "標準"
+                
+                if score_match:
+                    score = int(score_match.group(1))
+                    if score > 100:
+                        score = 100
+                    elif score < 0:
+                        score = 0
+                
+                if type_match:
+                    eval_type = type_match.group(1)
+                    if eval_type not in ["厳格", "標準", "寛容"]:
+                        eval_type = "標準"
+                
+                return {
+                    "score": score,
+                    "eval_type": eval_type
+                }
+          code_language: python3
+          outputs:
+            score:
+              type: number
+              children: null
+            eval_type:
+              type: string
+              children: null
+          inputs:
+            user_input:
+              value_selector:
+                - sys
+                - query
+              type: string
+          desc: "ユーザー入力からスコアと評価タイプを抽出"
+          selected: false
+          title: "入力解析"
+        height: 54
+        id: extract_input_node
+        position:
+          x: 350
+          y: 300
+        positionAbsolute:
+          x: 350
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: excellent_case
+              case_id: excellent_case
+              conditions:
+                - variable_selector:
+                    - extract_input_node
+                    - score
+                  comparison_operator: "≥"
+                  value: 90
+              logical_operator: and
+            - id: good_case
+              case_id: good_case
+              conditions:
+                - variable_selector:
+                    - extract_input_node
+                    - score
+                  comparison_operator: "≥"
+                  value: 70
+              logical_operator: and
+            - id: average_case
+              case_id: average_case
+              conditions:
+                - variable_selector:
+                    - extract_input_node
+                    - score
+                  comparison_operator: "≥"
+                  value: 50
+              logical_operator: and
+          desc: "スコアレベルの判定"
+          selected: false
+          title: "スコア条件分岐"
+        height: 198
+        id: score_condition_node
+        position:
+          x: 650
+          y: 300
+        positionAbsolute:
+          x: 650
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o-mini
+            mode: chat
+          prompt_template:
+            - id: system-prompt-excellent
+              role: system
+              text: |
+                あなたはスコア判定システムです。
+                優秀レベル（90点以上）の結果を評価タイプに応じて判定します。
+            - id: user-prompt-excellent
+              role: user
+              text: |
+                スコア: {{#extract_input_node.score#}}
+                評価タイプ: {{#extract_input_node.eval_type#}}
+                
+                このスコアは優秀レベルです。評価タイプに応じた判定結果とコメントを提供してください。
+                
+                形式：
+                【判定結果】優秀
+                【スコア】XX点
+                【評価タイプ】XX
+                【コメント】評価タイプに応じた詳細なフィードバック
+          completion_params:
+            temperature: 0.3
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "優秀レベルの判定処理"
+          selected: false
+          title: "優秀判定"
+        height: 98
+        id: excellent_result_node
+        position:
+          x: 950
+          y: 100
+        positionAbsolute:
+          x: 950
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o-mini
+            mode: chat
+          prompt_template:
+            - id: system-prompt-good
+              role: system
+              text: |
+                あなたはスコア判定システムです。
+                良好レベル（70-89点）の結果を評価タイプに応じて判定します。
+            - id: user-prompt-good
+              role: user
+              text: |
+                スコア: {{#extract_input_node.score#}}
+                評価タイプ: {{#extract_input_node.eval_type#}}
+                
+                このスコアは良好レベルです。評価タイプに応じた判定結果とコメントを提供してください。
+                
+                形式：
+                【判定結果】良好
+                【スコア】XX点
+                【評価タイプ】XX
+                【コメント】評価タイプに応じた詳細なフィードバック
+          completion_params:
+            temperature: 0.3
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "良好レベルの判定処理"
+          selected: false
+          title: "良好判定"
+        height: 98
+        id: good_result_node
+        position:
+          x: 950
+          y: 250
+        positionAbsolute:
+          x: 950
+          y: 250
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o-mini
+            mode: chat
+          prompt_template:
+            - id: system-prompt-average
+              role: system
+              text: |
+                あなたはスコア判定システムです。
+                普通レベル（50-69点）の結果を評価タイプに応じて判定します。
+            - id: user-prompt-average
+              role: user
+              text: |
+                スコア: {{#extract_input_node.score#}}
+                評価タイプ: {{#extract_input_node.eval_type#}}
+                
+                このスコアは普通レベルです。評価タイプに応じた判定結果とコメントを提供してください。
+                
+                形式：
+                【判定結果】普通
+                【スコア】XX点
+                【評価タイプ】XX
+                【コメント】評価タイプに応じた詳細なフィードバック
+          completion_params:
+            temperature: 0.3
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "普通レベルの判定処理"
+          selected: false
+          title: "普通判定"
+        height: 98
+        id: average_result_node
+        position:
+          x: 950
+          y: 400
+        positionAbsolute:
+          x: 950
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o-mini
+            mode: chat
+          prompt_template:
+            - id: system-prompt-poor
+              role: system
+              text: |
+                あなたはスコア判定システムです。
+                要努力レベル（50点未満）の結果を評価タイプに応じて判定します。
+            - id: user-prompt-poor
+              role: user
+              text: |
+                スコア: {{#extract_input_node.score#}}
+                評価タイプ: {{#extract_input_node.eval_type#}}
+                
+                このスコアは要努力レベルです。評価タイプに応じた判定結果とコメントを提供してください。
+                
+                形式：
+                【判定結果】要努力
+                【スコア】XX点
+                【評価タイプ】XX
+                【コメント】評価タイプに応じた詳細なフィードバック
+          completion_params:
+            temperature: 0.3
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "要努力レベルの判定処理"
+          selected: false
+          title: "要努力判定"
+        height: 98
+        id: poor_result_node
+        position:
+          x: 950
+          y: 550
+        positionAbsolute:
+          x: 950
+          y: 550
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#excellent_result_node.text#}}"
+          desc: "優秀判定の結果出力"
+          selected: false
+          title: "優秀結果"
+          type: answer
+          variables: []
+        height: 107
+        id: excellent_answer_node
+        position:
+          x: 1250
+          y: 100
+        positionAbsolute:
+          x: 1250
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#good_result_node.text#}}"
+          desc: "良好判定の結果出力"
+          selected: false
+          title: "良好結果"
+          type: answer
+          variables: []
+        height: 107
+        id: good_answer_node
+        position:
+          x: 1250
+          y: 250
+        positionAbsolute:
+          x: 1250
+          y: 250
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#average_result_node.text#}}"
+          desc: "普通判定の結果出力"
+          selected: false
+          title: "普通結果"
+          type: answer
+          variables: []
+        height: 107
+        id: average_answer_node
+        position:
+          x: 1250
+          y: 400
+        positionAbsolute:
+          x: 1250
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#poor_result_node.text#}}"
+          desc: "要努力判定の結果出力"
+          selected: false
+          title: "要努力結果"
+          type: answer
+          variables: []
+        height: 107
+        id: poor_answer_node
+        position:
+          x: 1250
+          y: 550
+        positionAbsolute:
+          x: 1250
+          y: 550
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

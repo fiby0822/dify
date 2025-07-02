@@ -1,0 +1,545 @@
+app:
+  description: "商品在庫管理システム：在庫数に応じて適切なメッセージと発注推奨を返すアプリケーション"
+  icon: "📦"
+  icon_background: "#FFEAD5"
+  mode: advanced-chat
+  name: "商品在庫管理システム"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      商品在庫管理システムへようこそ！
+      商品の在庫数を入力してください。
+      在庫レベルに応じて適切なメッセージと発注推奨をお知らせします。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "在庫数: 0"
+      - "在庫数: 5"
+      - "在庫数: 30"
+      - "在庫数: 80"
+      - "在庫数: 150"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: code
+        id: start-validate-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: validate_input_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: code
+          targetType: if-else
+        id: validate-check_invalid-edge
+        selected: false
+        source: validate_input_node
+        sourceHandle: source
+        target: check_invalid_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: check_invalid-invalid_answer-edge
+        selected: false
+        source: check_invalid_node
+        sourceHandle: invalid_case
+        target: invalid_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: check_invalid-check_zero-edge
+        selected: false
+        source: check_invalid_node
+        sourceHandle: false
+        target: check_zero_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: check_zero-zero_answer-edge
+        selected: false
+        source: check_zero_node
+        sourceHandle: zero_case
+        target: zero_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: check_zero-check_low-edge
+        selected: false
+        source: check_zero_node
+        sourceHandle: false
+        target: check_low_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: check_low-low_answer-edge
+        selected: false
+        source: check_low_node
+        sourceHandle: low_case
+        target: low_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: check_low-check_normal-edge
+        selected: false
+        source: check_low_node
+        sourceHandle: false
+        target: check_normal_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: check_normal-normal_answer-edge
+        selected: false
+        source: check_normal_node
+        sourceHandle: normal_case
+        target: normal_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: check_normal-check_high-edge
+        selected: false
+        source: check_normal_node
+        sourceHandle: false
+        target: check_high_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: check_high-high_answer-edge
+        selected: false
+        source: check_high_node
+        sourceHandle: high_case
+        target: high_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: check_high-excess_answer-edge
+        selected: false
+        source: check_high_node
+        sourceHandle: false
+        target: excess_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "ユーザーからの入力を受け付ける"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          code: |
+            user_input = sys.query
+            stock_number = -1
+            
+            try:
+                stock_number = int(user_input)
+                if stock_number < 0:
+                    stock_number = -1
+            except:
+                stock_number = -1
+            
+            return {
+                "stock_number": stock_number
+            }
+          desc: "入力値を数値に変換し、無効な場合は-1を設定"
+          inputs:
+            sys.query:
+              type: str
+          outputs:
+            stock_number:
+              type: int
+          selected: false
+          title: "入力値検証"
+          type: code
+        height: 98
+        id: validate_input_node
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - id: invalid_case
+              case_id: invalid_case
+              conditions:
+                - id: condition_1
+                  variable_selector:
+                    - validate_input_node
+                    - stock_number
+                  comparison_operator: "="
+                  value: -1
+              logical_operator: and
+          desc: "無効な入力値をチェック"
+          selected: false
+          title: "無効入力チェック"
+          type: if-else
+        height: 154
+        id: check_invalid_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ⚠️ 入力エラー
+            
+            正しい在庫数を入力してください。
+            在庫数は0以上の整数で入力してください。
+          desc: "無効入力時の回答"
+          selected: false
+          title: "無効入力回答"
+          type: answer
+          variables: []
+        height: 107
+        id: invalid_answer_node
+        position:
+          x: 950
+          y: 50
+        positionAbsolute:
+          x: 950
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - id: zero_case
+              case_id: zero_case
+              conditions:
+                - id: condition_1
+                  variable_selector:
+                    - validate_input_node
+                    - stock_number
+                  comparison_operator: "="
+                  value: 0
+              logical_operator: and
+          desc: "在庫切れをチェック"
+          selected: false
+          title: "在庫切れチェック"
+          type: if-else
+        height: 154
+        id: check_zero_node
+        position:
+          x: 950
+          y: 200
+        positionAbsolute:
+          x: 950
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            🚨 在庫切れです
+            
+            現在の在庫数: 0個
+            
+            至急発注が必要です！
+            すぐに発注手続きを行ってください。
+          desc: "在庫切れ時の回答"
+          selected: false
+          title: "在庫切れ回答"
+          type: answer
+          variables: []
+        height: 107
+        id: zero_answer_node
+        position:
+          x: 1250
+          y: 50
+        positionAbsolute:
+          x: 1250
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - id: low_case
+              case_id: low_case
+              conditions:
+                - id: condition_1
+                  variable_selector:
+                    - validate_input_node
+                    - stock_number
+                  comparison_operator: "<="
+                  value: 10
+              logical_operator: and
+          desc: "在庫わずかをチェック"
+          selected: false
+          title: "在庫わずかチェック"
+          type: if-else
+        height: 154
+        id: check_low_node
+        position:
+          x: 1250
+          y: 200
+        positionAbsolute:
+          x: 1250
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ⚠️ 在庫わずかです
+            
+            現在の在庫数: {{#validate_input_node.stock_number#}}個
+            
+            在庫がわずかになっています。
+            早急に発注をご検討ください。
+          desc: "在庫わずか時の回答"
+          selected: false
+          title: "在庫わずか回答"
+          type: answer
+          variables: []
+        height: 107
+        id: low_answer_node
+        position:
+          x: 1550
+          y: 50
+        positionAbsolute:
+          x: 1550
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - id: normal_case
+              case_id: normal_case
+              conditions:
+                - id: condition_1
+                  variable_selector:
+                    - validate_input_node
+                    - stock_number
+                  comparison_operator: "<="
+                  value: 50
+              logical_operator: and
+          desc: "適正レベルをチェック"
+          selected: false
+          title: "適正レベルチェック"
+          type: if-else
+        height: 154
+        id: check_normal_node
+        position:
+          x: 1550
+          y: 200
+        positionAbsolute:
+          x: 1550
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ✅ 在庫は適正レベルです
+            
+            現在の在庫数: {{#validate_input_node.stock_number#}}個
+            
+            在庫レベルは適正範囲内です。
+            通常の管理を継続してください。
+          desc: "適正レベル時の回答"
+          selected: false
+          title: "適正レベル回答"
+          type: answer
+          variables: []
+        height: 107
+        id: normal_answer_node
+        position:
+          x: 1850
+          y: 50
+        positionAbsolute:
+          x: 1850
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - id: high_case
+              case_id: high_case
+              conditions:
+                - id: condition_1
+                  variable_selector:
+                    - validate_input_node
+                    - stock_number
+                  comparison_operator: "<="
+                  value: 100
+              logical_operator: and
+          desc: "十分レベルをチェック"
+          selected: false
+          title: "十分レベルチェック"
+          type: if-else
+        height: 154
+        id: check_high_node
+        position:
+          x: 1850
+          y: 200
+        positionAbsolute:
+          x: 1850
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            👍 在庫は十分にあります
+            
+            現在の在庫数: {{#validate_input_node.stock_number#}}個
+            
+            在庫レベルは十分です。
+            当面の発注は不要です。
+          desc: "十分レベル時の回答"
+          selected: false
+          title: "十分レベル回答"
+          type: answer
+          variables: []
+        height: 107
+        id: high_answer_node
+        position:
+          x: 2150
+          y: 50
+        positionAbsolute:
+          x: 2150
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            📊 在庫過多の可能性があります
+            
+            現在の在庫数: {{#validate_input_node.stock_number#}}個
+            
+            在庫レベルが過剰です。
+            在庫調整をご検討ください。
+            保管コストや商品の劣化リスクにご注意ください。
+          desc: "在庫過多時の回答"
+          selected: false
+          title: "在庫過多回答"
+          type: answer
+          variables: []
+        height: 107
+        id: excess_answer_node
+        position:
+          x: 2150
+          y: 350
+        positionAbsolute:
+          x: 2150
+          y: 350
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244

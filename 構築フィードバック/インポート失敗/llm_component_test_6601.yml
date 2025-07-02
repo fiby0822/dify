@@ -1,0 +1,400 @@
+app:
+  description: "LLMコンポーネントの記述ルールを検証するテストアプリケーション。異なるtemperature設定での応答を比較します。"
+  icon: "🧪"
+  icon_background: "#E5F7FF"
+  mode: advanced-chat
+  name: "LLMコンポーネント検証テストアプリ"
+  use_icon_as_answer_icon: false
+  opening_statement: |
+    LLMコンポーネント検証テストアプリへようこそ！
+    
+    このアプリは、異なる設定のLLMがどのような応答を生成するかを比較検証します。
+    - 事実ベース（低temperature）
+    - バランス型（中temperature）
+    - 創造的（高temperature）
+    
+    質問を入力すると、3つの異なる設定での回答を比較できます。
+
+dependencies: []
+
+kind: app
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: true
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "日本の四季について教えてください"
+      - "効果的な時間管理の方法を提案してください"
+      - "未来の交通手段について想像してください"
+    suggested_questions_after_answer:
+      enabled: true
+    text_to_speech:
+      enabled: false
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-factual-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: factual_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-balanced-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: balanced_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-creative-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: creative_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: llm
+        id: factual-integration-edge
+        selected: false
+        source: factual_llm_node
+        sourceHandle: source
+        target: integration_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: llm
+        id: balanced-integration-edge
+        selected: false
+        source: balanced_llm_node
+        sourceHandle: source
+        target: integration_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: llm
+        id: creative-integration-edge
+        selected: false
+        source: creative_llm_node
+        sourceHandle: source
+        target: integration_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: integration-answer-edge
+        selected: false
+        source: integration_llm_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "ユーザーからの質問を受け付けます"
+          selected: false
+          title: "開始"
+          type: start
+          variables:
+            - label: "質問"
+              max_length: 1000
+              options: []
+              required: true
+              type: text-input
+              variable: user_question
+            - label: "追加コンテキスト"
+              max_length: 500
+              options: []
+              required: false
+              type: text-input
+              variable: context_info
+        height: 116
+        id: start_node
+        position:
+          x: 50
+          y: 250
+        positionAbsolute:
+          x: 50
+          y: 250
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: start
+        width: 244
+      - data:
+          context:
+            enabled: true
+            variable_selector:
+              - start_node
+              - context_info
+          desc: "事実ベースの正確な回答を生成"
+          memory:
+            enabled: false
+          model:
+            completion_params:
+              max_tokens: 800
+              temperature: 0.1
+              top_p: 0.5
+            mode: chat
+            name: gpt-4o
+            provider: openai
+          prompt_template:
+            - id: factual-system-prompt
+              role: system
+              text: |
+                あなたは正確性を重視する専門家です。
+                以下のルールに従って回答してください：
+                1. 事実に基づいた正確な情報のみを提供
+                2. 推測や憶測は避ける
+                3. 不確実な情報には「確認が必要」と明記
+                4. 簡潔で明確な説明を心がける
+            - id: factual-user-prompt
+              role: user
+              text: |
+                質問: {{#start_node.user_question#}}
+                
+                追加情報: {{#start_node.context_info#}}
+          selected: false
+          structured_output_enabled: false
+          title: "事実ベースLLM"
+          type: llm
+          vision:
+            enabled: false
+        height: 98
+        id: factual_llm_node
+        position:
+          x: 350
+          y: 50
+        positionAbsolute:
+          x: 350
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: llm
+        width: 244
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "バランスの取れた標準的な回答を生成"
+          memory:
+            enabled: true
+          model:
+            completion_params:
+              max_tokens: 800
+              temperature: 0.5
+              top_p: 0.8
+            mode: chat
+            name: gpt-4o
+            provider: openai
+          prompt_template:
+            - id: balanced-system-prompt
+              role: system
+              text: |
+                あなたはバランスの取れたアシスタントです。
+                以下のルールに従って回答してください：
+                1. 正確性と分かりやすさのバランスを保つ
+                2. 必要に応じて例示を含める
+                3. 実用的なアドバイスを提供
+                4. 親しみやすい口調を使用
+            - id: balanced-user-prompt
+              role: user
+              text: |
+                質問: {{#start_node.user_question#}}
+                
+                コンテキスト: {{#start_node.context_info#}}
+          selected: false
+          structured_output_enabled: false
+          title: "バランス型LLM"
+          type: llm
+          vision:
+            enabled: false
+        height: 98
+        id: balanced_llm_node
+        position:
+          x: 350
+          y: 250
+        positionAbsolute:
+          x: 350
+          y: 250
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: llm
+        width: 244
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "創造的で革新的な回答を生成"
+          memory:
+            enabled: false
+          model:
+            completion_params:
+              max_tokens: 800
+              temperature: 0.9
+              top_p: 0.95
+            mode: chat
+            name: gpt-4o
+            provider: openai
+          prompt_template:
+            - id: creative-system-prompt
+              role: system
+              text: |
+                あなたは創造性豊かなアシスタントです。
+                以下のルールに従って回答してください：
+                1. 独創的で革新的なアイデアを提供
+                2. 型にはまらない発想を歓迎
+                3. 想像力を刺激する内容を含める
+                4. 楽観的で前向きな視点を持つ
+            - id: creative-user-prompt
+              role: user
+              text: |
+                質問: {{#start_node.user_question#}}
+                
+                参考情報: {{#start_node.context_info#}}
+          selected: false
+          structured_output_enabled: false
+          title: "創造的LLM"
+          type: llm
+          vision:
+            enabled: false
+        height: 98
+        id: creative_llm_node
+        position:
+          x: 350
+          y: 450
+        positionAbsolute:
+          x: 350
+          y: 450
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: llm
+        width: 244
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "3つの回答を統合して比較結果を生成"
+          memory:
+            enabled: false
+          model:
+            completion_params:
+              max_tokens: 1500
+              temperature: 0.3
+              top_p: 0.7
+            mode: chat
+            name: gpt-4o
+            provider: openai
+          prompt_template:
+            - id: integration-system-prompt
+              role: system
+              text: |
+                あなたは分析的なレビュアーです。
+                3つの異なる観点からの回答を統合し、以下の形式で出力してください：
+                
+                1. 【事実ベースの回答】のポイント
+                2. 【バランス型の回答】のポイント
+                3. 【創造的な回答】のポイント
+                4. 【総合的な分析】
+                   - 各回答の特徴と違い
+                   - 質問に対する最適なアプローチ
+                   - 推奨される活用シーン
+            - id: integration-user-prompt
+              role: user
+              text: |
+                元の質問: {{#start_node.user_question#}}
+                
+                【事実ベースの回答】
+                {{#factual_llm_node.text#}}
+                
+                【バランス型の回答】
+                {{#balanced_llm_node.text#}}
+                
+                【創造的な回答】
+                {{#creative_llm_node.text#}}
+                
+                上記の3つの回答を分析し、統合的なレビューを作成してください。
+          selected: false
+          structured_output_enabled: false
+          title: "結果統合LLM"
+          type: llm
+          vision:
+            enabled: false
+        height: 98
+        id: integration_llm_node
+        position:
+          x: 700
+          y: 250
+        positionAbsolute:
+          x: 700
+          y: 250
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: llm
+        width: 244
+      - data:
+          answer: "{{#integration_llm_node.text#}}"
+          desc: "統合された分析結果を表示"
+          selected: false
+          title: "回答"
+          type: answer
+          variables: []
+        height: 107
+        id: answer_node
+        position:
+          x: 1050
+          y: 250
+        positionAbsolute:
+          x: 1050
+          y: 250
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: answer
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

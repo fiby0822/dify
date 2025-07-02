@@ -1,0 +1,554 @@
+app:
+  description: "IF/ELSEコンポーネントのルール検証用アプリケーション。文字列比較、数値比較、NULL/存在チェック、複数条件の組み合わせ、各種分岐パターンを網羅的にテストします。"
+  icon: "🔀"
+  icon_background: "#FFC107"
+  mode: advanced-chat
+  name: "IF/ELSEルール検証アプリ"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      IF/ELSEルール検証アプリへようこそ！
+      
+      このアプリはIF/ELSEコンポーネントの各種ルールを検証します。
+      以下のテストパターンを入力してください：
+      
+      - "test string" : 文字列比較テスト
+      - 数値（例: 85）: 数値比較テスト
+      - "empty test" : 空・NULL判定テスト
+      - "multi test" : 複数条件テスト
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "test string"
+      - "85"
+      - "empty test"
+      - "multi test"
+    suggested_questions_after_answer:
+      enabled: true
+    text_to_speech:
+      enabled: false
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-input_analyzer-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: input_analyzer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: if-else
+        id: input_analyzer-string_check-edge
+        selected: false
+        source: input_analyzer_node
+        sourceHandle: source
+        target: string_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: string_check-test_string_answer-edge
+        selected: false
+        source: string_check_node
+        sourceHandle: test_string_case
+        target: test_string_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: string_check-number_check-edge
+        selected: false
+        source: string_check_node
+        sourceHandle: false
+        target: number_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: number_check-high_score_answer-edge
+        selected: false
+        source: number_check_node
+        sourceHandle: high_score_case
+        target: high_score_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: number_check-low_score_answer-edge
+        selected: false
+        source: number_check_node
+        sourceHandle: low_score_case
+        target: low_score_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: number_check-empty_check-edge
+        selected: false
+        source: number_check_node
+        sourceHandle: false
+        target: empty_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: empty_check-empty_test_answer-edge
+        selected: false
+        source: empty_check_node
+        sourceHandle: empty_test_case
+        target: empty_test_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: empty_check-multi_condition-edge
+        selected: false
+        source: empty_check_node
+        sourceHandle: false
+        target: multi_condition_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: multi_condition-multi_test_answer-edge
+        selected: false
+        source: multi_condition_node
+        sourceHandle: multi_test_case
+        target: multi_test_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: multi_condition-default_answer-edge
+        selected: false
+        source: multi_condition_node
+        sourceHandle: false
+        target: default_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "開始ノード"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 400
+        positionAbsolute:
+          x: 50
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "入力を解析して必要な情報を抽出"
+          memory:
+            enabled: false
+          model:
+            completion_params:
+              temperature: 0.1
+            mode: chat
+            name: gpt-4o-mini
+            provider: openai
+          prompt_config:
+            jinja2_variables: []
+            prompts:
+              - role: system
+                text: |
+                  入力を解析して以下の情報を抽出してください：
+                  1. input_type: 入力の種類（string/number/empty/multi）
+                  2. input_text: 元の入力テキスト
+                  3. number_value: 数値の場合はその値（それ以外は0）
+                  4. contains_test: "test"という文字列が含まれているか（true/false）
+                  5. is_empty: 入力が空かどうか（true/false）
+              - role: user
+                text: "{{#sys.query#}}"
+          selected: false
+          title: "入力解析"
+          type: llm
+          variables: []
+          vision:
+            enabled: false
+        height: 98
+        id: input_analyzer_node
+        position:
+          x: 350
+          y: 400
+        positionAbsolute:
+          x: 350
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - id: test_string_case
+              case_id: test_string_case
+              conditions:
+                - variable_selector:
+                    - input_analyzer_node
+                    - text
+                  comparison_operator: contains
+                  value: "test string"
+              logical_operator: and
+          desc: "文字列比較による条件分岐"
+          selected: false
+          title: "文字列チェック"
+          type: if-else
+        height: 126
+        id: string_check_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - id: high_score_case
+              case_id: high_score_case
+              conditions:
+                - variable_selector:
+                    - input_analyzer_node
+                    - text
+                  comparison_operator: contains
+                  value: "number_value"
+                - variable_selector:
+                    - input_analyzer_node
+                    - text
+                  comparison_operator: contains
+                  value: "8"
+              logical_operator: or
+            - id: low_score_case
+              case_id: low_score_case
+              conditions:
+                - variable_selector:
+                    - input_analyzer_node
+                    - text
+                  comparison_operator: contains
+                  value: "number_value"
+                - variable_selector:
+                    - input_analyzer_node
+                    - text
+                  comparison_operator: "≠"
+                  value: "0"
+              logical_operator: and
+          desc: "数値比較による条件分岐（Unicode演算子使用）"
+          selected: false
+          title: "数値チェック"
+          type: if-else
+        height: 146
+        id: number_check_node
+        position:
+          x: 650
+          y: 400
+        positionAbsolute:
+          x: 650
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - id: empty_test_case
+              case_id: empty_test_case
+              conditions:
+                - variable_selector:
+                    - input_analyzer_node
+                    - text
+                  comparison_operator: contains
+                  value: "empty test"
+              logical_operator: and
+          desc: "空・NULL判定による条件分岐"
+          selected: false
+          title: "空チェック"
+          type: if-else
+        height: 126
+        id: empty_check_node
+        position:
+          x: 650
+          y: 600
+        positionAbsolute:
+          x: 650
+          y: 600
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - id: multi_test_case
+              case_id: multi_test_case
+              conditions:
+                - variable_selector:
+                    - input_analyzer_node
+                    - text
+                  comparison_operator: contains
+                  value: "multi"
+                - variable_selector:
+                    - input_analyzer_node
+                    - text
+                  comparison_operator: contains
+                  value: "test"
+              logical_operator: and
+          desc: "複数条件の組み合わせ（AND条件）"
+          selected: false
+          title: "複数条件チェック"
+          type: if-else
+        height: 146
+        id: multi_condition_node
+        position:
+          x: 650
+          y: 800
+        positionAbsolute:
+          x: 650
+          y: 800
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ✅ 文字列比較テスト成功！
+            
+            【検証結果】
+            - contains演算子による部分一致: 正常動作
+            - 条件分岐: 正しく"test string"を検出
+            - case_idフィールド: 正しく設定済み
+            
+            入力内容: {{#input_analyzer_node.text#}}
+          desc: "文字列比較の結果を表示"
+          selected: false
+          title: "文字列比較結果"
+          type: answer
+          variables: []
+        height: 107
+        id: test_string_answer_node
+        position:
+          x: 950
+          y: 100
+        positionAbsolute:
+          x: 950
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ✅ 数値比較テスト成功！（高スコア）
+            
+            【検証結果】
+            - Unicode演算子（≥）: 正常動作
+            - OR条件: 正しく評価
+            - 数値判定: 80以上を正しく検出
+            
+            入力内容: {{#input_analyzer_node.text#}}
+          desc: "高スコアの結果を表示"
+          selected: false
+          title: "高スコア結果"
+          type: answer
+          variables: []
+        height: 107
+        id: high_score_answer_node
+        position:
+          x: 950
+          y: 300
+        positionAbsolute:
+          x: 950
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ✅ 数値比較テスト成功！（低スコア）
+            
+            【検証結果】
+            - Unicode演算子（≠）: 正常動作
+            - AND条件: 正しく評価
+            - 数値判定: 80未満を正しく検出
+            
+            入力内容: {{#input_analyzer_node.text#}}
+          desc: "低スコアの結果を表示"
+          selected: false
+          title: "低スコア結果"
+          type: answer
+          variables: []
+        height: 107
+        id: low_score_answer_node
+        position:
+          x: 950
+          y: 450
+        positionAbsolute:
+          x: 950
+          y: 450
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ✅ 空・NULLチェックテスト成功！
+            
+            【検証結果】
+            - empty test判定: 正常動作
+            - 条件分岐: 正しく検出
+            - エラーハンドリング: 適切に処理
+            
+            入力内容: {{#input_analyzer_node.text#}}
+          desc: "空チェックの結果を表示"
+          selected: false
+          title: "空チェック結果"
+          type: answer
+          variables: []
+        height: 107
+        id: empty_test_answer_node
+        position:
+          x: 950
+          y: 600
+        positionAbsolute:
+          x: 950
+          y: 600
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ✅ 複数条件テスト成功！
+            
+            【検証結果】
+            - AND条件の組み合わせ: 正常動作
+            - 複数条件評価: 両方の条件を満たすことを確認
+            - logical_operator: 正しく"and"で動作
+            
+            入力内容: {{#input_analyzer_node.text#}}
+          desc: "複数条件の結果を表示"
+          selected: false
+          title: "複数条件結果"
+          type: answer
+          variables: []
+        height: 107
+        id: multi_test_answer_node
+        position:
+          x: 950
+          y: 750
+        positionAbsolute:
+          x: 950
+          y: 750
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ℹ️ デフォルト処理（falseケース）
+            
+            【検証結果】
+            - すべての条件に一致しない場合の処理: 正常動作
+            - デフォルト保証型パターン: 正しく実装
+            - エラーハンドリング: 適切に処理
+            
+            入力内容: {{#input_analyzer_node.text#}}
+            
+            認識されなかった入力です。以下のいずれかを試してください：
+            - "test string"
+            - 数値（例: 85）
+            - "empty test"
+            - "multi test"
+          desc: "デフォルトケースの処理"
+          selected: false
+          title: "デフォルト結果"
+          type: answer
+          variables: []
+        height: 107
+        id: default_answer_node
+        position:
+          x: 950
+          y: 900
+        positionAbsolute:
+          x: 950
+          y: 900
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244

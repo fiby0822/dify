@@ -1,0 +1,1290 @@
+app:
+  description: 建築図面を自動解析し、建築基準法適合性と設計品質を総合評価するAIシステム
+  icon: 🏗️
+  icon_background: '#F97316'
+  mode: advanced-chat
+  name: 建築図面自動チェックAI
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/openai:0.0.26@c1e643ac6a7732f6333a783320b4d3026fa5e31d8e7026375b98d44418d33f26
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .PDF
+      - .DWG
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .TIFF
+      allowed_file_types:
+      - document
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      enabled: true
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        image_file_size_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 5
+    opening_statement: 'こんにちは！建築図面自動チェックAIです。
+
+
+      📐 建築図面ファイルをアップロードしてください
+
+      🏢 建物用途・階数をお教えください
+
+
+      以下の高度な分析を実行します：
+
+      ✅ 図面形式の自動判定・読み取り
+
+      📏 寸法・面積の自動算出
+
+      ⚖️ 建築基準法適合性チェック
+
+      🔍 構造安全性の予備評価
+
+      📊 設計品質の総合判定
+
+      📋 法規チェックリスト生成
+
+      '
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+    - 住宅の平面図をチェックしてください
+    - 事務所ビルの法規適合性を確認お願いします
+    - 店舗設計の建築基準法チェックをしてください
+    suggested_questions_after_answer:
+      enabled: true
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: start
+        targetType: if-else
+      id: start-filecheck-edge
+      selected: false
+      source: start_node
+      sourceHandle: source
+      target: file_check_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: answer
+      id: filecheck-nofile-edge
+      selected: false
+      source: file_check_node
+      sourceHandle: 'true'
+      target: no_file_answer
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: if-else
+      id: filecheck-typecheck-edge
+      selected: false
+      source: file_check_node
+      sourceHandle: 'false'
+      target: file_type_check_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: typecheck-image-edge
+      selected: false
+      source: file_type_check_node
+      sourceHandle: image_file
+      target: image_analysis_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: document-extractor
+      id: typecheck-doc-edge
+      selected: false
+      source: file_type_check_node
+      sourceHandle: document_file
+      target: document_extract_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: parameter-extractor
+      id: image-param-edge
+      selected: false
+      source: image_analysis_node
+      sourceHandle: source
+      target: param_extract_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: document-extractor
+        targetType: parameter-extractor
+      id: doc-param-edge
+      selected: false
+      source: document_extract_node
+      sourceHandle: source
+      target: param_extract_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: parameter-extractor
+        targetType: if-else
+      id: param-buildtype-edge
+      selected: false
+      source: param_extract_node
+      sourceHandle: source
+      target: building_type_check_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: buildtype-residential-edge
+      selected: false
+      source: building_type_check_node
+      sourceHandle: residential
+      target: residential_analysis_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: buildtype-commercial-edge
+      selected: false
+      source: building_type_check_node
+      sourceHandle: commercial
+      target: commercial_analysis_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: buildtype-general-edge
+      selected: false
+      source: building_type_check_node
+      sourceHandle: 'false'
+      target: general_building_analysis_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: residential-lawcheck-edge
+      selected: false
+      source: residential_analysis_node
+      sourceHandle: source
+      target: law_compliance_check_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: commercial-lawcheck-edge
+      selected: false
+      source: commercial_analysis_node
+      sourceHandle: source
+      target: law_compliance_check_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: general-lawcheck-edge
+      selected: false
+      source: general_building_analysis_node
+      sourceHandle: source
+      target: law_compliance_check_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: code
+        targetType: llm
+      id: lawcheck-structural-edge
+      selected: false
+      source: law_compliance_check_node
+      sourceHandle: source
+      target: structural_safety_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: llm
+      id: structural-final-edge
+      selected: false
+      source: structural_safety_node
+      sourceHandle: source
+      target: final_report_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: final-answer-edge
+      selected: false
+      source: final_report_node
+      sourceHandle: source
+      target: final_answer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: '建築図面ファイルと建物情報をお教えください。
+
+          法規適合性と設計品質を総合チェックします。
+
+          '
+        selected: false
+        title: 開始
+        type: start
+        variables:
+        - allowed_file_extensions:
+          - .PDF
+          - .DWG
+          - .JPG
+          - .JPEG
+          - .PNG
+          - .TIFF
+          allowed_file_types:
+          - document
+          - image
+          allowed_file_upload_methods:
+          - local_file
+          label: 建築図面ファイル
+          max_length: 5
+          options: []
+          required: true
+          type: file
+          variable: blueprint_file
+        - label: 建物用途
+          max_length: 50
+          options: []
+          required: true
+          type: text-input
+          variable: building_purpose
+        - label: 階数
+          max_length: 10
+          options: []
+          required: true
+          type: text-input
+          variable: floor_count
+        - label: 敷地面積（㎡）
+          max_length: 20
+          options: []
+          required: false
+          type: text-input
+          variable: site_area
+      height: 244
+      id: start_node
+      position:
+        x: 50
+        y: 100
+      positionAbsolute:
+        x: 50
+        y: 100
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        cases:
+        - case_id: 'true'
+          conditions:
+          - comparison_operator: not exists
+            id: file_check_condition
+            value: ''
+            varType: file
+            variable_selector:
+            - start_node
+            - blueprint_file
+          id: 'true'
+          logical_operator: and
+        desc: 図面ファイルアップロードの確認
+        selected: false
+        title: ファイル存在チェック
+        type: if-else
+      height: 154
+      id: file_check_node
+      position:
+        x: 350
+        y: 100
+      positionAbsolute:
+        x: 350
+        y: 100
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '❌ 建築図面ファイルがアップロードされていません。
+
+
+          📐 以下の形式のファイルをアップロードしてください：
+
+          • PDF図面 (.pdf)
+
+          • CAD図面 (.dwg)
+
+          • 画像ファイル (.jpg, .jpeg, .png, .tiff)
+
+
+          🏗️ 対応可能な図面：
+
+          • 平面図、立面図、断面図
+
+          • 配置図、詳細図
+
+          • 構造図、設備図
+
+
+          ファイルをアップロード後、再度実行してください。
+
+          '
+        desc: ''
+        selected: false
+        title: ファイル未アップロード
+        type: answer
+        variables: []
+      height: 230
+      id: no_file_answer
+      position:
+        x: 650
+        y: 30
+      positionAbsolute:
+        x: 650
+        y: 30
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        cases:
+        - case_id: image_file
+          conditions:
+          - comparison_operator: is
+            id: image_type_condition
+            value: image
+            varType: string
+            variable_selector:
+            - start_node
+            - blueprint_file
+            - type
+          id: image_file
+          logical_operator: and
+        - case_id: document_file
+          conditions:
+          - comparison_operator: is
+            id: doc_type_condition
+            value: document
+            varType: string
+            variable_selector:
+            - start_node
+            - blueprint_file
+            - type
+          id: document_file
+          logical_operator: and
+        desc: ファイル形式による処理分岐
+        selected: false
+        title: ファイル形式判定
+        type: if-else
+      height: 202
+      id: file_type_check_node
+      position:
+        x: 650
+        y: 150
+      positionAbsolute:
+        x: 650
+        y: 150
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 画像形式図面の視覚的解析
+        model:
+          completion_params:
+            temperature: 0.2
+          mode: chat
+          name: gpt-4-vision-preview
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: 'あなたは建築図面解析の専門家です。
+
+            アップロードされた建築図面画像を詳細に分析し、以下の情報を抽出してください：
+
+
+            1. 図面の種類（平面図、立面図、断面図等）
+
+            2. 部屋の配置と用途
+
+            3. 寸法・面積の読み取り
+
+            4. 開口部（窓・ドア）の配置
+
+            5. 構造要素（柱、梁、壁）の確認
+
+            6. 設備関連要素の有無
+
+
+            視覚的に読み取れる情報を正確に文字情報として変換してください。
+
+            '
+        - id: user-prompt
+          role: user
+          text: '建物用途: {{#start_node.building_purpose#}}
+
+            階数: {{#start_node.floor_count#}}
+
+            敷地面積: {{#start_node.site_area#}}㎡
+
+
+            上記の建築図面を詳細に分析し、構造化された情報として抽出してください。
+
+            '
+        selected: false
+        structured_output_enabled: false
+        title: 図面画像解析
+        type: llm
+        variables: []
+        vision:
+          enabled: true
+      height: 118
+      id: image_analysis_node
+      position:
+        x: 950
+        y: 80
+      positionAbsolute:
+        x: 950
+        y: 80
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: PDF文書から図面情報を抽出
+        is_array_file: false
+        selected: false
+        title: 図面文書抽出
+        type: document-extractor
+        variable_selector:
+        - start_node
+        - blueprint_file
+      height: 120
+      id: document_extract_node
+      position:
+        x: 950
+        y: 220
+      positionAbsolute:
+        x: 950
+        y: 220
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: 図面から構造化データを抽出
+        instruction: '建築図面の情報を分析し、以下の項目を抽出してください。
+
+          数値は単位を含めて正確に抽出し、不明な場合は「不明」と記録してください。
+
+
+          建築基準法チェックに必要な情報を重点的に抽出してください。
+
+          '
+        model:
+          completion_params:
+            temperature: 0.1
+          mode: chat
+          name: gpt-4
+          provider: langgenius/openai/openai
+        parameters:
+        - description: 図面の種類（平面図/立面図/断面図/配置図等）
+          name: drawing_type
+          required: false
+          type: string
+        - description: 建築面積（㎡、数値のみ）
+          name: building_area
+          required: false
+          type: number
+        - description: 延床面積（㎡、数値のみ）
+          name: total_floor_area
+          required: false
+          type: number
+        - description: 建物高さ（m、数値のみ）
+          name: building_height
+          required: false
+          type: number
+        - description: 容積率（%、数値のみ）
+          name: floor_area_ratio
+          required: false
+          type: number
+        - description: 建蔽率（%、数値のみ）
+          name: building_coverage_ratio
+          required: false
+          type: number
+        - description: 主要な部屋（カンマ区切り）
+          name: main_rooms
+          required: false
+          type: string
+        - description: 構造種別（RC/S/木造等）
+          name: structure_type
+          required: false
+          type: string
+        - description: 避難経路の有無（有/無/不明）
+          name: evacuation_route
+          required: false
+          type: string
+        - description: 建物カテゴリ（住宅/商業/事務所/その他）
+          name: building_category
+          required: false
+          type: string
+        query:
+        - image_analysis_node
+        - text
+        - document_extract_node
+        - text
+        reasoning_mode: prompt
+        selected: false
+        title: 図面情報抽出
+        type: parameter-extractor
+        variables: []
+        vision:
+          enabled: false
+      height: 118
+      id: param_extract_node
+      position:
+        x: 1250
+        y: 150
+      positionAbsolute:
+        x: 1250
+        y: 150
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        cases:
+        - case_id: residential
+          conditions:
+          - comparison_operator: contains
+            id: residential_condition
+            value: 住宅
+            varType: string
+            variable_selector:
+            - param_extract_node
+            - building_category
+          id: residential
+          logical_operator: and
+        - case_id: commercial
+          conditions:
+          - comparison_operator: contains
+            id: commercial_condition
+            value: 商業
+            varType: string
+            variable_selector:
+            - param_extract_node
+            - building_category
+          - comparison_operator: contains
+            id: office_condition
+            value: 事務所
+            varType: string
+            variable_selector:
+            - param_extract_node
+            - building_category
+          id: commercial
+          logical_operator: or
+        desc: 建物用途による分析ルート分岐
+        selected: false
+        title: 建物用途判定
+        type: if-else
+      height: 228
+      id: building_type_check_node
+      position:
+        x: 1550
+        y: 100
+      positionAbsolute:
+        x: 1550
+        y: 100
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 住宅建築の法規チェック
+        model:
+          completion_params:
+            temperature: 0.2
+          mode: chat
+          name: gpt-4
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: 'あなたは住宅建築の法規チェック専門家です。
+
+            建築基準法の住宅関連規定に基づいて詳細評価を行ってください。
+
+
+            重点チェック項目：
+
+            1. 建蔽率・容積率の適合性
+
+            2. 高さ制限の遵守
+
+            3. 採光・換気規定の適合
+
+            4. 防火・準防火地域規定
+
+            5. 接道義務の確認
+
+            6. 居室の採光面積比率
+
+            7. 階段・廊下幅員
+
+            8. バリアフリー対応
+
+
+            各項目を適合/要確認/不適合で評価し、具体的な改善提案も含めてください。
+
+            '
+        - id: user-prompt
+          role: user
+          text: '【建物基本情報】
+
+            用途: {{#start_node.building_purpose#}}
+
+            階数: {{#start_node.floor_count#}}
+
+            敷地面積: {{#start_node.site_area#}}㎡
+
+
+            【図面解析結果】
+
+            図面種類: {{#param_extract_node.drawing_type#}}
+
+            建築面積: {{#param_extract_node.building_area#}}㎡
+
+            延床面積: {{#param_extract_node.total_floor_area#}}㎡
+
+            建物高さ: {{#param_extract_node.building_height#}}m
+
+            容積率: {{#param_extract_node.floor_area_ratio#}}%
+
+            建蔽率: {{#param_extract_node.building_coverage_ratio#}}%
+
+            構造: {{#param_extract_node.structure_type#}}
+
+            主要室: {{#param_extract_node.main_rooms#}}
+
+            避難経路: {{#param_extract_node.evacuation_route#}}
+
+
+            住宅建築基準法適合性を詳細評価してください。
+
+            '
+        selected: false
+        structured_output_enabled: false
+        title: 住宅法規分析
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 118
+      id: residential_analysis_node
+      position:
+        x: 1850
+        y: 30
+      positionAbsolute:
+        x: 1850
+        y: 30
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 商業・事務所建築の法規チェック
+        model:
+          completion_params:
+            temperature: 0.2
+          mode: chat
+          name: gpt-4
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: 'あなたは商業・事務所建築の法規チェック専門家です。
+
+            建築基準法の特殊建築物規定に基づいて詳細評価を行ってください。
+
+
+            重点チェック項目：
+
+            1. 特殊建築物としての規制適合
+
+            2. 防火・避難規定の遵守
+
+            3. 建蔽率・容積率の適合性
+
+            4. 駐車場附置義務
+
+            5. バリアフリー法適合
+
+            6. 消防法適合性
+
+            7. 排煙・非常用照明設備
+
+            8. 避難階段・非常用昇降機
+
+
+            各項目を適合/要確認/不適合で評価し、具体的な改善提案も含めてください。
+
+            '
+        - id: user-prompt
+          role: user
+          text: '【建物基本情報】
+
+            用途: {{#start_node.building_purpose#}}
+
+            階数: {{#start_node.floor_count#}}
+
+            敷地面積: {{#start_node.site_area#}}㎡
+
+
+            【図面解析結果】
+
+            図面種類: {{#param_extract_node.drawing_type#}}
+
+            建築面積: {{#param_extract_node.building_area#}}㎡
+
+            延床面積: {{#param_extract_node.total_floor_area#}}㎡
+
+            建物高さ: {{#param_extract_node.building_height#}}m
+
+            容積率: {{#param_extract_node.floor_area_ratio#}}%
+
+            建蔽率: {{#param_extract_node.building_coverage_ratio#}}%
+
+            構造: {{#param_extract_node.structure_type#}}
+
+            主要室: {{#param_extract_node.main_rooms#}}
+
+            避難経路: {{#param_extract_node.evacuation_route#}}
+
+
+            商業・事務所建築基準法適合性を詳細評価してください。
+
+            '
+        selected: false
+        structured_output_enabled: false
+        title: 商業建築法規分析
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 118
+      id: commercial_analysis_node
+      position:
+        x: 1850
+        y: 150
+      positionAbsolute:
+        x: 1850
+        y: 150
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 一般建築物の法規チェック
+        model:
+          completion_params:
+            temperature: 0.2
+          mode: chat
+          name: gpt-4
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: 'あなたは建築法規チェックの専門家です。
+
+            建築基準法の一般規定に基づいて詳細評価を行ってください。
+
+
+            重点チェック項目：
+
+            1. 建蔽率・容積率の適合性
+
+            2. 高さ制限・斜線制限
+
+            3. 防火・耐火規定
+
+            4. 構造関係規定
+
+            5. 採光・換気規定
+
+            6. 衛生関係規定
+
+            7. 避難関係規定
+
+            8. アクセシビリティ
+
+
+            各項目を適合/要確認/不適合で評価し、具体的な改善提案も含めてください。
+
+            '
+        - id: user-prompt
+          role: user
+          text: '【建物基本情報】
+
+            用途: {{#start_node.building_purpose#}}
+
+            階数: {{#start_node.floor_count#}}
+
+            敷地面積: {{#start_node.site_area#}}㎡
+
+
+            【図面解析結果】
+
+            図面種類: {{#param_extract_node.drawing_type#}}
+
+            建築面積: {{#param_extract_node.building_area#}}㎡
+
+            延床面積: {{#param_extract_node.total_floor_area#}}㎡
+
+            建物高さ: {{#param_extract_node.building_height#}}m
+
+            容積率: {{#param_extract_node.floor_area_ratio#}}%
+
+            建蔽率: {{#param_extract_node.building_coverage_ratio#}}%
+
+            構造: {{#param_extract_node.structure_type#}}
+
+            主要室: {{#param_extract_node.main_rooms#}}
+
+            避難経路: {{#param_extract_node.evacuation_route#}}
+
+
+            建築基準法適合性を詳細評価してください。
+
+            '
+        selected: false
+        structured_output_enabled: false
+        title: 一般建築法規分析
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 118
+      id: general_building_analysis_node
+      position:
+        x: 1850
+        y: 270
+      positionAbsolute:
+        x: 1850
+        y: 270
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        code: "def main(analysis_text: str, building_area: float, total_floor_area:\
+          \ float, \n         site_area: str, floor_area_ratio: float, building_coverage_ratio:\
+          \ float) -> dict:\n    \"\"\"\n    法規適合性チェック結果を数値化・構造化\n    \"\"\"\n   \
+          \ import re\n    \n    # 敷地面積の数値抽出\n    try:\n        if site_area and site_area\
+          \ != \"不明\":\n            site_area_num = float(re.findall(r'\\d+\\.?\\\
+          d*', str(site_area))[0])\n        else:\n            site_area_num = 0\n\
+          \    except:\n        site_area_num = 0\n    \n    # 適合性評価のカウント\n    compliant_count\
+          \ = len(re.findall(r'適合', analysis_text))\n    review_needed_count = len(re.findall(r'要確認',\
+          \ analysis_text))\n    non_compliant_count = len(re.findall(r'不適合', analysis_text))\n\
+          \    \n    total_checks = compliant_count + review_needed_count + non_compliant_count\n\
+          \    \n    # スコア算出\n    if total_checks > 0:\n        compliance_score =\
+          \ (compliant_count * 100 + review_needed_count * 50) / total_checks\n  \
+          \  else:\n        compliance_score = 70  # デフォルト値\n    \n    # 数値チェック\n\
+          \    numerical_issues = []\n    \n    if building_area and site_area_num\
+          \ > 0:\n        actual_coverage = (building_area / site_area_num) * 100\n\
+          \        if building_coverage_ratio and abs(actual_coverage - building_coverage_ratio)\
+          \ > 5:\n            numerical_issues.append(f\"建蔽率不整合: 実測{actual_coverage:.1f}%\
+          \ vs 記載{building_coverage_ratio}%\")\n    \n    if total_floor_area and\
+          \ site_area_num > 0:\n        actual_far = (total_floor_area / site_area_num)\
+          \ * 100\n        if floor_area_ratio and abs(actual_far - floor_area_ratio)\
+          \ > 10:\n            numerical_issues.append(f\"容積率不整合: 実測{actual_far:.1f}%\
+          \ vs 記載{floor_area_ratio}%\")\n    \n    # 総合判定\n    if compliance_score\
+          \ >= 90 and len(numerical_issues) == 0:\n        overall_grade = \"A\"\n\
+          \        recommendation = \"適合\"\n    elif compliance_score >= 80 or len(numerical_issues)\
+          \ <= 1:\n        overall_grade = \"B\"\n        recommendation = \"概ね適合\"\
+          \n    elif compliance_score >= 70 or len(numerical_issues) <= 2:\n     \
+          \   overall_grade = \"C\"\n        recommendation = \"要改善\"\n    else:\n\
+          \        overall_grade = \"D\"\n        recommendation = \"要大幅改善\"\n   \
+          \ \n    return {\n        \"compliance_score\": round(compliance_score,\
+          \ 1),\n        \"compliant_items\": compliant_count,\n        \"review_items\"\
+          : review_needed_count,\n        \"non_compliant_items\": non_compliant_count,\n\
+          \        \"numerical_issues\": numerical_issues,\n        \"overall_grade\"\
+          : overall_grade,\n        \"recommendation\": recommendation,\n        \"\
+          total_check_items\": total_checks\n    }\n"
+        code_language: python3
+        desc: 法規適合性チェック結果の数値化
+        error_strategy: fail-branch
+        outputs:
+          compliance_score:
+            children: null
+            type: number
+          compliant_items:
+            children: null
+            type: number
+          non_compliant_items:
+            children: null
+            type: number
+          numerical_issues:
+            children: null
+            type: array[string]
+          overall_grade:
+            children: null
+            type: string
+          recommendation:
+            children: null
+            type: string
+          review_items:
+            children: null
+            type: number
+          total_check_items:
+            children: null
+            type: number
+        selected: false
+        title: 法規適合性判定
+        type: code
+        variables:
+        - value_selector:
+          - residential_analysis_node
+          - text
+          variable: analysis_text
+        - value_selector:
+          - commercial_analysis_node
+          - text
+          variable: analysis_text
+        - value_selector:
+          - general_building_analysis_node
+          - text
+          variable: analysis_text
+        - value_selector:
+          - param_extract_node
+          - building_area
+          variable: building_area
+        - value_selector:
+          - param_extract_node
+          - total_floor_area
+          variable: total_floor_area
+        - value_selector:
+          - start_node
+          - site_area
+          variable: site_area
+        - value_selector:
+          - param_extract_node
+          - floor_area_ratio
+          variable: floor_area_ratio
+        - value_selector:
+          - param_extract_node
+          - building_coverage_ratio
+          variable: building_coverage_ratio
+      height: 118
+      id: law_compliance_check_node
+      position:
+        x: 2150
+        y: 150
+      positionAbsolute:
+        x: 2150
+        y: 150
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 構造安全性の予備評価
+        model:
+          completion_params:
+            temperature: 0.3
+          mode: chat
+          name: gpt-4
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: 'あなたは構造設計の専門家です。
+
+            図面情報から構造安全性の予備評価を行ってください。
+
+
+            評価項目：
+
+            1. 構造種別の妥当性
+
+            2. 耐震性能の推定
+
+            3. 基礎形式の適切性
+
+            4. 柱・梁配置の合理性
+
+            5. 荷重伝達経路の確認
+
+            6. 変形制御の妥当性
+
+
+            詳細な構造計算は別途必要ですが、図面レベルでの初期評価を行ってください。
+
+            '
+        - id: user-prompt
+          role: user
+          text: '【建物概要】
+
+            用途: {{#start_node.building_purpose#}}
+
+            階数: {{#start_node.floor_count#}}
+
+            構造: {{#param_extract_node.structure_type#}}
+
+            建物高さ: {{#param_extract_node.building_height#}}m
+
+            延床面積: {{#param_extract_node.total_floor_area#}}㎡
+
+
+            【法規チェック結果】
+
+            適合性スコア: {{#law_compliance_check_node.compliance_score#}}点
+
+            総合判定: {{#law_compliance_check_node.overall_grade#}}
+
+
+            構造安全性の予備評価を実施してください。
+
+            構造計算が必要な項目や、設計上の注意点も含めて評価してください。
+
+            '
+        selected: false
+        structured_output_enabled: false
+        title: 構造安全性評価
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 118
+      id: structural_safety_node
+      position:
+        x: 2450
+        y: 150
+      positionAbsolute:
+        x: 2450
+        y: 150
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 建築図面チェック総合レポート生成
+        model:
+          completion_params:
+            temperature: 0.4
+          mode: chat
+          name: gpt-4
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: '建築図面の自動チェック結果を統合し、総合評価レポートを作成してください。
+
+            建築士・施工会社・建築主が理解できる形式で出力してください。
+
+            '
+        - id: user-prompt
+          role: user
+          text: '【プロジェクト基本情報】
+
+            建物用途: {{#start_node.building_purpose#}}
+
+            階数: {{#start_node.floor_count#}}
+
+            敷地面積: {{#start_node.site_area#}}㎡
+
+
+            【図面解析結果】
+
+            図面種類: {{#param_extract_node.drawing_type#}}
+
+            建築面積: {{#param_extract_node.building_area#}}㎡
+
+            延床面積: {{#param_extract_node.total_floor_area#}}㎡
+
+            建物高さ: {{#param_extract_node.building_height#}}m
+
+            構造種別: {{#param_extract_node.structure_type#}}
+
+
+            【法規適合性評価】
+
+            適合性スコア: {{#law_compliance_check_node.compliance_score#}}点/100点
+
+            適合項目: {{#law_compliance_check_node.compliant_items#}}項目
+
+            要確認項目: {{#law_compliance_check_node.review_items#}}項目
+
+            不適合項目: {{#law_compliance_check_node.non_compliant_items#}}項目
+
+            総合判定: {{#law_compliance_check_node.overall_grade#}}（{{#law_compliance_check_node.recommendation#}}）
+
+
+            【構造安全性評価】
+
+            {{#structural_safety_node.text#}}
+
+
+            建築確認申請前に対応すべき項目を優先順位付きで整理し、
+
+            実用的な改善提案を含む総合レポートを作成してください。
+
+            '
+        selected: false
+        structured_output_enabled: false
+        title: 総合レポート生成
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 118
+      id: final_report_node
+      position:
+        x: 2750
+        y: 150
+      positionAbsolute:
+        x: 2750
+        y: 150
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: "## \U0001F3D7️ 建築図面自動チェック完了レポート\n\n**\U0001F4CA 総合評価: {{#law_compliance_check_node.overall_grade#}}グレード（{{#law_compliance_check_node.compliance_score#}}点/100点満点）**\n\
+          **⚖️ 法規適合性: {{#law_compliance_check_node.recommendation#}}**\n\n### \U0001F4CB\
+          \ チェック結果サマリー\n- ✅ 適合項目: {{#law_compliance_check_node.compliant_items#}}項目\n\
+          - ⚠️ 要確認項目: {{#law_compliance_check_node.review_items#}}項目  \n- ❌ 不適合項目:\
+          \ {{#law_compliance_check_node.non_compliant_items#}}項目\n- \U0001F4CF 総チェック項目:\
+          \ {{#law_compliance_check_node.total_check_items#}}項目\n\n---\n\n{{#final_report_node.text#}}\n\
+          \n---\n\n### \U0001F504 解析実行フロー\n✅ ファイル形式判定・アップロード確認  \n✅ 画像/文書別の図面解析実行\
+          \  \n✅ 建築要素の構造化データ抽出  \n✅ 用途別法規チェック分岐実行  \n✅ Python計算による適合性数値化  \n✅ 構造安全性の予備評価実行\
+          \  \n✅ 総合レポート生成完了  \n\n### \U0001F4D0 解析対象図面情報\n- **図面種類**: {{#param_extract_node.drawing_type#}}\n\
+          - **建築面積**: {{#param_extract_node.building_area#}}㎡\n- **延床面積**: {{#param_extract_node.total_floor_area#}}㎡\
+          \  \n- **構造種別**: {{#param_extract_node.structure_type#}}\n\n*本チェックは予備評価です。建築確認申請前に専門家による詳細確認をお勧めします*\n"
+        desc: ''
+        selected: false
+        title: 図面チェック結果レポート
+        type: answer
+        variables: []
+      height: 638
+      id: final_answer_node
+      position:
+        x: 3050
+        y: 150
+      positionAbsolute:
+        x: 3050
+        y: 150
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: 143.86843237902525
+      y: -0.03857791417388512
+      zoom: 1.0867631457270552

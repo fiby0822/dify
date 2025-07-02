@@ -1,0 +1,705 @@
+app:
+  description: 求人票と履歴書PDFから職務経歴を構造化し、適合度スコアと面接推奨判定を自動生成する採用スクリーニングAI
+  icon: 👥
+  icon_background: '#059669'
+  mode: advanced-chat
+  name: 採用候補者スクリーナー
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/openai:0.0.26@c1e643ac6a7732f6333a783320b4d3026fa5e31d8e7026375b98d44418d33f26
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .PDF
+      - .DOC
+      - .DOCX
+      allowed_file_types:
+      - document
+      allowed_file_upload_methods:
+      - local_file
+      enabled: true
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        image_file_size_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods: []
+      number_limits: 5
+    opening_statement: 'こんにちは！採用候補者スクリーナーです。
+
+      履歴書PDFと求人要件から候補者の適合度を自動評価します。
+
+      📄 履歴書PDFの自動解析 📊 職務経歴の構造化 🎯 求人要件との適合度スコア算出 ✅ 面接推奨・見送り判定 📋 候補者一覧の自動作成
+
+      履歴書ファイルと求人情報を入力してください！'
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+    - エンジニア職の候補者をスクリーニングしてください
+    - 営業職の適合度を評価お願いします
+    - マネージャー候補の履歴書を分析してください
+    suggested_questions_after_answer:
+      enabled: true
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: start
+        targetType: if-else
+      id: start-filecheck-edge
+      selected: false
+      source: start_node
+      sourceHandle: source
+      target: file_check_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: answer
+      id: filecheck-nofile-edge
+      selected: false
+      source: file_check_node
+      sourceHandle: 'true'
+      target: no_file_answer
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: document-extractor
+      id: filecheck-extract-edge
+      selected: false
+      source: file_check_node
+      sourceHandle: 'false'
+      target: document_extract_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: document-extractor
+        targetType: parameter-extractor
+      id: extract-structure-edge
+      selected: false
+      source: document_extract_node
+      sourceHandle: source
+      target: resume_structure_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: parameter-extractor
+        targetType: code
+      id: structure-scoring-edge
+      selected: false
+      source: resume_structure_node
+      sourceHandle: source
+      target: scoring_engine_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: code
+        targetType: llm
+      id: scoring-judgment-edge
+      selected: false
+      source: scoring_engine_node
+      sourceHandle: source
+      target: final_judgment_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: judgment-answer-edge
+      selected: false
+      source: final_judgment_node
+      sourceHandle: source
+      target: final_answer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: '履歴書PDFファイルと求人要件を入力してください。
+
+          候補者の適合度を自動評価いたします。'
+        selected: true
+        title: 開始
+        type: start
+        variables:
+        - allowed_file_extensions:
+          - .PDF
+          - .DOC
+          - .DOCX
+          allowed_file_types:
+          - document
+          allowed_file_upload_methods:
+          - local_file
+          label: 履歴書PDFファイル
+          max_length: 5
+          options: []
+          required: true
+          type: file
+          variable: resume_file
+        - label: 募集職種
+          max_length: 100
+          options: []
+          required: true
+          type: text-input
+          variable: job_title
+        - label: 必須経験年数
+          max_length: 20
+          options: []
+          required: false
+          type: text-input
+          variable: required_experience
+        - label: 必須スキル・資格
+          max_length: 500
+          options: []
+          required: false
+          type: paragraph
+          variable: required_skills
+        - label: 歓迎スキル・経験
+          max_length: 500
+          options: []
+          required: false
+          type: paragraph
+          variable: preferred_skills
+        - label: 年収レンジ
+          max_length: 100
+          options: []
+          required: false
+          type: text-input
+          variable: salary_range
+        - label: 勤務地
+          max_length: 100
+          options: []
+          required: false
+          type: text-input
+          variable: work_location
+      height: 322
+      id: start_node
+      position:
+        x: 50
+        y: 100
+      positionAbsolute:
+        x: 50
+        y: 100
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        cases:
+        - case_id: 'true'
+          conditions:
+          - comparison_operator: not exists
+            id: file_check_condition
+            value: ''
+            varType: file
+            variable_selector:
+            - start_node
+            - resume_file
+          id: 'true'
+          logical_operator: and
+        desc: 履歴書ファイルの存在確認
+        selected: false
+        title: ファイル存在チェック
+        type: if-else
+      height: 154
+      id: file_check_node
+      position:
+        x: 350
+        y: 100
+      positionAbsolute:
+        x: 350
+        y: 100
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '❌ 履歴書ファイルがアップロードされていません。
+
+          📄 以下の形式のファイルをアップロードしてください： • PDF文書 (.pdf) • Word文書 (.doc, .docx)
+
+          📋 対応可能な履歴書： • 日本語・英語の履歴書 • 職務経歴書 • レジュメ・CV • 手書き・PC作成問わず
+
+          💡 スクリーニングのコツ： • 求人要件を詳細に入力するほど精度向上 • 必須スキルと歓迎スキルを明確に分ける • 経験年数は具体的に記載
+
+          ファイルをアップロード後、再度実行してください。'
+        desc: ''
+        selected: false
+        title: ファイル未アップロード
+        type: answer
+        variables: []
+      height: 278
+      id: no_file_answer
+      position:
+        x: 650
+        y: 50
+      positionAbsolute:
+        x: 650
+        y: 50
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: 履歴書PDFからテキストを抽出
+        is_array_file: false
+        selected: false
+        title: 履歴書テキスト抽出
+        type: document-extractor
+        variable_selector:
+        - start_node
+        - resume_file
+      height: 120
+      id: document_extract_node
+      position:
+        x: 650
+        y: 180
+      positionAbsolute:
+        x: 650
+        y: 180
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: 履歴書から構造化データを抽出
+        instruction: '履歴書の内容を詳細に分析し、採用スクリーニングに必要な構造化データを抽出してください。
+
+          職務経歴、スキル、資格、学歴などを整理し、数値化可能な項目は具体的に記録してください。'
+        model:
+          completion_params:
+            temperature: 0.1
+          mode: chat
+          name: gpt-4
+          provider: langgenius/openai/openai
+        parameters:
+        - description: 候補者氏名
+          name: candidate_name
+          required: false
+          type: string
+        - description: 年齢（数値のみ）
+          name: candidate_age
+          required: false
+          type: number
+        - description: 総職歴年数（数値のみ）
+          name: total_experience_years
+          required: false
+          type: number
+        - description: 最終学歴
+          name: final_education
+          required: false
+          type: string
+        - description: 職歴一覧（会社名・職種・期間）
+          name: work_history
+          required: false
+          type: string
+        - description: 保有スキル（カンマ区切り）
+          name: technical_skills
+          required: false
+          type: string
+        - description: 保有資格（カンマ区切り）
+          name: certifications
+          required: false
+          type: string
+        - description: 希望年収（数値のみ、万円単位）
+          name: desired_salary
+          required: false
+          type: number
+        - description: 転職回数（数値のみ）
+          name: job_change_count
+          required: false
+          type: number
+        - description: 管理職経験有無（有/無）
+          name: management_experience
+          required: false
+          type: string
+        - description: 語学力（TOEIC点数等）
+          name: language_skills
+          required: false
+          type: string
+        - description: 直近の職種・ポジション
+          name: current_position
+          required: false
+          type: string
+        query:
+        - document_extract_node
+        - text
+        reasoning_mode: prompt
+        selected: false
+        title: 履歴書構造化
+        type: parameter-extractor
+        variables: []
+        vision:
+          enabled: false
+      height: 118
+      id: resume_structure_node
+      position:
+        x: 950
+        y: 180
+      positionAbsolute:
+        x: 950
+        y: 180
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        code: "def main(candidate_name: str, total_experience_years: float, technical_skills:\
+          \ str,\n         certifications: str, management_experience: str, current_position:\
+          \ str,\n         job_title: str, required_experience: str, required_skills:\
+          \ str, \n         preferred_skills: str, desired_salary: float) -> dict:\n\
+          \    \"\"\"\n    候補者と求人要件の適合度スコアを算出\n    \"\"\"\n    import re\n    \n \
+          \   # デフォルト値設定\n    if not candidate_name:\n        candidate_name = \"\
+          候補者名不明\"\n    if not total_experience_years or total_experience_years <\
+          \ 0:\n        total_experience_years = 0\n    if not technical_skills:\n\
+          \        technical_skills = \"\"\n    if not certifications:\n        certifications\
+          \ = \"\"\n    if not management_experience:\n        management_experience\
+          \ = \"不明\"\n    if not current_position:\n        current_position = \"\
+          不明\"\n    if not desired_salary or desired_salary <= 0:\n        desired_salary\
+          \ = 0\n    \n    # 求人要件の処理\n    if not required_experience:\n        required_experience\
+          \ = \"0年\"\n    if not required_skills:\n        required_skills = \"\"\n\
+          \    if not preferred_skills:\n        preferred_skills = \"\"\n    \n \
+          \   # 必須経験年数の抽出\n    required_years_match = re.search(r'(\\d+)', required_experience)\n\
+          \    required_years = float(required_years_match.group(1)) if required_years_match\
+          \ else 0\n    \n    # スコア算出項目\n    scores = {\n        \"experience_score\"\
+          : 0,\n        \"skills_score\": 0,\n        \"certification_score\": 0,\n\
+          \        \"position_match_score\": 0,\n        \"management_score\": 0\n\
+          \    }\n    \n    # 1. 経験年数スコア（30点満点）\n    if total_experience_years >=\
+          \ required_years:\n        if total_experience_years >= required_years *\
+          \ 1.5:\n            scores[\"experience_score\"] = 30  # 十分な経験\n       \
+          \ else:\n            scores[\"experience_score\"] = 25  # 適切な経験\n    elif\
+          \ total_experience_years >= required_years * 0.8:\n        scores[\"experience_score\"\
+          ] = 20  # やや不足\n    elif total_experience_years >= required_years * 0.5:\n\
+          \        scores[\"experience_score\"] = 10  # 不足\n    else:\n        scores[\"\
+          experience_score\"] = 0   # 大幅に不足\n    \n    # 2. スキルマッチスコア（35点満点）\n   \
+          \ required_skill_list = [skill.strip().lower() for skill in required_skills.split(',')\
+          \ if skill.strip()]\n    preferred_skill_list = [skill.strip().lower() for\
+          \ skill in preferred_skills.split(',') if skill.strip()]\n    candidate_skill_list\
+          \ = [skill.strip().lower() for skill in technical_skills.split(',') if skill.strip()]\n\
+          \    \n    # 必須スキルマッチ（25点）\n    if required_skill_list:\n        required_match_count\
+          \ = sum(1 for req_skill in required_skill_list \n                      \
+          \           if any(req_skill in cand_skill or cand_skill in req_skill \n\
+          \                                      for cand_skill in candidate_skill_list))\n\
+          \        scores[\"skills_score\"] = min(25, (required_match_count / len(required_skill_list))\
+          \ * 25)\n    else:\n        scores[\"skills_score\"] = 20  # 必須スキル未指定の場合\n\
+          \    \n    # 歓迎スキルマッチ（10点）\n    if preferred_skill_list:\n        preferred_match_count\
+          \ = sum(1 for pref_skill in preferred_skill_list \n                    \
+          \              if any(pref_skill in cand_skill or cand_skill in pref_skill\
+          \ \n                                       for cand_skill in candidate_skill_list))\n\
+          \        scores[\"skills_score\"] += min(10, (preferred_match_count / len(preferred_skill_list))\
+          \ * 10)\n    \n    # 3. 資格スコア（15点満点）\n    if certifications and certifications\
+          \ != \"なし\":\n        cert_count = len([cert for cert in certifications.split(',')\
+          \ if cert.strip()])\n        scores[\"certification_score\"] = min(15, cert_count\
+          \ * 5)\n    \n    # 4. ポジションマッチスコア（10点満点）\n    if current_position and job_title:\n\
+          \        # 職種の類似性をチェック\n        position_keywords = [\"エンジニア\", \"営業\",\
+          \ \"マーケティング\", \"人事\", \"経理\", \"管理\", \"開発\", \"企画\"]\n        current_keywords\
+          \ = [kw for kw in position_keywords if kw in current_position]\n       \
+          \ job_keywords = [kw for kw in position_keywords if kw in job_title]\n \
+          \       \n        if any(kw in job_keywords for kw in current_keywords):\n\
+          \            scores[\"position_match_score\"] = 10\n        elif current_keywords\
+          \ or job_keywords:\n            scores[\"position_match_score\"] = 5\n \
+          \   \n    # 5. 管理職経験スコア（10点満点）\n    if \"管理\" in job_title or \"マネージャー\"\
+          \ in job_title or \"リーダー\" in job_title:\n        if \"有\" in management_experience:\n\
+          \            scores[\"management_score\"] = 10\n        elif \"無\" in management_experience:\n\
+          \            scores[\"management_score\"] = 3\n    else:\n        scores[\"\
+          management_score\"] = 5  # 管理職募集でない場合は中間点\n    \n    # 総合スコア算出\n    total_score\
+          \ = sum(scores.values())\n    \n    # 判定ロジック\n    if total_score >= 85:\n\
+          \        recommendation = \"強く推薦\"\n        decision = \"面接確定\"\n      \
+          \  priority = \"A\"\n    elif total_score >= 70:\n        recommendation\
+          \ = \"推薦\"\n        decision = \"面接推奨\"\n        priority = \"B\"\n    elif\
+          \ total_score >= 55:\n        recommendation = \"条件付き推薦\"\n        decision\
+          \ = \"要検討\"\n        priority = \"C\"\n    elif total_score >= 40:\n   \
+          \     recommendation = \"要慎重検討\"\n        decision = \"面接検討\"\n        priority\
+          \ = \"D\"\n    else:\n        recommendation = \"見送り推奨\"\n        decision\
+          \ = \"見送り\"\n        priority = \"E\"\n    \n    # 強み・弱みの分析\n    strengths\
+          \ = []\n    weaknesses = []\n    \n    if scores[\"experience_score\"] >=\
+          \ 25:\n        strengths.append(\"豊富な実務経験\")\n    elif scores[\"experience_score\"\
+          ] <= 10:\n        weaknesses.append(\"実務経験不足\")\n    \n    if scores[\"\
+          skills_score\"] >= 30:\n        strengths.append(\"スキルマッチ度高\")\n    elif\
+          \ scores[\"skills_score\"] <= 15:\n        weaknesses.append(\"必須スキル不足\"\
+          )\n    \n    if scores[\"certification_score\"] >= 10:\n        strengths.append(\"\
+          資格保有\")\n    \n    if scores[\"management_score\"] >= 8:\n        strengths.append(\"\
+          管理職経験\")\n    \n    return {\n        \"total_score\": round(total_score,\
+          \ 1),\n        \"experience_score\": round(scores[\"experience_score\"],\
+          \ 1),\n        \"skills_score\": round(scores[\"skills_score\"], 1),\n \
+          \       \"certification_score\": round(scores[\"certification_score\"],\
+          \ 1),\n        \"position_match_score\": round(scores[\"position_match_score\"\
+          ], 1),\n        \"management_score\": round(scores[\"management_score\"\
+          ], 1),\n        \"recommendation\": recommendation,\n        \"decision\"\
+          : decision,\n        \"priority\": priority,\n        \"strengths\": strengths,\n\
+          \        \"weaknesses\": weaknesses,\n        \"experience_gap\": max(0,\
+          \ required_years - total_experience_years)\n    }\n"
+        code_language: python3
+        desc: 適合度スコア算出エンジン
+        error_strategy: fail-branch
+        outputs:
+          certification_score:
+            children: null
+            type: number
+          decision:
+            children: null
+            type: string
+          experience_gap:
+            children: null
+            type: number
+          experience_score:
+            children: null
+            type: number
+          management_score:
+            children: null
+            type: number
+          position_match_score:
+            children: null
+            type: number
+          priority:
+            children: null
+            type: string
+          recommendation:
+            children: null
+            type: string
+          skills_score:
+            children: null
+            type: number
+          strengths:
+            children: null
+            type: array[string]
+          total_score:
+            children: null
+            type: number
+          weaknesses:
+            children: null
+            type: array[string]
+        selected: false
+        title: 適合度スコア算出
+        type: code
+        variables:
+        - value_selector:
+          - resume_structure_node
+          - candidate_name
+          variable: candidate_name
+        - value_selector:
+          - resume_structure_node
+          - total_experience_years
+          variable: total_experience_years
+        - value_selector:
+          - resume_structure_node
+          - technical_skills
+          variable: technical_skills
+        - value_selector:
+          - resume_structure_node
+          - certifications
+          variable: certifications
+        - value_selector:
+          - resume_structure_node
+          - management_experience
+          variable: management_experience
+        - value_selector:
+          - resume_structure_node
+          - current_position
+          variable: current_position
+        - value_selector:
+          - start_node
+          - job_title
+          variable: job_title
+        - value_selector:
+          - start_node
+          - required_experience
+          variable: required_experience
+        - value_selector:
+          - start_node
+          - required_skills
+          variable: required_skills
+        - value_selector:
+          - start_node
+          - preferred_skills
+          variable: preferred_skills
+        - value_selector:
+          - resume_structure_node
+          - desired_salary
+          variable: desired_salary
+      height: 118
+      id: scoring_engine_node
+      position:
+        x: 1250
+        y: 180
+      positionAbsolute:
+        x: 1250
+        y: 180
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 最終判定とフィードバック生成
+        model:
+          completion_params:
+            temperature: 0.4
+          mode: chat
+          name: gpt-4
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: 'あなたは採用スクリーニングの専門家です。
+
+            候補者の履歴書分析と適合度スコアを基に、採用担当者向けの総合判定レポートを作成してください。
+
+            ## 出力フォーマット **📋 候補者プロフィール** - 氏名・年齢・総職歴 - 現在のポジション - 主要スキル・資格
+
+            **📊 適合度分析** - 総合スコアの解説 - 各評価項目の詳細 - 強み・弱みの具体的分析
+
+            **💡 面接での確認ポイント** - 重点的に確認すべき項目 - 想定される質問例
+
+            **🎯 最終推奨** - 面接実施の可否 - 優先度とその理由
+
+            実務的で採用担当者が意思決定しやすい内容にしてください。'
+        - id: user-prompt
+          role: user
+          text: '【求人情報】 募集職種: {{#start_node.job_title#}} 必須経験: {{#start_node.required_experience#}}
+            必須スキル: {{#start_node.required_skills#}} 歓迎スキル: {{#start_node.preferred_skills#}}
+            年収レンジ: {{#start_node.salary_range#}}
+
+            【候補者情報】 氏名: {{#resume_structure_node.candidate_name#}} 年齢: {{#resume_structure_node.candidate_age#}}歳
+            総職歴: {{#resume_structure_node.total_experience_years#}}年 現在のポジション: {{#resume_structure_node.current_position#}}
+            スキル: {{#resume_structure_node.technical_skills#}} 資格: {{#resume_structure_node.certifications#}}
+            管理職経験: {{#resume_structure_node.management_experience#}}
+
+            【スコア結果】 総合スコア: {{#scoring_engine_node.total_score#}}点/100点 経験スコア: {{#scoring_engine_node.experience_score#}}点
+            スキルスコア: {{#scoring_engine_node.skills_score#}}点 資格スコア: {{#scoring_engine_node.certification_score#}}点
+            判定: {{#scoring_engine_node.decision#}} 優先度: {{#scoring_engine_node.priority#}}
+            強み: {{#scoring_engine_node.strengths#}} 弱み: {{#scoring_engine_node.weaknesses#}}
+
+            上記の情報を基に、採用担当者向けの総合判定レポートを作成してください。'
+        selected: false
+        structured_output_enabled: false
+        title: 最終判定レポート
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 118
+      id: final_judgment_node
+      position:
+        x: 1550
+        y: 180
+      positionAbsolute:
+        x: 1550
+        y: 180
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '## 👥 採用候補者スクリーニング完了！
+
+          **🎯 総合判定: {{#scoring_engine_node.decision#}}** **📊 適合度スコア: {{#scoring_engine_node.total_score#}}点/100点**
+          **🏆 優先度: {{#scoring_engine_node.priority#}}ランク**
+
+          ---
+
+          {{#final_judgment_node.text#}}
+
+          ---
+
+          ### 📈 詳細スコア内訳
+
+          | 評価項目 | スコア | 満点 | 評価 | |---------|--------|------|------| | 経験年数 | {{#scoring_engine_node.experience_score#}}点
+          | 30点 | {{#scoring_engine_node.experience_score#}}≥25→優秀、≥20→良好、≥10→要検討
+          | | スキルマッチ | {{#scoring_engine_node.skills_score#}}点 | 35点 | 必須+歓迎スキルの適合度
+          | | 資格・認定 | {{#scoring_engine_node.certification_score#}}点 | 15点 | 保有資格の評価
+          | | ポジション適合 | {{#scoring_engine_node.position_match_score#}}点 | 10点 | 職種経験の関連性
+          | | 管理職経験 | {{#scoring_engine_node.management_score#}}点 | 10点 | マネジメント経験
+          |
+
+          ### ✅ 強み {{#scoring_engine_node.strengths#}}
+
+          ### ⚠️ 弱み・懸念点 {{#scoring_engine_node.weaknesses#}}
+
+          ---
+
+          ### 📋 候補者一覧用データ
+
+          ``` 候補者名: {{#resume_structure_node.candidate_name#}} 総合スコア: {{#scoring_engine_node.total_score#}}点
+          判定: {{#scoring_engine_node.decision#}} 優先度: {{#scoring_engine_node.priority#}}
+          推奨: {{#scoring_engine_node.recommendation#}} 職歴: {{#resume_structure_node.total_experience_years#}}年
+          現職: {{#resume_structure_node.current_position#}} ```
+
+          ### 🎯 次のアクション
+
+          **{{#scoring_engine_node.priority#}}ランク候補者への対応:** - **A・Bランク**: 早期面接設定を推奨
+          - **Cランク**: 面接前の追加確認を実施 - **D・Eランク**: 見送りまたは慎重検討
+
+          ### 📞 面接設定の推奨
+
+          {{#scoring_engine_node.decision#}}のため、以下の対応を推奨します： 1. **書類通過**: {{#scoring_engine_node.total_score#}}点≥55で推奨
+          2. **面接形式**: {{#scoring_engine_node.priority#}}ランクに応じて調整 3. **面接官**: スキル弱み部分の専門性を持つ面接官を配置
+
+          ---
+
+          *複数候補者のスクリーニング結果を一覧化して、優先順位付けにご活用ください*'
+        desc: ''
+        selected: false
+        title: スクリーニング結果
+        type: answer
+        variables: []
+      height: 996
+      id: final_answer_node
+      position:
+        x: 1850
+        y: 180
+      positionAbsolute:
+        x: 1850
+        y: 180
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: 27.34895476579038
+      y: 7.434316969410872
+      zoom: 0.974004268543241

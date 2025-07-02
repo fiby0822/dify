@@ -1,0 +1,176 @@
+app:
+  description: "LLMコンポーネントの検証用カスタマーサポートアシスタント。ユーザーからの問い合わせを受け取り、適切な回答を生成します。"
+  icon: "🤖"
+  icon_background: "#FFEAD5"
+  mode: advanced-chat
+  name: "LLMコンポーネント検証用アシスタント"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      こんにちは！カスタマーサポートアシスタントです。
+      お問い合わせ内容をお聞かせください。
+      お手伝いできることがございましたら、何でもお申し付けください。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "返品・交換について教えてください"
+      - "配送状況を確認したいです"
+      - "商品の使い方がわかりません"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-support_llm-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: support_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: support_llm-answer-edge
+        selected: false
+        source: support_llm_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "会話の開始ノード"
+          selected: false
+          title: "開始"
+          type: start
+          variables:
+            - variable: user_query
+              type: text
+              label: "お問い合わせ内容"
+              max_length: 2000
+              default: ""
+            - variable: customer_id
+              type: text
+              label: "お客様ID"
+              max_length: 100
+              default: ""
+        height: 116
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-prompt-support
+              role: system
+              text: |
+                あなたは優秀なカスタマーサポート担当者です。
+                以下のルールに従って回答してください：
+                1. 丁寧で分かりやすい言葉使い
+                2. 具体的な解決策の提示
+                3. 必要に応じて追加情報の確認
+                4. 共感的な対応を心がける
+                5. 問題解決に向けた建設的な提案
+                
+                お客様の満足度を最優先に考え、親切で専門的な対応を心がけてください。
+            - id: user-prompt-support
+              role: user
+              text: |
+                お客様ID: {{#start_node.customer_id#}}
+                
+                お問い合わせ内容：
+                {{#start_node.user_query#}}
+                
+                上記の内容に対して、適切なサポート対応をお願いします。
+          completion_params:
+            temperature: 0.7
+            max_tokens: 1000
+            top_p: 0.9
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          memory:
+            enabled: false
+          desc: "カスタマーサポート対応を行うLLMノード"
+          selected: false
+          title: "サポート対応LLM"
+          type: llm
+        height: 98
+        id: support_llm_node
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#support_llm_node.text#}}"
+          desc: "LLMの回答を表示"
+          selected: false
+          title: "回答"
+          type: answer
+          variables: []
+        height: 107
+        id: answer_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

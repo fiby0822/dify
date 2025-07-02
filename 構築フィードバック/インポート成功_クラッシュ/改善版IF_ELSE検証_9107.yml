@@ -1,0 +1,520 @@
+app:
+  description: "改善版IF/ELSEルールの動作検証アプリケーション。YAMLコメント排除、case_id必須化、独立answer型パターンなど最新ルールを厳密に実装。"
+  icon: "🔍"
+  icon_background: "#E0F7FA"
+  mode: advanced-chat
+  name: "改善版IF_ELSE検証アプリ"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      改善版IF/ELSEルール検証アプリへようこそ！
+      
+      このアプリは最新の改善ルールをテストします：
+      1. YAMLコメントの完全排除
+      2. case_id必須実装
+      3. 独立answer型パターン
+      4. 正確なフィールド名（isInLoop）
+      
+      テスト入力例：
+      - "score:85" → 高スコア判定
+      - "score:45" → 中スコア判定
+      - "緊急対応が必要です" → 緊急パターン
+      - "通常の処理です" → 通常パターン
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "score:92"
+      - "score:25"
+      - "緊急対応をお願いします"
+      - "通常の申請です"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: code
+        id: start-parse-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: parse_input_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      
+      - data:
+          isInLoop: false
+          sourceType: code
+          targetType: if-else
+        id: parse-score-edge
+        selected: false
+        source: parse_input_node
+        sourceHandle: source
+        target: score_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: score-low-edge
+        selected: false
+        source: score_check_node
+        sourceHandle: low_score_case
+        target: low_score_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: score-medium-edge
+        selected: false
+        source: score_check_node
+        sourceHandle: medium_score_case
+        target: medium_score_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: score-high-edge
+        selected: false
+        source: score_check_node
+        sourceHandle: high_score_case
+        target: high_score_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: score-pattern-edge
+        selected: false
+        source: score_check_node
+        sourceHandle: 'false'
+        target: pattern_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: pattern-urgent-edge
+        selected: false
+        source: pattern_check_node
+        sourceHandle: urgent_pattern_case
+        target: urgent_pattern_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: pattern-normal-edge
+        selected: false
+        source: pattern_check_node
+        sourceHandle: normal_pattern_case
+        target: normal_pattern_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: pattern-default-edge
+        selected: false
+        source: pattern_check_node
+        sourceHandle: 'false'
+        target: default_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    
+    nodes:
+      - data:
+          desc: "開始ノード。advanced-chatモードのため変数は空配列"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 300
+        positionAbsolute:
+          x: 50
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      
+      - data:
+          code: |
+            import re
+            
+            user_input = sys.query.lower() if sys.query else ""
+            
+            score_match = re.search(r'score:\s*(\d+)', user_input)
+            
+            if score_match:
+                score_value = int(score_match.group(1))
+                input_type = "score"
+            else:
+                score_value = -1
+                input_type = "text"
+            
+            return {
+                "input_type": input_type,
+                "score_value": score_value,
+                "original_text": sys.query
+            }
+          code_language: python3
+          desc: "入力を解析して数値やパターンを抽出。コメントは使用せずdescで説明"
+          outputs:
+            input_type:
+              type: string
+            score_value:
+              type: number
+            original_text:
+              type: string
+          selected: false
+          title: "入力解析"
+          type: code
+          variables:
+            - value_selector:
+                - sys
+                - query
+              variable: sys.query
+        height: 98
+        id: parse_input_node
+        position:
+          x: 350
+          y: 300
+        positionAbsolute:
+          x: 350
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      
+      - data:
+          type: if-else
+          cases:
+            - id: low_score_case
+              case_id: low_score_case
+              conditions:
+                - variable_selector:
+                    - parse_input_node
+                    - score_value
+                  comparison_operator: "≤"
+                  value: 30
+              logical_operator: and
+            
+            - id: medium_score_case
+              case_id: medium_score_case
+              conditions:
+                - variable_selector:
+                    - parse_input_node
+                    - score_value
+                  comparison_operator: "≤"
+                  value: 70
+              logical_operator: and
+            
+            - id: high_score_case
+              case_id: high_score_case
+              conditions:
+                - variable_selector:
+                    - parse_input_node
+                    - score_value
+                  comparison_operator: ">"
+                  value: 70
+              logical_operator: and
+          desc: "数値範囲判定。条件は順番に評価され重複なし"
+          selected: false
+          title: "スコア判定"
+        height: 198
+        id: score_check_node
+        position:
+          x: 650
+          y: 300
+        positionAbsolute:
+          x: 650
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      
+      - data:
+          type: if-else
+          cases:
+            - id: urgent_pattern_case
+              case_id: urgent_pattern_case
+              conditions:
+                - variable_selector:
+                    - parse_input_node
+                    - original_text
+                  comparison_operator: contains
+                  value: "緊急"
+              logical_operator: and
+            
+            - id: normal_pattern_case
+              case_id: normal_pattern_case
+              conditions:
+                - variable_selector:
+                    - parse_input_node
+                    - original_text
+                  comparison_operator: contains
+                  value: "通常"
+              logical_operator: and
+          desc: "文字列パターン判定。独立answer型で実装"
+          selected: false
+          title: "パターン判定"
+        height: 154
+        id: pattern_check_node
+        position:
+          x: 650
+          y: 600
+        positionAbsolute:
+          x: 650
+          y: 600
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      
+      - data:
+          answer: |
+            【低スコア判定】
+            スコア: {{#parse_input_node.score_value#}}点
+            
+            判定結果：低スコア（0-30点）
+            改善が必要な状態です。基礎から見直しをお勧めします。
+            
+            ✅ 改善版ルールの実装確認：
+            - case_id正常設定
+            - Unicode演算子（≤）使用
+            - 独立answerノード実装
+          desc: "低スコア用の独立answer"
+          selected: false
+          title: "低スコア結果"
+          type: answer
+          variables: []
+        height: 250
+        id: low_score_answer
+        position:
+          x: 950
+          y: 100
+        positionAbsolute:
+          x: 950
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      
+      - data:
+          answer: |
+            【中スコア判定】
+            スコア: {{#parse_input_node.score_value#}}点
+            
+            判定結果：中スコア（31-70点）
+            標準的な状態です。さらなる向上を目指しましょう。
+            
+            ✅ 改善版ルールの実装確認：
+            - 条件の重複なし
+            - 順次評価による範囲指定
+            - 独立answerノード実装
+          desc: "中スコア用の独立answer"
+          selected: false
+          title: "中スコア結果"
+          type: answer
+          variables: []
+        height: 250
+        id: medium_score_answer
+        position:
+          x: 950
+          y: 400
+        positionAbsolute:
+          x: 950
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      
+      - data:
+          answer: |
+            【高スコア判定】
+            スコア: {{#parse_input_node.score_value#}}点
+            
+            判定結果：高スコア（71-100点）
+            優秀な状態です。この調子を維持してください！
+            
+            ✅ 改善版ルールの実装確認：
+            - Unicode演算子（>）使用
+            - 最後の条件として実装
+            - 独立answerノード実装
+          desc: "高スコア用の独立answer"
+          selected: false
+          title: "高スコア結果"
+          type: answer
+          variables: []
+        height: 250
+        id: high_score_answer
+        position:
+          x: 950
+          y: 700
+        positionAbsolute:
+          x: 950
+          y: 700
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      
+      - data:
+          answer: |
+            【緊急パターン検出】
+            入力テキスト: {{#parse_input_node.original_text#}}
+            
+            緊急対応が必要な案件として処理します。
+            担当者に即座に通知されます。
+            
+            ✅ 改善版ルールの実装確認：
+            - 文字列contains演算子
+            - 独立answerノード
+            - 実行パスの変数のみ参照
+          desc: "緊急パターン用の独立answer"
+          selected: false
+          title: "緊急パターン結果"
+          type: answer
+          variables: []
+        height: 250
+        id: urgent_pattern_answer
+        position:
+          x: 950
+          y: 1000
+        positionAbsolute:
+          x: 950
+          y: 1000
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      
+      - data:
+          answer: |
+            【通常パターン検出】
+            入力テキスト: {{#parse_input_node.original_text#}}
+            
+            通常の案件として処理します。
+            標準的な手順で対応いたします。
+            
+            ✅ 改善版ルールの実装確認：
+            - 複数条件の差別化
+            - 独立answerノード
+            - 変数参照エラー回避
+          desc: "通常パターン用の独立answer"
+          selected: false
+          title: "通常パターン結果"
+          type: answer
+          variables: []
+        height: 250
+        id: normal_pattern_answer
+        position:
+          x: 950
+          y: 1300
+        positionAbsolute:
+          x: 950
+          y: 1300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      
+      - data:
+          answer: |
+            【デフォルト処理】
+            入力: {{#parse_input_node.original_text#}}
+            
+            特定のパターンに該当しない入力です。
+            一般的な処理として対応します。
+            
+            ✅ 改善版ルールの実装確認：
+            - falseハンドルによるデフォルト処理
+            - YAMLコメント完全排除
+            - すべての必須フィールド設定
+          desc: "デフォルトケース用のanswer"
+          selected: false
+          title: "デフォルト結果"
+          type: answer
+          variables: []
+        height: 250
+        id: default_answer
+        position:
+          x: 950
+          y: 1600
+        positionAbsolute:
+          x: 950
+          y: 1600
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.7

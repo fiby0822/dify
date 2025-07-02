@@ -1,0 +1,247 @@
+app:
+  description: "更新されたLLMコンポーネントルールの検証用アプリケーション。memory設定の新ルール（省略推奨、完全構造必須）を検証します。"
+  icon: "🔬"
+  icon_background: "#FFEAD5"
+  mode: advanced-chat
+  name: "改善ルール検証_LLM_3214"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      LLMコンポーネントの改善されたルール検証アプリケーションです。
+      
+      このアプリでは以下を検証します：
+      ・memory設定の省略パターン（推奨）
+      ・memory設定の完全構造パターン
+      ・その他の必須パラメータの動作
+      
+      何か質問を入力してください。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "AIとは何ですか？"
+      - "プログラミングを学ぶ方法を教えてください"
+      - "健康的な生活習慣について教えてください"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-analyzer-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: question_analyzer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: llm
+        id: analyzer-generator-edge
+        selected: false
+        source: question_analyzer_node
+        sourceHandle: source
+        target: answer_generator_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: generator-answer-edge
+        selected: false
+        source: answer_generator_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "ユーザー入力の開始点"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: analyzer-system-1
+              role: system
+              text: |
+                あなたは質問分析の専門家です。
+                ユーザーからの質問を分析し、以下の観点で整理してください：
+                1. 質問のカテゴリー（技術的、概念的、実践的など）
+                2. 回答に必要な情報の種類
+                3. 適切な回答の構成
+                
+                分析結果を簡潔にまとめて出力してください。
+            - id: analyzer-user-1
+              role: user
+              text: |
+                ユーザーの質問：
+                {{#sys.query#}}
+          completion_params:
+            temperature: 0.3
+            max_tokens: 500
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "質問を分析するLLMノード（memory設定を省略 - 推奨パターン）"
+          selected: false
+          title: "質問分析（memory省略）"
+          type: llm
+        height: 98
+        id: question_analyzer_node
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: generator-system-1
+              role: system
+              text: |
+                あなたは知識豊富なアシスタントです。
+                前段の分析結果を参考にしながら、ユーザーの質問に対して
+                詳細で分かりやすい回答を提供してください。
+                
+                回答は以下の構成で作成してください：
+                1. 要約（1-2文）
+                2. 詳細説明
+                3. 具体例（該当する場合）
+                4. まとめ
+            - id: generator-user-1
+              role: user
+              text: |
+                質問の分析結果：
+                {{#question_analyzer_node.text#}}
+                
+                元の質問：
+                {{#sys.query#}}
+                
+                上記を踏まえて、適切な回答をお願いします。
+          completion_params:
+            temperature: 0.7
+            max_tokens: 1500
+            top_p: 0.9
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          memory:
+            enabled: true
+            window:
+              enabled: true
+              size: 10
+            role_prefix:
+              assistant: 'アシスタント'
+              user: 'ユーザー'
+            query_prompt_template: '{{#sys.query#}}'
+          desc: "回答を生成するLLMノード（memory設定を完全構造で記述）"
+          selected: false
+          title: "回答生成（memory完全構造）"
+          type: llm
+        height: 98
+        id: answer_generator_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            {{#answer_generator_node.text#}}
+            
+            ---
+            📊 技術検証情報：
+            - 質問分析ノード：memory設定を省略（推奨パターン）
+            - 回答生成ノード：memory設定を完全構造で記述
+            - 両パターンとも正常に動作することを確認
+          desc: "最終的な回答を表示"
+          selected: false
+          title: "回答"
+          type: answer
+          variables: []
+        height: 374
+        id: answer_node
+        position:
+          x: 950
+          y: 200
+        positionAbsolute:
+          x: 950
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

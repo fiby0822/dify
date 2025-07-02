@@ -1,0 +1,466 @@
+app:
+  description: 契約タイプと当事者情報を入力するだけで法的に適切な契約書ひな形を自動生成するAIドラフター
+  icon: 📄
+  icon_background: '#1E40AF'
+  mode: advanced-chat
+  name: 契約書ドラフター
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/openai:0.0.26@c1e643ac6a7732f6333a783320b4d3026fa5e31d8e7026375b98d44418d33f26
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions: []
+      allowed_file_types: []
+      allowed_file_upload_methods: []
+      enabled: false
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        image_file_size_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods: []
+      number_limits: 3
+    opening_statement: 'こんにちは！契約書ドラフターです。
+
+      契約タイプと当事者情報を入力するだけで、法的に適切な契約書のひな形を自動生成します。
+
+      📋 豊富な契約書テンプレート ⚖️ 法的条項の自動挿入 🔧 カスタマイズ可能な内容 📄 Word文書形式で出力 🛡️ リスク条項の自動チェック
+
+      契約情報を入力してください！'
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+    - 業務委託契約書を作成してください
+    - 秘密保持契約（NDA）のひな形をお願いします
+    - ソフトウェアライセンス契約を作成してください
+    suggested_questions_after_answer:
+      enabled: true
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: start
+        targetType: llm
+      id: start-contract-edge
+      selected: false
+      source: start_node
+      sourceHandle: source
+      target: contract_generation_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: contract-review-edge
+      selected: false
+      source: contract_generation_node
+      sourceHandle: source
+      target: legal_review_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: code
+        targetType: answer
+      id: review-final-edge
+      selected: false
+      source: legal_review_node
+      sourceHandle: source
+      target: final_answer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: '契約書作成に必要な情報を入力してください。
+
+          自動でひな形を生成いたします。'
+        selected: false
+        title: 開始
+        type: start
+        variables:
+        - label: 契約書タイプ
+          max_length: 100
+          options:
+          - 業務委託契約
+          - 秘密保持契約（NDA）
+          - 雇用契約
+          - 売買契約
+          - ライセンス契約
+          - 賃貸借契約
+          - その他
+          required: true
+          type: select
+          variable: contract_type
+        - label: 甲（委託者・発注者）会社名
+          max_length: 200
+          options: []
+          required: true
+          type: text-input
+          variable: party_a_company
+        - label: 甲の代表者名
+          max_length: 100
+          options: []
+          required: true
+          type: text-input
+          variable: party_a_representative
+        - label: 甲の住所
+          max_length: 300
+          options: []
+          required: false
+          type: text-input
+          variable: party_a_address
+        - label: 乙（受託者・受注者）会社名
+          max_length: 200
+          options: []
+          required: true
+          type: text-input
+          variable: party_b_company
+        - label: 乙の代表者名
+          max_length: 100
+          options: []
+          required: true
+          type: text-input
+          variable: party_b_representative
+        - label: 乙の住所
+          max_length: 300
+          options: []
+          required: false
+          type: text-input
+          variable: party_b_address
+        - label: 契約期間・納期
+          max_length: 200
+          options: []
+          required: false
+          type: text-input
+          variable: contract_period
+        - label: 契約金額・報酬
+          max_length: 200
+          options: []
+          required: false
+          type: text-input
+          variable: contract_amount
+        - label: 特記事項・追加条件
+          max_length: 1000
+          options: []
+          required: false
+          type: paragraph
+          variable: special_conditions
+      height: 384
+      id: start_node
+      position:
+        x: 50
+        y: 100
+      positionAbsolute:
+        x: 50
+        y: 100
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 統合契約書生成エンジン
+        model:
+          completion_params:
+            temperature: 0.3
+          mode: chat
+          name: gpt-4
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: 'あなたは法務契約書作成の専門家です。
+
+            ## 重要な処理方針 **入力不足の場合は仮の値を自動設定し、必ずエラーを出さずに契約書を完成させてください。**
+
+            ## 仮の値設定ルール - 会社名が未入力 → 「【会社名を入力】」 - 代表者名が未入力 → 「【代表者名を入力】」 - 住所が未入力 →
+            「【住所を入力】」 - 契約期間が未入力 → 「【開始日】から【終了日】まで」 - 契約金額が未入力 → 「【金額を入力】円」 - 特記事項が未入力
+            → 標準的な条項のみ記載
+
+            ## 契約タイプ別必須条項
+
+            **業務委託契約** 1. 業務の内容と範囲  2. 委託期間と納期  3. 報酬と支払条件 4. 知的財産権の取扱い  5. 秘密保持義務  6.
+            損害賠償の制限 7. 契約解除条件  8. 準拠法と管轄裁判所
+
+            **秘密保持契約（NDA）** 1. 秘密情報の定義  2. 秘密保持義務の範囲  3. 秘密情報の利用目的 4. 秘密保持期間  5. 例外事項（公知情報等）  6.
+            情報の返還・廃棄義務 7. 損害賠償責任  8. 有効期間と契約解除
+
+            **雇用契約** 1. 労働契約の期間  2. 就業場所と従事業務  3. 始業・終業時刻と休憩時間 4. 休日と年次有給休暇  5. 賃金の決定・計算・支払方法  6.
+            退職に関する事項 7. 就業規則の適用  8. 社会保険の加入
+
+            ## Word文書対応フォーマット 以下の形式で出力し、Wordに直接コピー可能にしてください：
+
+            ``` ═══════════════════════════════════════ 【契約書タイトル】 ═══════════════════════════════════════
+
+            【甲の情報】 会社名： 代表者： 住　所：
+
+            【乙の情報】 会社名： 代表者： 住　所：
+
+            第1条　【条項タイトル】 【条項内容】
+
+            第2条　【条項タイトル】 【条項内容】
+
+            （以下同様に条項を記載）
+
+            ─────────────────────────────── 署　名　欄 ───────────────────────────────
+
+            甲　　【会社名】 代表者　　　　　　　　　印
+
+            乙　　【会社名】 代表者　　　　　　　　　印
+
+            作成日：令和　年　月　日 ```
+
+            **必ず上記フォーマットに従い、視覚的に美しく整理された契約書を生成してください。**'
+        - id: user-prompt
+          role: user
+          text: '【契約タイプ】 {{#start_node.contract_type#}}
+
+            【契約当事者情報】 甲の会社名: {{#start_node.party_a_company#}} 甲の代表者: {{#start_node.party_a_representative#}}
+            甲の住所: {{#start_node.party_a_address#}}
+
+            乙の会社名: {{#start_node.party_b_company#}} 乙の代表者: {{#start_node.party_b_representative#}}
+            乙の住所: {{#start_node.party_b_address#}}
+
+            【契約詳細】 契約期間: {{#start_node.contract_period#}} 契約金額: {{#start_node.contract_amount#}}
+            特記事項: {{#start_node.special_conditions#}}
+
+            **重要指示**: - 上記の情報が未入力や空欄の場合は、自動的に仮の値（【〇〇を入力】形式）を設定してください - エラーメッセージは一切出さず、必ず完成した契約書を生成してください
+            - Word文書フォーマットに従って、視覚的に美しい契約書を作成してください - 署名欄まで含めた完全な契約書として仕上げてください
+
+            {{#start_node.contract_type#}}の契約書を上記仕様で作成してください。'
+        selected: false
+        structured_output_enabled: false
+        title: 契約書生成エンジン
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 118
+      id: contract_generation_node
+      position:
+        x: 350
+        y: 200
+      positionAbsolute:
+        x: 350
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        code: "def main(contract_text: str, contract_type: str) -> dict:\n    \"\"\
+          \"\n    契約書のリーガルチェックと品質評価\n    \"\"\"\n    import re\n    \n    # 必須条項のチェック項目定義\n\
+          \    legal_checks = {\n        \"業務委託契約\": [\n            \"業務内容\", \"委託期間\"\
+          , \"報酬\", \"支払\", \"知的財産\", \"秘密保持\", \"損害賠償\", \"契約解除\", \"管轄\"\n     \
+          \   ],\n        \"秘密保持契約\": [\n            \"秘密情報\", \"定義\", \"保持義務\", \"\
+          利用目的\", \"返還\", \"廃棄\", \"有効期間\", \"損害賠償\"\n        ],\n        \"雇用契約\"\
+          : [\n            \"労働条件\", \"就業時間\", \"休日\", \"給与\", \"退職\", \"就業規則\", \"\
+          社会保険\", \"雇用期間\"\n        ]\n    }\n    \n    # デフォルトのチェック項目\n    default_checks\
+          \ = [\"契約期間\", \"当事者\", \"権利義務\", \"対価\", \"解除\", \"損害賠償\", \"準拠法\", \"\
+          管轄\"]\n    \n    # 契約タイプに応じたチェック項目を選択\n    if \"業務委託\" in contract_type:\n\
+          \        check_items = legal_checks[\"業務委託契約\"]\n    elif \"秘密保持\" in contract_type\
+          \ or \"NDA\" in contract_type:\n        check_items = legal_checks[\"秘密保持契約\"\
+          ]\n    elif \"雇用\" in contract_type:\n        check_items = legal_checks[\"\
+          雇用契約\"]\n    else:\n        check_items = default_checks\n    \n    # チェック結果の初期化\n\
+          \    present_clauses = []\n    missing_clauses = []\n    risk_warnings =\
+          \ []\n    improvement_suggestions = []\n    \n    # 必須条項のチェック\n    for clause\
+          \ in check_items:\n        if clause in contract_text:\n            present_clauses.append(clause)\n\
+          \        else:\n            missing_clauses.append(clause)\n    \n    #\
+          \ リスク項目のチェック\n    risk_patterns = {\n        \"曖昧な表現\": [\"適宜\", \"適切に\"\
+          , \"必要に応じて\", \"相当な\", \"適当な\"],\n        \"期限の欠如\": not bool(re.search(r'\\\
+          d{4}年\\d{1,2}月\\d{1,2}日|\\d+日以内|\\d+ヶ月|\\d+年', contract_text)),\n      \
+          \  \"金額の未記載\": not bool(re.search(r'円|￥|金|料|費|額', contract_text)),\n   \
+          \     \"署名欄の欠如\": \"署名\" not in contract_text and \"記名\" not in contract_text\n\
+          \    }\n    \n    for risk_type, condition in risk_patterns.items():\n \
+          \       if isinstance(condition, bool) and condition:\n            risk_warnings.append(risk_type)\n\
+          \        elif isinstance(condition, list) and any(word in contract_text\
+          \ for word in condition):\n            risk_warnings.append(risk_type)\n\
+          \    \n    # 改善提案の生成\n    if missing_clauses:\n        improvement_suggestions.append(f\"\
+          欠落条項の追加検討: {', '.join(missing_clauses[:3])}\")\n    \n    if \"曖昧な表現\" in\
+          \ risk_warnings:\n        improvement_suggestions.append(\"曖昧な表現を具体的な条件に修正することを推奨\"\
+          )\n    \n    if \"期限の欠如\" in risk_warnings:\n        improvement_suggestions.append(\"\
+          具体的な期日・期限の明記を推奨\")\n    \n    if \"金額の未記載\" in risk_warnings:\n        improvement_suggestions.append(\"\
+          対価・報酬の具体的な記載を推奨\")\n    \n    if not improvement_suggestions:\n        improvement_suggestions.append(\"\
+          適切な契約書構成です。法務部門での最終確認を推奨\")\n    \n    # 契約書の完成度スコア算出\n    total_items =\
+          \ len(check_items)\n    present_items = len(present_clauses)\n    completeness_score\
+          \ = (present_items / total_items) * 100 if total_items > 0 else 0\n    \n\
+          \    # リスクレベルの判定\n    risk_count = len(risk_warnings)\n    missing_count\
+          \ = len(missing_clauses)\n    \n    if risk_count == 0 and missing_count\
+          \ <= 1:\n        risk_level = \"低\"\n        overall_grade = \"A\"\n   \
+          \ elif risk_count <= 1 and missing_count <= 2:\n        risk_level = \"\
+          中\"\n        overall_grade = \"B\"\n    elif risk_count <= 2 and missing_count\
+          \ <= 3:\n        risk_level = \"中\"\n        overall_grade = \"C\"\n   \
+          \ else:\n        risk_level = \"高\"\n        overall_grade = \"D\"\n   \
+          \ \n    # Word文書化のためのファイル名生成\n    import datetime\n    today = datetime.date.today().strftime(\"\
+          %Y%m%d\")\n    filename = f\"{contract_type}_{today}.docx\"\n    \n    return\
+          \ {\n        \"completeness_score\": round(completeness_score, 1),\n   \
+          \     \"present_clauses\": present_clauses,\n        \"missing_clauses\"\
+          : missing_clauses,\n        \"risk_warnings\": risk_warnings,\n        \"\
+          risk_level\": risk_level,\n        \"overall_grade\": overall_grade,\n \
+          \       \"improvement_suggestions\": improvement_suggestions,\n        \"\
+          total_check_items\": total_items,\n        \"contract_filename\": filename,\n\
+          \        \"legal_review_status\": \"完了\"\n    }\n"
+        code_language: python3
+        desc: 契約書のリーガルチェックと品質評価
+        error_strategy: fail-branch
+        outputs:
+          completeness_score:
+            children: null
+            type: number
+          contract_filename:
+            children: null
+            type: string
+          improvement_suggestions:
+            children: null
+            type: array[string]
+          legal_review_status:
+            children: null
+            type: string
+          missing_clauses:
+            children: null
+            type: array[string]
+          overall_grade:
+            children: null
+            type: string
+          present_clauses:
+            children: null
+            type: array[string]
+          risk_level:
+            children: null
+            type: string
+          risk_warnings:
+            children: null
+            type: array[string]
+          total_check_items:
+            children: null
+            type: number
+        selected: false
+        title: リーガルチェック処理
+        type: code
+        variables:
+        - value_selector:
+          - contract_generation_node
+          - text
+          variable: contract_text
+        - value_selector:
+          - start_node
+          - contract_type
+          variable: contract_type
+      height: 118
+      id: legal_review_node
+      position:
+        x: 650
+        y: 200
+      positionAbsolute:
+        x: 650
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '## 📄 契約書ドラフト完成！
+
+          **📊 完成度スコア: {{#legal_review_node.completeness_score#}}%** **⚖️ リスクレベル: {{#legal_review_node.risk_level#}}**
+          **🎯 総合評価: {{#legal_review_node.overall_grade#}}グレード**
+
+          ---
+
+          ## 📋 Word文書用契約書（コピー＆ペースト対応）
+
+          ▼ **以下をすべて選択してWordにコピーしてください** ▼
+
+          ``` {{#contract_generation_node.text#}} ```
+
+          ▲ **ここまでをWordにコピー** ▲
+
+          ---
+
+          ## 💾 Word文書化の手順
+
+          **推奨ファイル名**: `{{#legal_review_node.contract_filename#}}`
+
+          ### 📝 **簡単3ステップ** 1. **上記の契約書本文をすべて選択してコピー** 2. **Microsoft Wordを開いて新規文書に貼り付け**
+          3. **フォント調整**（MS明朝 12pt推奨）して保存
+
+          ### 🎨 **Word書式設定（推奨）** - **フォント**: MS明朝または游明朝 - **サイズ**: 12pt - **行間**:
+          1.5倍 - **余白**: 上下左右 25mm - **ページ設定**: A4縦
+
+          ---
+
+          ## 🔍 リーガルチェック結果
+
+          ### ✅ **確認済み条項** ({{#legal_review_node.total_check_items#}}項目中) {{#legal_review_node.present_clauses#}}
+
+          ### ⚠️ **要確認事項** {{#legal_review_node.missing_clauses#}}
+
+          ### 🚨 **リスク警告** {{#legal_review_node.risk_warnings#}}
+
+          ### 💡 **改善提案** {{#legal_review_node.improvement_suggestions#}}
+
+          ---
+
+          ## ⚠️ 重要事項・免責事項
+
+          ### 🛡️ **法的確認事項** - このひな形は一般的な条項に基づいています - 個別案件の特殊事情は考慮されていません - 重要な契約は**必ず弁護士等の専門家に相談**してください
+          - 最新の法改正に対応しているか要確認
+
+          ### 🎯 **次のアクション** 1. **内容精査**: 契約内容の詳細確認 2. **法務レビュー**: 専門部門での最終チェック 3.
+          **相手方協議**: 条件・条項の調整 4. **正式締結**: 署名・捺印による契約成立
+
+          ### 📞 **サポート** - 【〇〇を入力】となっている箇所は手動で修正してください - Word文書での編集・カスタマイズが可能です -
+          印刷してそのまま使用できます
+
+          契約書の作成お疲れ様でした！ 💼✨'
+        desc: ''
+        selected: false
+        title: 契約書ドラフト完成
+        type: answer
+        variables: []
+      height: 943
+      id: final_answer_node
+      position:
+        x: 950
+        y: 200
+      positionAbsolute:
+        x: 950
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: -283.6
+      y: -90.20000000000005
+      zoom: 0.8

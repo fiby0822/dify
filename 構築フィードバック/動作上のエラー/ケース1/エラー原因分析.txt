@@ -1,0 +1,44 @@
+## エラー原因分析：inventory_check_workflow_4892.yml
+
+### 1. logical_operatorフィールドの欠落
+**問題箇所**: IF_ELSEノードの各ケース（case_id: '1', '2', '3'）
+**エラー内容**: cases.0.logical_operator Field required
+**原因**: 各ケースに`logical_operator`フィールドが設定されていない
+
+**該当箇所**:
+```yaml
+- case_id: '1'
+  conditions:
+    - comparison_operator: '>='
+      id: 'condition-1'
+      value: '100'
+      variable_selector:
+        - start-1733025084892
+        - stock_quantity
+  # logical_operator: and が欠落
+```
+
+**修正方法**: 各ケースに`logical_operator: and`を追加
+
+### 2. 比較演算子のエラー
+**問題箇所**: 全ての条件で`>=`を使用
+**エラー内容**: comparison_operator Input should be... [≥が期待されている]
+**原因**: ASCIIの`>=`がサポートされていない（Difyはエラーメッセージで≥を要求）
+
+**矛盾点**: 
+- コーディングルールでは「ASCII文字（>=）を使用」と明記
+- 実際のDifyではUnicode文字（≥）を要求
+- これはルールと実装の不一致
+
+### 3. バージョンの問題
+**問題**: version: 0.1.1（古いバージョン）
+**推奨**: version: 0.3.0を使用すべき
+
+### 4. その他の構造的問題
+- workflowモードを使用（advanced-chatモードが推奨）
+- dependenciesフィールドの欠落
+- app.use_icon_as_answer_iconの欠落
+
+### まとめ
+主要なエラー原因は`logical_operator`の欠落と、比較演算子のASCII/Unicode問題です。
+コーディングルールと実際のDifyの要求が矛盾している点が明らかになりました。

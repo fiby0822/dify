@@ -1,0 +1,577 @@
+app:
+  description: "注文処理自動分類システム - IF_ELSEコンポーネントの動作検証用"
+  icon: "📦"
+  icon_background: "#E3F2FD"
+  mode: advanced-chat
+  name: "注文処理自動分類システム"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: "注文処理自動分類システムへようこそ。注文情報（金額、会員種別、配送方法）を入力してください。"
+    suggested_questions:
+      - "注文金額15000円、プレミアム会員、express配送"
+      - "注文金額7500円、通常会員、standard配送"
+      - "注文金額3000円、非会員、配送方法未指定"
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: code
+        id: start-data_parser-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: data_parser
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: code
+          targetType: if-else
+        id: data_parser-amount_check-edge
+        selected: false
+        source: data_parser
+        sourceHandle: source
+        target: amount_check
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: amount_check-member_check_high-edge
+        selected: false
+        source: amount_check
+        sourceHandle: high_amount_case
+        target: member_check_high
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: amount_check-member_check_medium-edge
+        selected: false
+        source: amount_check
+        sourceHandle: medium_amount_case
+        target: member_check_medium
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: amount_check-member_check_low-edge
+        selected: false
+        source: amount_check
+        sourceHandle: false
+        target: member_check_low
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: member_check_high-delivery_check_premium-edge
+        selected: false
+        source: member_check_high
+        sourceHandle: premium_member_case
+        target: delivery_check_premium
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: member_check_high-high_regular_answer-edge
+        selected: false
+        source: member_check_high
+        sourceHandle: regular_member_case
+        target: high_regular_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: member_check_high-high_guest_answer-edge
+        selected: false
+        source: member_check_high
+        sourceHandle: false
+        target: high_guest_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: member_check_medium-medium_premium_answer-edge
+        selected: false
+        source: member_check_medium
+        sourceHandle: premium_member_case
+        target: medium_premium_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: member_check_medium-medium_regular_answer-edge
+        selected: false
+        source: member_check_medium
+        sourceHandle: false
+        target: medium_regular_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: member_check_low-low_premium_answer-edge
+        selected: false
+        source: member_check_low
+        sourceHandle: premium_member_case
+        target: low_premium_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: member_check_low-low_other_answer-edge
+        selected: false
+        source: member_check_low
+        sourceHandle: false
+        target: low_other_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: delivery_check_premium-express_premium_answer-edge
+        selected: false
+        source: delivery_check_premium
+        sourceHandle: express_delivery_case
+        target: express_premium_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: delivery_check_premium-standard_premium_answer-edge
+        selected: false
+        source: delivery_check_premium
+        sourceHandle: standard_delivery_case
+        target: standard_premium_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: delivery_check_premium-default_premium_answer-edge
+        selected: false
+        source: delivery_check_premium
+        sourceHandle: false
+        target: default_premium_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "ユーザー入力の受付"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          code: "def main(user_input):\n    import re\n    \n    text = user_input.lower()\n    \n    amount_match = re.search(r'(\\d+)[円]?', text)\n    amount = int(amount_match.group(1)) if amount_match else 0\n    \n    member_type = 'guest'\n    if 'プレミアム' in text:\n        member_type = 'premium'\n    elif '通常会員' in text:\n        member_type = 'regular'\n    \n    delivery = None\n    if 'express' in text:\n        delivery = 'express'\n    elif 'standard' in text:\n        delivery = 'standard'\n    \n    return {\n        'amount': amount,\n        'member_type': member_type,\n        'delivery': delivery\n    }"
+          code_language: python3
+          outputs:
+            amount:
+              type: number
+              description: "注文金額"
+            member_type:
+              type: string
+              description: "会員種別"
+            delivery:
+              type: string
+              description: "配送方法"
+          selected: false
+          title: "データ解析"
+          type: code
+          variables:
+            - value_selector:
+                - sys
+                - query
+              variable: user_input
+        height: 98
+        id: data_parser
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - id: high_amount_case
+              case_id: high_amount_case
+              conditions:
+                - variable_selector:
+                    - data_parser
+                    - amount
+                  comparison_operator: "≥"
+                  value: 10000
+            - id: medium_amount_case
+              case_id: medium_amount_case
+              conditions:
+                - variable_selector:
+                    - data_parser
+                    - amount
+                  comparison_operator: "≥"
+                  value: 5000
+                - variable_selector:
+                    - data_parser
+                    - amount
+                  comparison_operator: "<"
+                  value: 10000
+              logical_operator: and
+          selected: false
+          title: "金額判定"
+          type: if-else
+        height: 146
+        id: amount_check
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - id: premium_member_case
+              case_id: premium_member_case
+              conditions:
+                - variable_selector:
+                    - data_parser
+                    - member_type
+                  comparison_operator: is
+                  value: premium
+            - id: regular_member_case
+              case_id: regular_member_case
+              conditions:
+                - variable_selector:
+                    - data_parser
+                    - member_type
+                  comparison_operator: is
+                  value: regular
+          selected: false
+          title: "会員判定（高額）"
+          type: if-else
+        height: 122
+        id: member_check_high
+        position:
+          x: 950
+          y: 50
+        positionAbsolute:
+          x: 950
+          y: 50
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - id: premium_member_case
+              case_id: premium_member_case
+              conditions:
+                - variable_selector:
+                    - data_parser
+                    - member_type
+                  comparison_operator: is
+                  value: premium
+          selected: false
+          title: "会員判定（中額）"
+          type: if-else
+        height: 98
+        id: member_check_medium
+        position:
+          x: 950
+          y: 200
+        positionAbsolute:
+          x: 950
+          y: 200
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - id: premium_member_case
+              case_id: premium_member_case
+              conditions:
+                - variable_selector:
+                    - data_parser
+                    - member_type
+                  comparison_operator: is
+                  value: premium
+          selected: false
+          title: "会員判定（低額）"
+          type: if-else
+        height: 98
+        id: member_check_low
+        position:
+          x: 950
+          y: 350
+        positionAbsolute:
+          x: 950
+          y: 350
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - id: express_delivery_case
+              case_id: express_delivery_case
+              conditions:
+                - variable_selector:
+                    - data_parser
+                    - delivery
+                  comparison_operator: is
+                  value: express
+            - id: standard_delivery_case
+              case_id: standard_delivery_case
+              conditions:
+                - variable_selector:
+                    - data_parser
+                    - delivery
+                  comparison_operator: is
+                  value: standard
+          selected: false
+          title: "配送判定"
+          type: if-else
+        height: 122
+        id: delivery_check_premium
+        position:
+          x: 1250
+          y: 50
+        positionAbsolute:
+          x: 1250
+          y: 50
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "プレミアム会員様の高額注文（{{#data_parser.amount#}}円）をexpress配送で承りました。\n\n特典：\n- 20%割引適用\n- 即日配送手配\n- 優先カスタマーサポート\n- ポイント3倍付与"
+          selected: false
+          title: "優先処理（Express）"
+          type: answer
+        height: 90
+        id: express_premium_answer
+        position:
+          x: 1550
+          y: 10
+        positionAbsolute:
+          x: 1550
+          y: 10
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "プレミアム会員様の高額注文（{{#data_parser.amount#}}円）を通常配送で承りました。\n\n特典：\n- 20%割引適用\n- 2-3営業日配送\n- 優先カスタマーサポート\n- ポイント2倍付与"
+          selected: false
+          title: "優先処理（Standard）"
+          type: answer
+        height: 90
+        id: standard_premium_answer
+        position:
+          x: 1550
+          y: 120
+        positionAbsolute:
+          x: 1550
+          y: 120
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "プレミアム会員様の高額注文（{{#data_parser.amount#}}円）を承りました。\n\n特典：\n- 20%割引適用\n- 標準配送（3-5営業日）\n- 優先カスタマーサポート\n- ポイント2倍付与"
+          selected: false
+          title: "優先処理（Default）"
+          type: answer
+        height: 90
+        id: default_premium_answer
+        position:
+          x: 1550
+          y: 230
+        positionAbsolute:
+          x: 1550
+          y: 230
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "通常会員様の高額注文（{{#data_parser.amount#}}円）を承りました。\n\n特典：\n- 10%割引適用\n- 標準配送\n- ポイント1.5倍付与"
+          selected: false
+          title: "通常処理（高額）"
+          type: answer
+        height: 90
+        id: high_regular_answer
+        position:
+          x: 1250
+          y: 200
+        positionAbsolute:
+          x: 1250
+          y: 200
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "高額注文（{{#data_parser.amount#}}円）を承りました。\n\n会員登録いただくと以下の特典があります：\n- 10%割引\n- ポイント付与\n- 優先配送\n\n今すぐ会員登録しますか？"
+          selected: false
+          title: "ゲスト処理（高額）"
+          type: answer
+        height: 90
+        id: high_guest_answer
+        position:
+          x: 1250
+          y: 310
+        positionAbsolute:
+          x: 1250
+          y: 310
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "プレミアム会員様の注文（{{#data_parser.amount#}}円）を承りました。\n\n特典：\n- 15%割引適用\n- ポイント2倍付与\n- 次回使える500円クーポン"
+          selected: false
+          title: "プレミアム処理（中額）"
+          type: answer
+        height: 90
+        id: medium_premium_answer
+        position:
+          x: 1250
+          y: 420
+        positionAbsolute:
+          x: 1250
+          y: 420
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "注文（{{#data_parser.amount#}}円）を承りました。\n\n標準配送にて3-5営業日でお届けします。\nポイントを付与いたしました。"
+          selected: false
+          title: "通常処理（中額）"
+          type: answer
+        height: 90
+        id: medium_regular_answer
+        position:
+          x: 1250
+          y: 530
+        positionAbsolute:
+          x: 1250
+          y: 530
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "プレミアム会員様の少額注文（{{#data_parser.amount#}}円）を承りました。\n\n送料無料・ポイント付与いたしました。"
+          selected: false
+          title: "プレミアム処理（低額）"
+          type: answer
+        height: 90
+        id: low_premium_answer
+        position:
+          x: 1250
+          y: 640
+        positionAbsolute:
+          x: 1250
+          y: 640
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "少額注文（{{#data_parser.amount#}}円）を承りました。\n\n5,000円以上のご注文で送料無料となります。\n会員登録で次回使える10%OFFクーポンプレゼント中！"
+          selected: false
+          title: "簡易処理"
+          type: answer
+        height: 90
+        id: low_other_answer
+        position:
+          x: 1250
+          y: 750
+        positionAbsolute:
+          x: 1250
+          y: 750
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.5

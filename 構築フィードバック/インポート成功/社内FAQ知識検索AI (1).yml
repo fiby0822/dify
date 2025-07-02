@@ -1,0 +1,496 @@
+app:
+  description: 社内FAQナレッジベースから根拠付きで正確な回答を提供するAIアシスタント
+  icon: 💡
+  icon_background: '#3B82F6'
+  mode: advanced-chat
+  name: 社内FAQ知識検索AI
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/openai:0.0.26@c1e643ac6a7732f6333a783320b4d3026fa5e31d8e7026375b98d44418d33f26
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions: []
+      allowed_file_types: []
+      allowed_file_upload_methods: []
+      enabled: false
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        image_file_size_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods: []
+      number_limits: 3
+    opening_statement: 'こんにちは！社内FAQ知識検索AIです。
+
+
+      社内の各種手続きや制度について、正確で根拠のある回答を提供いたします。
+
+
+      📚 豊富なナレッジベースから検索
+
+      🎯 根拠となる文書を明示
+
+      ⚡ 迅速で正確な回答
+
+      🔍 関連情報も合わせて提案
+
+
+      何についてお調べしますか？'
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+    - 有給休暇の申請方法を教えてください
+    - 在宅勤務制度について詳しく知りたいです
+    - 経費精算の手続きを教えてください
+    - 人事評価制度について説明してください
+    suggested_questions_after_answer:
+      enabled: true
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: start
+        targetType: knowledge-retrieval
+      id: start-knowledge-edge
+      selected: false
+      source: start_node
+      sourceHandle: source
+      target: knowledge_retrieval_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: knowledge-retrieval
+        targetType: if-else
+      id: knowledge-check-edge
+      selected: false
+      source: knowledge_retrieval_node
+      sourceHandle: source
+      target: knowledge_check_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: check-found-edge
+      selected: false
+      source: knowledge_check_node
+      sourceHandle: knowledge_found
+      target: answer_generation_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: check-notfound-edge
+      selected: false
+      source: knowledge_check_node
+      sourceHandle: 'false'
+      target: no_knowledge_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: llm
+      id: answer-suggest-edge
+      selected: false
+      source: answer_generation_node
+      sourceHandle: source
+      target: suggestion_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: suggest-final-edge
+      selected: false
+      source: suggestion_node
+      sourceHandle: source
+      target: final_answer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: noknowledge-answer-edge
+      selected: false
+      source: no_knowledge_node
+      sourceHandle: source
+      target: no_knowledge_answer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: '社内制度や手続きについて何でもお聞きください。
+
+          ナレッジベースから最適な回答を検索いたします。'
+        selected: false
+        title: 開始
+        type: start
+        variables: []
+      height: 130
+      id: start_node
+      position:
+        x: 50
+        y: 200
+      positionAbsolute:
+        x: 50
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        dataset_ids:
+        - bcV75jAonrEqzc+rRcYG2xQYmn8U1gcAZUeF4kLH93L06yWq+3JJiBI+QtXhJ0Hj
+        desc: 社内FAQナレッジベースから関連情報を検索
+        multiple_retrieval_config:
+          reranking_enable: true
+          reranking_mode: weighted_score
+          top_k: 4
+          weights:
+            keyword_setting:
+              keyword_weight: 0.3
+            vector_setting:
+              embedding_model_name: text-embedding-3-large
+              embedding_provider_name: langgenius/openai/openai
+              vector_weight: 0.7
+        query_variable_selector:
+        - sys
+        - query
+        retrieval_mode: multiple
+        selected: false
+        title: ナレッジ検索
+        top_k: 5
+        type: knowledge-retrieval
+      height: 136
+      id: knowledge_retrieval_node
+      position:
+        x: 350
+        y: 200
+      positionAbsolute:
+        x: 350
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        cases:
+        - case_id: knowledge_found
+          conditions:
+          - comparison_operator: not empty
+            id: knowledge_exists_condition
+            value: ''
+            varType: string
+            variable_selector:
+            - knowledge_retrieval_node
+            - result
+          id: knowledge_found
+          logical_operator: and
+        desc: ナレッジ検索結果の存在確認
+        selected: false
+        title: 検索結果判定
+        type: if-else
+      height: 154
+      id: knowledge_check_node
+      position:
+        x: 650
+        y: 200
+      positionAbsolute:
+        x: 650
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - knowledge_retrieval_node
+          - result
+        desc: ナレッジベースから根拠付き回答を生成
+        model:
+          completion_params:
+            temperature: 0.3
+          mode: chat
+          name: gpt-4
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: 'あなたは社内FAQ専門のAIアシスタントです。
+
+            提供されたナレッジベースの情報を基に、正確で分かりやすい回答を提供してください。
+
+
+            ## 回答ルール
+
+            1. **根拠の明示**: 回答の根拠となる文書名や項目を必ず明記する
+
+            2. **正確性重視**: ナレッジベースにない情報は推測しない
+
+            3. **具体性**: 手続きの場合は具体的なステップを示す
+
+            4. **親切さ**: 関連する注意点や補足情報も含める
+
+            5. **構造化**: 見出しや箇条書きを使って読みやすくする
+
+
+            ## 回答フォーマット
+
+            **📋 回答**
+
+            [質問に対する具体的な回答]
+
+
+            **📚 根拠**
+
+            - [参照した文書名・項目名]
+
+            - [該当する規則や制度名]
+
+
+            **⚠️ 注意点**
+
+            [手続き上の注意点や期限など]
+
+
+            **🔗 関連情報**
+
+            [関連する制度や手続きがあれば記載]'
+        - id: user-prompt
+          role: user
+          text: '質問: {{#sys.query#}}
+
+
+            上記の質問について、提供されたナレッジベースの情報を基に、根拠を明示して正確に回答してください。'
+        selected: false
+        structured_output_enabled: false
+        title: 回答生成
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 118
+      id: answer_generation_node
+      position:
+        x: 950
+        y: 150
+      positionAbsolute:
+        x: 950
+        y: 150
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: ナレッジベースに情報がない場合の対応
+        model:
+          completion_params:
+            temperature: 0.5
+          mode: chat
+          name: gpt-4
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: 'あなたは社内FAQ専門のAIアシスタントです。
+
+            ナレッジベースに該当する情報が見つからない場合の対応を行ってください。
+
+
+            ## 対応方針
+
+            1. 情報が見つからないことを丁寧に伝える
+
+            2. 類似の質問や関連する可能性のある分野を提案
+
+            3. 適切な問い合わせ先を案内
+
+            4. 再質問を促す'
+        - id: user-prompt
+          role: user
+          text: '質問: {{#sys.query#}}
+
+
+            申し訳ございませんが、この質問に関する情報がナレッジベースに見つかりませんでした。
+
+            適切な案内と代替案を提供してください。'
+        selected: false
+        structured_output_enabled: false
+        title: 情報不足対応
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 118
+      id: no_knowledge_node
+      position:
+        x: 950
+        y: 300
+      positionAbsolute:
+        x: 950
+        y: 300
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 関連質問の提案生成
+        model:
+          completion_params:
+            temperature: 0.4
+          mode: chat
+          name: gpt-4
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: 'ユーザーの質問と提供した回答を踏まえて、関連する質問を3つ提案してください。
+
+            社内制度や手続きに関する実用的な質問を提案してください。
+
+
+            フォーマット:
+
+            **💡 こちらもよくある質問です**
+
+            • [関連質問1]
+
+            • [関連質問2]
+
+            • [関連質問3]'
+        - id: user-prompt
+          role: user
+          text: '元の質問: {{#sys.query#}}
+
+
+            提供した回答: {{#answer_generation_node.text#}}
+
+
+            上記を踏まえて、関連する質問を3つ提案してください。'
+        selected: false
+        structured_output_enabled: false
+        title: 関連質問提案
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 118
+      id: suggestion_node
+      position:
+        x: 1250
+        y: 150
+      positionAbsolute:
+        x: 1250
+        y: 150
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '{{#answer_generation_node.text#}}
+
+          ---
+
+          {{#suggestion_node.text#}}
+
+          ---
+
+          💬 **他にご質問がございましたら、お気軽にお聞きください！**'
+        desc: ''
+        selected: false
+        title: 最終回答
+        type: answer
+        variables: []
+      height: 155
+      id: final_answer_node
+      position:
+        x: 1550
+        y: 150
+      positionAbsolute:
+        x: 1550
+        y: 150
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '{{#no_knowledge_node.text#}}
+
+          ---
+
+          🆘 **お困りの場合は** • 人事部（内線: 1234）までお問い合わせください • 社内ポータルサイトの「よくある質問」もご確認ください •
+          質問の内容を変えて再度お試しください
+
+          💬 **他にご質問がございましたら、お気軽にお聞きください！**'
+        desc: ''
+        selected: false
+        title: 情報不足回答
+        type: answer
+        variables: []
+      height: 217
+      id: no_knowledge_answer_node
+      position:
+        x: 1250
+        y: 300
+      positionAbsolute:
+        x: 1250
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: -207.30744521983456
+      y: 70.01005987034978
+      zoom: 0.9450419589949746

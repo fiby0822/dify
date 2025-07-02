@@ -1,0 +1,723 @@
+app:
+  description: 問い合わせ内容を段階的に確認しながら、社内DB、ベテラン知見、メーカー確認の順で最適な回答を構築する高信頼性ワークフロー
+  icon: 🔍
+  icon_background: "#4A90E2"
+  mode: advanced-chat
+  name: 段階的確認型問い合わせ対応システム
+  use_icon_as_answer_icon: false
+
+kind: app
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+        - .PDF
+        - .DOCX
+        - .TXT
+        - .CSV
+      allowed_file_types:
+        - document
+      allowed_file_upload_methods:
+        - local_file
+      enabled: true
+      number_limits: 3
+    opening_statement: |
+      段階的確認型問い合わせ対応システムへようこそ。
+      
+      このシステムは、お客様からの問い合わせに対して、以下の順序で確認を行い、
+      最も確実で適切な回答を提供します：
+      
+      1. 社内データベース確認
+      2. ベテラン社員の知見確認
+      3. メーカーへの確認（必要に応じて）
+      
+      問い合わせ内容と、お客様の連絡方法（電話/FAX）をお知らせください。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - 在庫状況を確認したい（メーカー名：◯◯、商品名：◯◯）
+      - 代替商品の提案を希望（用途：◯◯、予算：◯◯円）
+      - 納期の確認（注文番号：◯◯、商品名：◯◯）
+      - 技術的な仕様について質問（製品型番：◯◯、確認事項：◯◯）
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ja-JP
+      voice: ja-JP-NaokiNeural
+
+  graph:
+    edges:
+      - data:
+          isInIteration: false
+          targetHandle: target
+          sourceHandle: source
+        id: start-classification-edge
+        source: start_node
+        sourceHandle: source
+        target: inquiry_classification_node
+        targetHandle: target
+        type: custom
+      - data:
+          isInIteration: false
+          targetHandle: target
+          sourceHandle: source
+        id: classification-db_check-edge
+        source: inquiry_classification_node
+        sourceHandle: source
+        target: db_check_node
+        targetHandle: target
+        type: custom
+      - data:
+          isInIteration: false
+          targetHandle: target
+          sourceHandle: source
+        id: db_check-first_judgment
+        source: db_check_node
+        sourceHandle: source
+        target: first_judgment_node
+        targetHandle: target
+        type: custom
+      - data:
+          isInIteration: false
+          targetHandle: target
+          sourceHandle: true
+        id: first_judgment-response-edge
+        source: first_judgment_node
+        sourceHandle: true
+        target: response_generation_node
+        targetHandle: target
+        type: custom
+      - data:
+          isInIteration: false
+          targetHandle: target
+          sourceHandle: false
+        id: first_judgment-veteran-edge
+        source: first_judgment_node
+        sourceHandle: false
+        target: veteran_check_node
+        targetHandle: target
+        type: custom
+      - data:
+          isInIteration: false
+          targetHandle: target
+          sourceHandle: source
+        id: veteran-second_judgment-edge
+        source: veteran_check_node
+        sourceHandle: source
+        target: second_judgment_node
+        targetHandle: target
+        type: custom
+      - data:
+          isInIteration: false
+          targetHandle: target
+          sourceHandle: true
+        id: second_judgment-response-edge
+        source: second_judgment_node
+        sourceHandle: true
+        target: response_generation_node
+        targetHandle: target
+        type: custom
+      - data:
+          isInIteration: false
+          targetHandle: target
+          sourceHandle: false
+        id: second_judgment-manufacturer-edge
+        source: second_judgment_node
+        sourceHandle: false
+        target: manufacturer_prep_node
+        targetHandle: target
+        type: custom
+      - data:
+          isInIteration: false
+          targetHandle: target
+          sourceHandle: source
+        id: manufacturer-interim-edge
+        source: manufacturer_prep_node
+        sourceHandle: source
+        target: interim_response_node
+        targetHandle: target
+        type: custom
+      - data:
+          isInIteration: false
+          targetHandle: target
+          sourceHandle: source
+        id: interim-status-edge
+        source: interim_response_node
+        sourceHandle: source
+        target: status_management_node
+        targetHandle: target
+        type: custom
+      - data:
+          isInIteration: false
+          targetHandle: target
+          sourceHandle: source
+        id: status-final-edge
+        source: status_management_node
+        sourceHandle: source
+        target: final_answer_node
+        targetHandle: target
+        type: custom
+      - data:
+          isInIteration: false
+          targetHandle: target
+          sourceHandle: source
+        id: response-status-edge
+        source: response_generation_node
+        sourceHandle: source
+        target: status_management_node
+        targetHandle: target
+        type: custom
+
+    nodes:
+      - data:
+          title: 問い合わせ受付
+          type: start
+          variables:
+            - label: 問い合わせ内容
+              max_length: 2000
+              required: true
+              type: paragraph
+              variable: inquiry_content
+            - label: 連絡方法
+              options:
+                - TEL
+                - FAX
+              required: true
+              type: select
+              variable: contact_method
+            - label: お客様情報（任意）
+              max_length: 500
+              required: false
+              type: text-input
+              variable: customer_info
+        height: 157
+        id: start_node
+        position:
+          x: 50
+          y: 250
+        type: start
+        width: 244
+
+      - data:
+          context:
+            enabled: true
+            variable_selector:
+              - start_node
+              - inquiry_content
+          desc: サンプルの7パターンに基づく分類と情報抽出
+          memory:
+            role_prefix:
+              assistant: AI
+              user: ユーザー
+          model:
+            completion_params:
+              max_tokens: 1000
+              temperature: 0.3
+            mode: chat
+            name: gpt-4o-mini
+            provider: openai
+          prompt_template:
+            - role: system
+              text: |
+                あなたは問い合わせ分類の専門家です。以下の問い合わせパターンに基づいて分類と情報抽出を行ってください。
+
+                【問い合わせパターン】
+                1. 在庫確認（メーカー名、商品名、数量）
+                2. 代替商品提案（用途、予算、希望仕様）
+                3. 納期確認（注文番号、商品情報）
+                4. 価格問い合わせ（商品名、数量、見積条件）
+                5. 技術仕様確認（製品型番、確認項目）
+                6. 不具合・クレーム（症状、使用状況）
+                7. その他一般問い合わせ
+
+                【抽出項目】
+                - inquiry_type: 問い合わせタイプ（1-7の番号）
+                - manufacturer: メーカー名
+                - product_category: 商品カテゴリ
+                - specific_items: 具体的な確認事項
+                - urgency_level: 緊急度（high/medium/low）
+                - required_checks: 必要な確認事項リスト
+
+                JSON形式で出力してください。
+            - role: user
+              text: "{{#start_node.inquiry_content#}}"
+          selected: false
+          title: 問い合わせ分類
+          type: llm
+        height: 98
+        id: inquiry_classification_node
+        position:
+          x: 350
+          y: 250
+        type: llm
+        width: 244
+
+      - data:
+          code: |
+            import json
+            import datetime
+
+            # 分類結果の解析
+            try:
+                classification = json.loads(inquiry_classification)
+            except:
+                classification = {
+                    "inquiry_type": "7",
+                    "urgency_level": "medium",
+                    "required_checks": ["general_check"]
+                }
+
+            # 模擬的な社内DB確認
+            db_results = {
+                "stock_info": {},
+                "product_info": {},
+                "past_inquiries": [],
+                "internal_knowledge": {}
+            }
+
+            # 問い合わせタイプに応じた確認
+            if classification.get("inquiry_type") == "1":  # 在庫確認
+                db_results["stock_info"] = {
+                    "status": "checking",
+                    "warehouse_A": "確認中",
+                    "warehouse_B": "確認中",
+                    "last_update": datetime.datetime.now().isoformat()
+                }
+            elif classification.get("inquiry_type") == "2":  # 代替商品
+                db_results["product_info"] = {
+                    "alternatives": ["商品A", "商品B", "商品C"],
+                    "comparison": "詳細比較データ取得中"
+                }
+            
+            # 過去の類似問い合わせ検索
+            db_results["past_inquiries"] = [
+                {
+                    "date": "2024-12-01",
+                    "summary": "類似ケースあり",
+                    "resolution": "ベテラン確認後対応"
+                }
+            ]
+
+            # 社内で回答可能かの判定
+            can_answer_internally = False
+            confidence_score = 0.5
+
+            # 基本的な在庫情報があれば部分的に回答可能
+            if db_results["stock_info"] or db_results["product_info"]:
+                confidence_score = 0.7
+                if len(db_results["past_inquiries"]) > 0:
+                    confidence_score = 0.8
+
+            result = {
+                "db_check_results": db_results,
+                "can_answer_internally": confidence_score > 0.85,
+                "confidence_score": confidence_score,
+                "next_action": "veteran_check" if confidence_score < 0.85 else "generate_response"
+            }
+
+            return result
+          code_language: python3
+          desc: 社内データベースの確認処理
+          outputs:
+            db_check_results:
+              type: object
+            can_answer_internally:
+              type: boolean
+            confidence_score:
+              type: number
+            next_action:
+              type: string
+          selected: false
+          title: 社内DB確認
+          type: code
+          variables:
+            - value_selector:
+                - inquiry_classification_node
+                - text
+              variable: inquiry_classification
+        height: 98
+        id: db_check_node
+        position:
+          x: 650
+          y: 250
+        type: code
+        width: 244
+
+      - data:
+          cases:
+            - case_id: can_answer
+              conditions:
+                - comparison_operator: "="
+                  value: true
+                  variable_selector:
+                    - db_check_node
+                    - can_answer_internally
+              logical_operator: and
+          default_case_id: need_more_info
+          desc: 社内情報で回答可能か判定
+          title: 第1次判定
+          type: if-else
+        height: 98
+        id: first_judgment_node
+        position:
+          x: 950
+          y: 250
+        type: if-else
+        width: 244
+
+      - data:
+          context:
+            enabled: true
+            variable_selector:
+              - start_node
+              - inquiry_content
+          desc: ベテラン社員の知見を活用
+          memory:
+            role_prefix:
+              assistant: AI
+              user: ユーザー
+          model:
+            completion_params:
+              max_tokens: 1500
+              temperature: 0.4
+            mode: chat
+            name: gpt-4o-mini
+            provider: openai
+          prompt_template:
+            - role: system
+              text: |
+                あなたはベテラン社員の知識と経験を持つアドバイザーです。
+                
+                以下の観点から問い合わせに対する知見を提供してください：
+                1. 過去の類似ケースと対応方法
+                2. 特殊な条件や注意事項
+                3. 代替案や提案事項
+                4. メーカー確認が必要な項目
+                
+                社内DBの結果: {{#db_check_node.db_check_results#}}
+                
+                回答形式：
+                - veteran_insights: ベテランの知見
+                - special_considerations: 特別な配慮事項
+                - alternative_proposals: 代替提案
+                - manufacturer_check_items: メーカー確認必要項目
+                - can_answer_with_veteran: ベテラン知見で回答可能か（true/false）
+                - confidence_level: 確信度（0-1）
+            - role: user
+              text: "問い合わせ内容：{{#start_node.inquiry_content#}}"
+          selected: false
+          title: ベテラン知見活用
+          type: llm
+        height: 98
+        id: veteran_check_node
+        position:
+          x: 950
+          y: 450
+        type: llm
+        width: 244
+
+      - data:
+          cases:
+            - case_id: can_answer_veteran
+              conditions:
+                - comparison_operator: contains
+                  value: '"can_answer_with_veteran": true'
+                  variable_selector:
+                    - veteran_check_node
+                    - text
+              logical_operator: and
+          default_case_id: need_manufacturer
+          desc: ベテラン知見で回答可能か判定
+          title: 第2次判定
+          type: if-else
+        height: 98
+        id: second_judgment_node
+        position:
+          x: 1250
+          y: 450
+        type: if-else
+        width: 244
+
+      - data:
+          context:
+            enabled: true
+            variable_selector:
+              - start_node
+              - inquiry_content
+          desc: メーカーへの確認事項を整理
+          memory:
+            role_prefix:
+              assistant: AI
+              user: ユーザー
+          model:
+            completion_params:
+              max_tokens: 1000
+              temperature: 0.3
+            mode: chat
+            name: gpt-4o-mini
+            provider: openai
+          prompt_template:
+            - role: system
+              text: |
+                メーカーへの問い合わせ準備を行います。
+                
+                社内DB結果: {{#db_check_node.db_check_results#}}
+                ベテラン知見: {{#veteran_check_node.text#}}
+                
+                以下の形式で出力してください：
+                
+                【メーカー確認事項】
+                1. 優先度：高
+                   - 確認項目：
+                   - 理由：
+                
+                2. 優先度：中
+                   - 確認項目：
+                   - 理由：
+                
+                【問い合わせ文案】
+                件名：
+                本文：
+                
+                【必要情報】
+                - 型番：
+                - ロット番号：
+                - その他：
+            - role: user
+              text: "元の問い合わせ：{{#start_node.inquiry_content#}}"
+          selected: false
+          title: メーカー問い合わせ準備
+          type: llm
+        height: 98
+        id: manufacturer_prep_node
+        position:
+          x: 1250
+          y: 650
+        type: llm
+        width: 244
+
+      - data:
+          context:
+            enabled: true
+            variable_selector:
+              - start_node
+              - inquiry_content
+          desc: 確認中の暫定回答を生成
+          memory:
+            role_prefix:
+              assistant: AI
+              user: ユーザー
+          model:
+            completion_params:
+              max_tokens: 1500
+              temperature: 0.5
+            mode: chat
+            name: gpt-4o-mini
+            provider: openai
+          prompt_template:
+            - role: system
+              text: |
+                現在の確認状況を踏まえた暫定回答を作成してください。
+                
+                連絡方法：{{#start_node.contact_method#}}
+                
+                【含めるべき内容】
+                1. 現在確認できている事項
+                2. 確認中の事項と予想時間
+                3. 次のアクション
+                4. お客様への配慮
+                
+                社内DB結果：{{#db_check_node.db_check_results#}}
+                ベテラン知見：{{#veteran_check_node.text#}}
+                メーカー確認事項：{{#manufacturer_prep_node.text#}}
+                
+                丁寧で分かりやすい日本語で回答してください。
+            - role: user
+              text: "お客様の問い合わせ：{{#start_node.inquiry_content#}}"
+          selected: false
+          title: 暫定回答生成
+          type: llm
+        height: 98
+        id: interim_response_node
+        position:
+          x: 1550
+          y: 650
+        type: llm
+        width: 244
+
+      - data:
+          context:
+            enabled: true
+            variable_selector:
+              - start_node
+              - inquiry_content
+          desc: 収集した情報を統合して最適な回答を生成
+          memory:
+            role_prefix:
+              assistant: AI
+              user: ユーザー
+          model:
+            completion_params:
+              max_tokens: 2000
+              temperature: 0.4
+            mode: chat
+            name: gpt-4o-mini
+            provider: openai
+          prompt_template:
+            - role: system
+              text: |
+                収集した全ての情報を基に、お客様への最適な回答を作成してください。
+                
+                連絡方法：{{#start_node.contact_method#}}
+                お客様情報：{{#start_node.customer_info#}}
+                
+                利用可能な情報：
+                - 社内DB結果：{{#db_check_node.db_check_results#}}
+                - ベテラン知見：{{#veteran_check_node.text#}}
+                
+                【回答のポイント】
+                1. 明確で具体的な情報提供
+                2. 次のステップの明示
+                3. 問い合わせへの感謝
+                4. 追加質問への対応準備
+                
+                プロフェッショナルで温かみのある対応を心がけてください。
+            - role: user
+              text: "お客様の問い合わせ：{{#start_node.inquiry_content#}}"
+          selected: false
+          title: 統合回答生成
+          type: llm
+        height: 98
+        id: response_generation_node
+        position:
+          x: 1550
+          y: 250
+        type: llm
+        width: 244
+
+      - data:
+          code: |
+            import json
+            import datetime
+
+            # 各確認段階の状態を記録
+            status_record = {
+                "inquiry_id": f"INQ_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}",
+                "timestamp": datetime.datetime.now().isoformat(),
+                "contact_method": contact_method,
+                "customer_info": customer_info or "未登録",
+                "inquiry_content": inquiry_content,
+                "process_stages": {
+                    "db_check": {
+                        "completed": True,
+                        "confidence": db_confidence,
+                        "result_summary": "社内DB確認完了"
+                    },
+                    "veteran_check": {
+                        "completed": veteran_text is not None,
+                        "result_summary": "ベテラン知見確認" if veteran_text else "未実施"
+                    },
+                    "manufacturer_check": {
+                        "completed": manufacturer_text is not None,
+                        "status": "準備完了" if manufacturer_text else "不要",
+                        "follow_up_required": manufacturer_text is not None
+                    }
+                },
+                "response_provided": True,
+                "follow_up_tasks": []
+            }
+
+            # フォローアップタスクの生成
+            if manufacturer_text:
+                status_record["follow_up_tasks"].append({
+                    "task": "メーカーへの確認実施",
+                    "priority": "high",
+                    "due_date": datetime.datetime.now() + datetime.timedelta(days=1)
+                })
+
+            # エスカレーション判定
+            escalation_required = False
+            if "urgent" in inquiry_content.lower() or "至急" in inquiry_content:
+                escalation_required = True
+                status_record["escalation"] = {
+                    "required": True,
+                    "reason": "緊急案件",
+                    "notified_to": "上級管理者"
+                }
+
+            return {
+                "status_record": status_record,
+                "escalation_required": escalation_required,
+                "process_summary": f"問い合わせID: {status_record['inquiry_id']} - 処理ステータス記録完了"
+            }
+          code_language: python3
+          desc: 確認プロセスの状態管理とフォローアップ
+          outputs:
+            status_record:
+              type: object
+            escalation_required:
+              type: boolean
+            process_summary:
+              type: string
+          selected: false
+          title: 確認ステータス管理
+          type: code
+          variables:
+            - value_selector:
+                - start_node
+                - inquiry_content
+              variable: inquiry_content
+            - value_selector:
+                - start_node
+                - contact_method
+              variable: contact_method
+            - value_selector:
+                - start_node
+                - customer_info
+              variable: customer_info
+            - value_selector:
+                - db_check_node
+                - confidence_score
+              variable: db_confidence
+            - value_selector:
+                - veteran_check_node
+                - text
+              variable: veteran_text
+            - value_selector:
+                - manufacturer_prep_node
+                - text
+              variable: manufacturer_text
+        height: 98
+        id: status_management_node
+        position:
+          x: 1850
+          y: 450
+        type: code
+        width: 244
+
+      - data:
+          answer:
+            "{{#response_generation_node.text#}}\n\n{{#interim_response_node.text#}}\n\n
+            ---\n【処理ステータス】\n{{#status_management_node.process_summary#}}"
+          desc: 最終的な回答をお客様に提供
+          selected: false
+          title: 最終回答
+          type: answer
+        height: 98
+        id: final_answer_node
+        position:
+          x: 2150
+          y: 450
+        type: answer
+        width: 244
+
+  hash: f5e7d3a2b1c4

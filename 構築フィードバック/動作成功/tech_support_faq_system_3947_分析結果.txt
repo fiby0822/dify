@@ -1,0 +1,38 @@
+YMLファイル: tech_support_faq_system_3947.yml（技術サポートFAQシステム）
+分析日時: 2025-07-02
+
+【報告された問題】
+1. ナレッジが選択されていないものがあった
+
+【詳細分析結果】
+
+1. ナレッジ選択に関する分析：
+   - hardware_knowledge_node（行290-291）: dataset_idsが1つ指定されている（暗号化されたID形式）
+     - multiple_retrieval_configも詳細に設定されている（reranking有効、top_k: 4）
+   
+   - software_knowledge_node（行325-326）: dataset_idsが1つ指定されている（暗号化されたID形式）
+     - multiple_retrieval_configも詳細に設定されている（reranking有効、top_k: 4）
+   
+   - other_knowledge_node（行360-361）: dataset_idsが1つ指定されている（暗号化されたID形式）
+     - multiple_retrieval_configも詳細に設定されている（reranking有効、top_k: 4）
+
+   すべての知識検索ノードで：
+   - dataset_idsが正しく指定されている
+   - retrieval_modeがmultipleに設定されている
+   - rerankingが有効化されている
+   - embedding_model_nameとembedding_provider_nameも指定されている
+
+2. IF_ELSE構造の分析：
+   - category_branch_node（行253-288）:
+     - hardware_case: hardware_knowledge_nodeに接続（正常）
+     - software_case: software_knowledge_nodeに接続（正常）
+     - false（ELSEケース）: other_knowledge_nodeに接続（行103で確認、正常）
+
+【推測される問題の原因】
+1. 高度な設定（multiple retrieval、reranking）を使用しているため、実行環境での設定不整合の可能性
+2. embedding_model_nameで指定されているモデル（text-embedding-3-large）へのアクセス権限の問題
+3. 複数のナレッジベース検索設定が実行環境で正しく動作していない可能性
+
+【特記事項】
+- このYMLは他のものより高度な検索設定を使用している（multiple retrieval、reranking、重み付けなど）
+- query_variable_selectorが他のYMLと異なる形式（analyze_question_node.text）を使用

@@ -1,0 +1,33 @@
+## エラー原因分析：inventory_check_workflow_4892.yml
+
+### エラー概要
+Difyのバリデーションエラーにより、YMLファイルがインポートできない。
+
+### 主要なエラー原因
+
+#### 1. logical_operatorフィールドの欠如
+- **エラー内容**: 各caseに`logical_operator`フィールドが必須だが存在しない
+- **影響箇所**: 全てのIF-ELSEノードのcases配列内の各要素
+- **正しい記述例**:
+  ```yaml
+  cases:
+    - case_id: '1'
+      logical_operator: and  # このフィールドが必須
+      conditions: [...]
+  ```
+
+#### 2. comparison_operatorの値の不一致
+- **エラー内容**: ASCII文字の`>=`や`<`が拒否されている
+- **Difyの期待値**: Unicode文字の`≥`、`≤`を期待、またはstring型の比較演算子（'contains'、'is'等）
+- **コーディングルールとの矛盾**: ルールではASCII文字の使用を推奨しているが、実際のDifyはUnicode文字を要求
+
+### 正常に動作するYMLとの比較
+
+**正常なYMLの特徴**:
+1. `logical_operator`フィールドが各caseに存在（"and"または"or"）
+2. `comparison_operator`には主に"contains"を使用
+3. 数値の直接比較ではなく、文字列の包含チェックを使用
+4. `app.use_icon_as_answer_icon: false`が含まれている（ただしworkflowモードでは必須ではない）
+
+### 結論
+コーディングルールで指定されたASCII文字の比較演算子（>=、<等）は、実際のDifyシステムでは受け入れられない。また、`logical_operator`フィールドが必須であることがルールに明記されていない。

@@ -1,0 +1,812 @@
+app:
+  description: "質問カテゴリーに応じて適切なナレッジベースを検索し、回答を提供するスマートFAQシステム"
+  icon: "❓"
+  icon_background: "#D1E7DD"
+  mode: advanced-chat
+  name: "スマートFAQシステム"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      スマートFAQシステムへようこそ！
+      
+      お困りのことがございましたら、お気軽にご質問ください。
+      技術的な質問、製品に関する質問、その他一般的な質問など、
+      幅広くお答えいたします。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "製品の保証期間について教えてください"
+      - "ソフトウェアのインストール方法を教えてください"
+      - "営業時間を教えてください"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-analyze-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: analyze_question_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: if-else
+        id: analyze-category-edge
+        selected: false
+        source: analyze_question_node
+        sourceHandle: source
+        target: category_branch_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: knowledge-retrieval
+        id: branch-tech-edge
+        selected: false
+        source: category_branch_node
+        sourceHandle: tech_case
+        target: tech_knowledge_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: knowledge-retrieval
+        id: branch-product-edge
+        selected: false
+        source: category_branch_node
+        sourceHandle: product_case
+        target: product_knowledge_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: knowledge-retrieval
+        id: branch-general-edge
+        selected: false
+        source: category_branch_node
+        sourceHandle: false
+        target: general_knowledge_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: knowledge-retrieval
+          targetType: if-else
+        id: tech-result-edge
+        selected: false
+        source: tech_knowledge_node
+        sourceHandle: source
+        target: tech_result_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: knowledge-retrieval
+          targetType: if-else
+        id: product-result-edge
+        selected: false
+        source: product_knowledge_node
+        sourceHandle: source
+        target: product_result_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: knowledge-retrieval
+          targetType: if-else
+        id: general-result-edge
+        selected: false
+        source: general_knowledge_node
+        sourceHandle: source
+        target: general_result_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: tech-found-edge
+        selected: false
+        source: tech_result_check_node
+        sourceHandle: found_case
+        target: tech_format_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: tech-notfound-edge
+        selected: false
+        source: tech_result_check_node
+        sourceHandle: false
+        target: tech_notfound_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: product-found-edge
+        selected: false
+        source: product_result_check_node
+        sourceHandle: found_case
+        target: product_format_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: product-notfound-edge
+        selected: false
+        source: product_result_check_node
+        sourceHandle: false
+        target: product_notfound_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: general-found-edge
+        selected: false
+        source: general_result_check_node
+        sourceHandle: found_case
+        target: general_format_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: general-notfound-edge
+        selected: false
+        source: general_result_check_node
+        sourceHandle: false
+        target: general_notfound_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: tech-format-answer-edge
+        selected: false
+        source: tech_format_answer_node
+        sourceHandle: source
+        target: tech_final_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: product-format-answer-edge
+        selected: false
+        source: product_format_answer_node
+        sourceHandle: source
+        target: product_final_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: general-format-answer-edge
+        selected: false
+        source: general_format_answer_node
+        sourceHandle: source
+        target: general_final_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "開始ノード"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 400
+        positionAbsolute:
+          x: 50
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "質問内容を分析してカテゴリーを判定"
+          selected: false
+          title: "質問分析"
+          type: llm
+          model:
+            provider: openai
+            name: gpt-4
+            mode: chat
+            completion_params:
+              temperature: 0.3
+              max_tokens: 100
+          prompt_template:
+            - id: system-analyze
+              role: system
+              text: |
+                ユーザーの質問を分析し、以下の3つのカテゴリーに分類してください：
+                
+                1. 技術質問：技術的な内容、使い方、設定方法、トラブルシューティングなど
+                2. 製品質問：製品仕様、価格、在庫、保証、納期など
+                3. 一般質問：営業時間、連絡先、会社情報、その他
+                
+                必ず「技術質問」「製品質問」「一般質問」のいずれか一つを回答してください。
+            - id: user-analyze
+              role: user
+              text: |
+                {{#sys.query#}}
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+        height: 98
+        id: analyze_question_node
+        position:
+          x: 350
+          y: 400
+        positionAbsolute:
+          x: 350
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "カテゴリーに基づいて分岐"
+          selected: false
+          title: "カテゴリー分岐"
+          type: if-else
+          cases:
+            - id: tech_case
+              case_id: tech_case
+              conditions:
+                - variable_selector:
+                    - analyze_question_node
+                    - text
+                  comparison_operator: contains
+                  value: "技術質問"
+              logical_operator: and
+            - id: product_case
+              case_id: product_case
+              conditions:
+                - variable_selector:
+                    - analyze_question_node
+                    - text
+                  comparison_operator: contains
+                  value: "製品質問"
+              logical_operator: and
+        height: 198
+        id: category_branch_node
+        position:
+          x: 650
+          y: 400
+        positionAbsolute:
+          x: 650
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          dataset_ids:
+            - "mUJqT0QSpLmBBBGsAg6tP+rLJoOBsXRCgClBvqhk7NKJWFKdH7o5AOBH9nG0DiXe"
+          desc: ''
+          query_variable_selector:
+            - sys
+            - query
+          retrieval_mode: single
+          selected: false
+          title: "技術知識検索"
+          type: knowledge-retrieval
+        height: 92
+        id: tech_knowledge_node
+        position:
+          x: 950
+          y: 100
+        positionAbsolute:
+          x: 950
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          dataset_ids:
+            - "7ccfkMYSp7EbvPLfz84xM+MGWesznlJf6laOpWdSR4vOjJa6XZ3W7JdALMg/4IRY"
+            - "8ddglNZTq8FcwQMgz95yN+NHXftzomlKg7mbPqXeTR5wPkJb7YZ4X8KeALNh/5JSZ"
+          desc: ''
+          multiple_retrieval_config:
+            reranking_enable: true
+            reranking_mode: weighted_score
+            top_k: 3
+            weights:
+              keyword_setting:
+                keyword_weight: 0.3
+              vector_setting:
+                embedding_model_name: text-embedding-3-large
+                embedding_provider_name: langgenius/openai/openai
+                vector_weight: 0.7
+          query_variable_selector:
+            - sys
+            - query
+          retrieval_mode: multiple
+          selected: false
+          title: "製品知識検索"
+          type: knowledge-retrieval
+        height: 92
+        id: product_knowledge_node
+        position:
+          x: 950
+          y: 400
+        positionAbsolute:
+          x: 950
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          dataset_ids:
+            - "9eehMOaUr9GdxRNha06zO+OIYguaplMLh8ncQrYfUS6xQlKc8Za5Y9LfBMOi/6KTa"
+          desc: ''
+          query_variable_selector:
+            - sys
+            - query
+          retrieval_mode: single
+          selected: false
+          title: "一般知識検索"
+          type: knowledge-retrieval
+        height: 92
+        id: general_knowledge_node
+        position:
+          x: 950
+          y: 700
+        positionAbsolute:
+          x: 950
+          y: 700
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "技術検索結果の有無を確認"
+          selected: false
+          title: "技術結果確認"
+          type: if-else
+          cases:
+            - id: found_case
+              case_id: found_case
+              conditions:
+                - variable_selector:
+                    - tech_knowledge_node
+                    - result
+                  comparison_operator: not empty
+                  value: ""
+              logical_operator: and
+        height: 154
+        id: tech_result_check_node
+        position:
+          x: 1250
+          y: 100
+        positionAbsolute:
+          x: 1250
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "製品検索結果の有無を確認"
+          selected: false
+          title: "製品結果確認"
+          type: if-else
+          cases:
+            - id: found_case
+              case_id: found_case
+              conditions:
+                - variable_selector:
+                    - product_knowledge_node
+                    - result
+                  comparison_operator: not empty
+                  value: ""
+              logical_operator: and
+        height: 154
+        id: product_result_check_node
+        position:
+          x: 1250
+          y: 400
+        positionAbsolute:
+          x: 1250
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "一般検索結果の有無を確認"
+          selected: false
+          title: "一般結果確認"
+          type: if-else
+          cases:
+            - id: found_case
+              case_id: found_case
+              conditions:
+                - variable_selector:
+                    - general_knowledge_node
+                    - result
+                  comparison_operator: not empty
+                  value: ""
+              logical_operator: and
+        height: 154
+        id: general_result_check_node
+        position:
+          x: 1250
+          y: 700
+        positionAbsolute:
+          x: 1250
+          y: 700
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "技術質問の回答を整形"
+          selected: false
+          title: "技術回答整形"
+          type: llm
+          model:
+            provider: openai
+            name: gpt-4
+            mode: chat
+            completion_params:
+              temperature: 0.5
+              max_tokens: 500
+          prompt_template:
+            - id: system-tech-format
+              role: system
+              text: |
+                ナレッジベースから取得した技術情報を基に、
+                ユーザーの質問に対して分かりやすく丁寧な回答を作成してください。
+                
+                技術的な内容は正確に、かつ初心者にも理解しやすいように説明してください。
+            - id: user-tech-format
+              role: user
+              text: |
+                質問：{{#sys.query#}}
+                
+                ナレッジベースの情報：
+                {{#tech_knowledge_node.result#}}
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+        height: 98
+        id: tech_format_answer_node
+        position:
+          x: 1550
+          y: 50
+        positionAbsolute:
+          x: 1550
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "製品質問の回答を整形"
+          selected: false
+          title: "製品回答整形"
+          type: llm
+          model:
+            provider: openai
+            name: gpt-4
+            mode: chat
+            completion_params:
+              temperature: 0.5
+              max_tokens: 500
+          prompt_template:
+            - id: system-product-format
+              role: system
+              text: |
+                ナレッジベースから取得した製品情報を基に、
+                ユーザーの質問に対して分かりやすく丁寧な回答を作成してください。
+                
+                製品の特徴や利点を明確に説明してください。
+            - id: user-product-format
+              role: user
+              text: |
+                質問：{{#sys.query#}}
+                
+                ナレッジベースの情報：
+                {{#product_knowledge_node.result#}}
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+        height: 98
+        id: product_format_answer_node
+        position:
+          x: 1550
+          y: 350
+        positionAbsolute:
+          x: 1550
+          y: 350
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "一般質問の回答を整形"
+          selected: false
+          title: "一般回答整形"
+          type: llm
+          model:
+            provider: openai
+            name: gpt-4
+            mode: chat
+            completion_params:
+              temperature: 0.5
+              max_tokens: 500
+          prompt_template:
+            - id: system-general-format
+              role: system
+              text: |
+                ナレッジベースから取得した一般情報を基に、
+                ユーザーの質問に対して分かりやすく丁寧な回答を作成してください。
+                
+                正確な情報を提供し、親切な対応を心がけてください。
+            - id: user-general-format
+              role: user
+              text: |
+                質問：{{#sys.query#}}
+                
+                ナレッジベースの情報：
+                {{#general_knowledge_node.result#}}
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+        height: 98
+        id: general_format_answer_node
+        position:
+          x: 1550
+          y: 650
+        positionAbsolute:
+          x: 1550
+          y: 650
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#tech_format_answer_node.text#}}"
+          desc: "技術質問の最終回答"
+          selected: false
+          title: "技術回答"
+          type: answer
+          variables: []
+        height: 107
+        id: tech_final_answer_node
+        position:
+          x: 1850
+          y: 50
+        positionAbsolute:
+          x: 1850
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            申し訳ございません。
+            
+            お尋ねの技術的な内容について、現在ナレッジベースに該当する情報が見つかりませんでした。
+            
+            お手数ですが、以下の方法でお問い合わせください：
+            • サポートセンター：support@example.com
+            • 電話サポート：0120-XXX-XXX（平日9:00-18:00）
+            
+            技術担当者が詳しくご説明させていただきます。
+          desc: "技術質問で結果なしの回答"
+          selected: false
+          title: "技術結果なし"
+          type: answer
+          variables: []
+        height: 287
+        id: tech_notfound_answer_node
+        position:
+          x: 1550
+          y: 150
+        positionAbsolute:
+          x: 1550
+          y: 150
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#product_format_answer_node.text#}}"
+          desc: "製品質問の最終回答"
+          selected: false
+          title: "製品回答"
+          type: answer
+          variables: []
+        height: 107
+        id: product_final_answer_node
+        position:
+          x: 1850
+          y: 350
+        positionAbsolute:
+          x: 1850
+          y: 350
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            申し訳ございません。
+            
+            お尋ねの製品について、現在ナレッジベースに該当する情報が見つかりませんでした。
+            
+            製品に関する詳しい情報は：
+            • 営業担当者：sales@example.com
+            • お客様相談室：0120-YYY-YYY（平日9:00-18:00）
+            
+            最新の製品情報をご案内させていただきます。
+          desc: "製品質問で結果なしの回答"
+          selected: false
+          title: "製品結果なし"
+          type: answer
+          variables: []
+        height: 263
+        id: product_notfound_answer_node
+        position:
+          x: 1550
+          y: 450
+        positionAbsolute:
+          x: 1550
+          y: 450
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#general_format_answer_node.text#}}"
+          desc: "一般質問の最終回答"
+          selected: false
+          title: "一般回答"
+          type: answer
+          variables: []
+        height: 107
+        id: general_final_answer_node
+        position:
+          x: 1850
+          y: 650
+        positionAbsolute:
+          x: 1850
+          y: 650
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            申し訳ございません。
+            
+            お尋ねの内容について、現在ナレッジベースに該当する情報が見つかりませんでした。
+            
+            一般的なお問い合わせは：
+            • 代表電話：03-XXXX-XXXX（平日9:00-18:00）
+            • お問い合わせフォーム：https://example.com/contact
+            
+            担当者より回答させていただきます。
+          desc: "一般質問で結果なしの回答"
+          selected: false
+          title: "一般結果なし"
+          type: answer
+          variables: []
+        height: 263
+        id: general_notfound_answer_node
+        position:
+          x: 1550
+          y: 750
+        positionAbsolute:
+          x: 1550
+          y: 750
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.4

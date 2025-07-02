@@ -1,0 +1,593 @@
+app:
+  description: "顧客からの問い合わせ内容に基づいて適切な部署に振り分け、優先度を判定するシステム"
+  icon: "🎫"
+  icon_background: "#FFEAD5"
+  mode: advanced-chat
+  name: "顧客サポートチケット振り分けシステム"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      お問い合わせ内容を入力してください。適切な部署に振り分けて対応いたします。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "アプリケーションでエラーが発生しています"
+      - "請求書の金額について確認したいです"
+      - "サービスの使い方を教えてください"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: if-else
+        id: start-tech-check-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: tech_support_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: tech-check-urgent-check-edge
+        selected: false
+        source: tech_support_check_node
+        sourceHandle: technical_case
+        target: urgent_check_tech_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: tech-check-billing-check-edge
+        selected: false
+        source: tech_support_check_node
+        sourceHandle: "false"
+        target: billing_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: billing-check-urgent-check-edge
+        selected: false
+        source: billing_check_node
+        sourceHandle: billing_case
+        target: urgent_check_billing_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: billing-check-general-urgent-edge
+        selected: false
+        source: billing_check_node
+        sourceHandle: "false"
+        target: urgent_check_general_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: urgent-tech-high-answer-edge
+        selected: false
+        source: urgent_check_tech_node
+        sourceHandle: urgent_case
+        target: tech_urgent_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: urgent-tech-normal-answer-edge
+        selected: false
+        source: urgent_check_tech_node
+        sourceHandle: "false"
+        target: tech_normal_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: urgent-billing-high-answer-edge
+        selected: false
+        source: urgent_check_billing_node
+        sourceHandle: urgent_case
+        target: billing_urgent_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: urgent-billing-normal-answer-edge
+        selected: false
+        source: urgent_check_billing_node
+        sourceHandle: "false"
+        target: billing_normal_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: urgent-general-high-answer-edge
+        selected: false
+        source: urgent_check_general_node
+        sourceHandle: urgent_case
+        target: general_urgent_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: urgent-general-normal-answer-edge
+        selected: false
+        source: urgent_check_general_node
+        sourceHandle: "false"
+        target: general_normal_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "開始ノード"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: technical_case
+              case_id: technical_case
+              conditions:
+                - id: tech_keyword_1
+                  variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "エラー"
+                - id: tech_keyword_2
+                  variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "動作しない"
+                - id: tech_keyword_3
+                  variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "不具合"
+                - id: tech_keyword_4
+                  variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "故障"
+              logical_operator: or
+          desc: "技術サポート関連のキーワードをチェック"
+          selected: false
+          title: "技術サポート判定"
+        height: 198
+        id: tech_support_check_node
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: billing_case
+              case_id: billing_case
+              conditions:
+                - id: billing_keyword_1
+                  variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "料金"
+                - id: billing_keyword_2
+                  variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "請求"
+                - id: billing_keyword_3
+                  variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "支払"
+                - id: billing_keyword_4
+                  variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "価格"
+              logical_operator: or
+          desc: "請求関連のキーワードをチェック"
+          selected: false
+          title: "請求関連判定"
+        height: 198
+        id: billing_check_node
+        position:
+          x: 650
+          y: 400
+        positionAbsolute:
+          x: 650
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: urgent_case
+              case_id: urgent_case
+              conditions:
+                - id: urgent_keyword_1
+                  variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "緊急"
+                - id: urgent_keyword_2
+                  variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "至急"
+                - id: urgent_keyword_3
+                  variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "すぐに"
+              logical_operator: or
+          desc: "緊急度の判定（技術サポート）"
+          selected: false
+          title: "緊急度判定（技術）"
+        height: 154
+        id: urgent_check_tech_node
+        position:
+          x: 950
+          y: 50
+        positionAbsolute:
+          x: 950
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: urgent_case
+              case_id: urgent_case
+              conditions:
+                - id: urgent_keyword_1
+                  variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "緊急"
+                - id: urgent_keyword_2
+                  variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "至急"
+                - id: urgent_keyword_3
+                  variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "すぐに"
+              logical_operator: or
+          desc: "緊急度の判定（請求関連）"
+          selected: false
+          title: "緊急度判定（請求）"
+        height: 154
+        id: urgent_check_billing_node
+        position:
+          x: 950
+          y: 250
+        positionAbsolute:
+          x: 950
+          y: 250
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: urgent_case
+              case_id: urgent_case
+              conditions:
+                - id: urgent_keyword_1
+                  variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "緊急"
+                - id: urgent_keyword_2
+                  variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "至急"
+                - id: urgent_keyword_3
+                  variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "すぐに"
+              logical_operator: or
+          desc: "緊急度の判定（一般問い合わせ）"
+          selected: false
+          title: "緊急度判定（一般）"
+        height: 154
+        id: urgent_check_general_node
+        position:
+          x: 950
+          y: 550
+        positionAbsolute:
+          x: 950
+          y: 550
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            【技術サポート部門】緊急対応
+            
+            お問い合わせ内容：{{#sys.query#}}
+            
+            技術的な問題に関する緊急のお問い合わせありがとうございます。
+            技術サポート部門の担当者が最優先で対応いたします。
+            
+            対応優先度：高
+            振り分け先：技術サポート部門
+            予想対応時間：1時間以内
+          desc: "技術サポート緊急対応"
+          selected: false
+          title: "技術サポート（緊急）"
+          type: answer
+          variables: []
+        height: 250
+        id: tech_urgent_answer_node
+        position:
+          x: 1250
+          y: 0
+        positionAbsolute:
+          x: 1250
+          y: 0
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            【技術サポート部門】通常対応
+            
+            お問い合わせ内容：{{#sys.query#}}
+            
+            技術的な問題に関するお問い合わせありがとうございます。
+            技術サポート部門の担当者が順次対応いたします。
+            
+            対応優先度：通常
+            振り分け先：技術サポート部門
+            予想対応時間：24時間以内
+          desc: "技術サポート通常対応"
+          selected: false
+          title: "技術サポート（通常）"
+          type: answer
+          variables: []
+        height: 250
+        id: tech_normal_answer_node
+        position:
+          x: 1250
+          y: 100
+        positionAbsolute:
+          x: 1250
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            【請求関連部門】緊急対応
+            
+            お問い合わせ内容：{{#sys.query#}}
+            
+            請求に関する緊急のお問い合わせありがとうございます。
+            請求関連部門の担当者が最優先で対応いたします。
+            
+            対応優先度：高
+            振り分け先：請求関連部門
+            予想対応時間：2時間以内
+          desc: "請求関連緊急対応"
+          selected: false
+          title: "請求関連（緊急）"
+          type: answer
+          variables: []
+        height: 250
+        id: billing_urgent_answer_node
+        position:
+          x: 1250
+          y: 200
+        positionAbsolute:
+          x: 1250
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            【請求関連部門】通常対応
+            
+            お問い合わせ内容：{{#sys.query#}}
+            
+            請求に関するお問い合わせありがとうございます。
+            請求関連部門の担当者が順次対応いたします。
+            
+            対応優先度：通常
+            振り分け先：請求関連部門
+            予想対応時間：48時間以内
+          desc: "請求関連通常対応"
+          selected: false
+          title: "請求関連（通常）"
+          type: answer
+          variables: []
+        height: 250
+        id: billing_normal_answer_node
+        position:
+          x: 1250
+          y: 300
+        positionAbsolute:
+          x: 1250
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            【一般問い合わせ部門】緊急対応
+            
+            お問い合わせ内容：{{#sys.query#}}
+            
+            緊急のお問い合わせありがとうございます。
+            一般問い合わせ部門の担当者が優先的に対応いたします。
+            
+            対応優先度：高
+            振り分け先：一般問い合わせ部門
+            予想対応時間：3時間以内
+          desc: "一般問い合わせ緊急対応"
+          selected: false
+          title: "一般問い合わせ（緊急）"
+          type: answer
+          variables: []
+        height: 250
+        id: general_urgent_answer_node
+        position:
+          x: 1250
+          y: 500
+        positionAbsolute:
+          x: 1250
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            【一般問い合わせ部門】通常対応
+            
+            お問い合わせ内容：{{#sys.query#}}
+            
+            お問い合わせありがとうございます。
+            一般問い合わせ部門の担当者が順次対応いたします。
+            
+            対応優先度：通常
+            振り分け先：一般問い合わせ部門
+            予想対応時間：72時間以内
+          desc: "一般問い合わせ通常対応"
+          selected: false
+          title: "一般問い合わせ（通常）"
+          type: answer
+          variables: []
+        height: 250
+        id: general_normal_answer_node
+        position:
+          x: 1250
+          y: 600
+        positionAbsolute:
+          x: 1250
+          y: 600
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.5

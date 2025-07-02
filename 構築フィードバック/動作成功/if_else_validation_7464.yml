@@ -1,0 +1,772 @@
+app:
+  description: "IF/ELSEコンポーネントの動作検証用アプリケーション"
+  icon: "🔄"
+  icon_background: "#E0E0E0"
+  mode: advanced-chat
+  name: "IF/ELSE検証アプリ"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      IF/ELSE検証用アプリケーションです。
+      以下の検証を実行します：
+      1. 基本的な条件分岐（文字列、数値、NULL）
+      2. 複数条件（AND/OR）
+      3. 複雑な分岐パターン
+      
+      何か入力してください。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "テスト開始"
+      - "高スコアのテスト"
+      - "低スコアのテスト"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-variable-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: variable_setup_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: if-else
+        id: variable-basic-edge
+        selected: false
+        source: variable_setup_node
+        sourceHandle: source
+        target: basic_condition_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: basic-high-edge
+        selected: false
+        source: basic_condition_node
+        sourceHandle: high_case
+        target: high_result_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: basic-medium-edge
+        selected: false
+        source: basic_condition_node
+        sourceHandle: medium_case
+        target: medium_result_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: basic-low-edge
+        selected: false
+        source: basic_condition_node
+        sourceHandle: false
+        target: low_result_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: if-else
+        id: high-numeric-edge
+        selected: false
+        source: high_result_node
+        sourceHandle: source
+        target: numeric_condition_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: if-else
+        id: medium-numeric-edge
+        selected: false
+        source: medium_result_node
+        sourceHandle: source
+        target: numeric_condition_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: if-else
+        id: low-numeric-edge
+        selected: false
+        source: low_result_node
+        sourceHandle: source
+        target: numeric_condition_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: numeric-excellent-edge
+        selected: false
+        source: numeric_condition_node
+        sourceHandle: excellent_case
+        target: excellent_result_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: numeric-good-edge
+        selected: false
+        source: numeric_condition_node
+        sourceHandle: good_case
+        target: good_result_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: numeric-default-edge
+        selected: false
+        source: numeric_condition_node
+        sourceHandle: false
+        target: default_result_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: if-else
+        id: excellent-complex-edge
+        selected: false
+        source: excellent_result_node
+        sourceHandle: source
+        target: complex_condition_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: if-else
+        id: good-complex-edge
+        selected: false
+        source: good_result_node
+        sourceHandle: source
+        target: complex_condition_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: if-else
+        id: default-complex-edge
+        selected: false
+        source: default_result_node
+        sourceHandle: source
+        target: complex_condition_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: complex-special-edge
+        selected: false
+        source: complex_condition_node
+        sourceHandle: special_case
+        target: special_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: complex-keyword-edge
+        selected: false
+        source: complex_condition_node
+        sourceHandle: keyword_case
+        target: keyword_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: complex-default-edge
+        selected: false
+        source: complex_condition_node
+        sourceHandle: false
+        target: default_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "開始ノード"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 300
+        positionAbsolute:
+          x: 50
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-setup
+              role: system
+              text: |
+                テスト用の変数を設定します。
+                以下の変数を生成してください：
+                - category: "high", "medium", "low"のいずれか
+                - score: 0-100の数値
+                - status: "active", "pending", "inactive"のいずれか
+                - description: テストの説明文（必ず"緊急"または"通常"を含む）
+                - is_empty: 空文字列またはNULL
+            - id: user-setup
+              role: user
+              text: |
+                ユーザー入力: {{#sys.query#}}
+                
+                上記の入力に基づいて、テスト用の変数を生成してください。
+          completion_params:
+            temperature: 0.3
+            max_tokens: 500
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "テスト用変数の設定"
+          selected: false
+          title: "変数設定"
+          type: llm
+        height: 98
+        id: variable_setup_node
+        position:
+          x: 350
+          y: 300
+        positionAbsolute:
+          x: 350
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: high_case
+              case_id: high_case
+              conditions:
+                - variable_selector:
+                    - variable_setup_node
+                    - text
+                  comparison_operator: contains
+                  value: "category: \"high\""
+              logical_operator: and
+            - id: medium_case
+              case_id: medium_case
+              conditions:
+                - variable_selector:
+                    - variable_setup_node
+                    - text
+                  comparison_operator: contains
+                  value: "category: \"medium\""
+              logical_operator: and
+          desc: "基本的な条件分岐（文字列）"
+          selected: false
+          title: "基本条件分岐"
+        height: 198
+        id: basic_condition_node
+        position:
+          x: 650
+          y: 300
+        positionAbsolute:
+          x: 650
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: high-msg
+              role: system
+              text: "カテゴリがHIGHの処理結果を出力してください。"
+            - id: high-user
+              role: user
+              text: "HIGHカテゴリが検出されました。スコア：{{#variable_setup_node.text#}}"
+          completion_params:
+            temperature: 0.3
+            max_tokens: 200
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "HIGHカテゴリの処理"
+          selected: false
+          title: "HIGH結果"
+          type: llm
+        height: 98
+        id: high_result_node
+        position:
+          x: 950
+          y: 100
+        positionAbsolute:
+          x: 950
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: medium-msg
+              role: system
+              text: "カテゴリがMEDIUMの処理結果を出力してください。"
+            - id: medium-user
+              role: user
+              text: "MEDIUMカテゴリが検出されました。スコア：{{#variable_setup_node.text#}}"
+          completion_params:
+            temperature: 0.3
+            max_tokens: 200
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "MEDIUMカテゴリの処理"
+          selected: false
+          title: "MEDIUM結果"
+          type: llm
+        height: 98
+        id: medium_result_node
+        position:
+          x: 950
+          y: 300
+        positionAbsolute:
+          x: 950
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: low-msg
+              role: system
+              text: "カテゴリがLOWまたはデフォルトの処理結果を出力してください。"
+            - id: low-user
+              role: user
+              text: "LOWカテゴリまたはデフォルトが検出されました。スコア：{{#variable_setup_node.text#}}"
+          completion_params:
+            temperature: 0.3
+            max_tokens: 200
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "LOWカテゴリ/デフォルトの処理"
+          selected: false
+          title: "LOW/デフォルト結果"
+          type: llm
+        height: 98
+        id: low_result_node
+        position:
+          x: 950
+          y: 500
+        positionAbsolute:
+          x: 950
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: excellent_case
+              case_id: excellent_case
+              conditions:
+                - variable_selector:
+                    - variable_setup_node
+                    - text
+                  comparison_operator: contains
+                  value: "score: "
+                - variable_selector:
+                    - variable_setup_node
+                    - text
+                  comparison_operator: contains
+                  value: "9"
+              logical_operator: and
+            - id: good_case
+              case_id: good_case
+              conditions:
+                - variable_selector:
+                    - variable_setup_node
+                    - text
+                  comparison_operator: contains
+                  value: "score: "
+                - variable_selector:
+                    - variable_setup_node
+                    - text
+                  comparison_operator: contains
+                  value: "6"
+              logical_operator: or
+          desc: "数値比較（Unicodeは実際の数値比較では使用困難なため文字列で代替）"
+          selected: false
+          title: "数値条件分岐"
+        height: 220
+        id: numeric_condition_node
+        position:
+          x: 1250
+          y: 300
+        positionAbsolute:
+          x: 1250
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: excellent-msg
+              role: system
+              text: "優秀なスコアの処理結果を出力してください。"
+            - id: excellent-user
+              role: user
+              text: "優秀なスコア（90以上）が検出されました。"
+          completion_params:
+            temperature: 0.3
+            max_tokens: 200
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "優秀スコアの処理"
+          selected: false
+          title: "優秀結果"
+          type: llm
+        height: 98
+        id: excellent_result_node
+        position:
+          x: 1550
+          y: 100
+        positionAbsolute:
+          x: 1550
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: good-msg
+              role: system
+              text: "良好なスコアの処理結果を出力してください。"
+            - id: good-user
+              role: user
+              text: "良好なスコア（60-89）が検出されました。"
+          completion_params:
+            temperature: 0.3
+            max_tokens: 200
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "良好スコアの処理"
+          selected: false
+          title: "良好結果"
+          type: llm
+        height: 98
+        id: good_result_node
+        position:
+          x: 1550
+          y: 300
+        positionAbsolute:
+          x: 1550
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: default-msg
+              role: system
+              text: "デフォルトスコアの処理結果を出力してください。"
+            - id: default-user
+              role: user
+              text: "デフォルトスコア（60未満）が検出されました。"
+          completion_params:
+            temperature: 0.3
+            max_tokens: 200
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "デフォルトスコアの処理"
+          selected: false
+          title: "デフォルト結果"
+          type: llm
+        height: 98
+        id: default_result_node
+        position:
+          x: 1550
+          y: 500
+        positionAbsolute:
+          x: 1550
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: special_case
+              case_id: special_case
+              conditions:
+                - variable_selector:
+                    - variable_setup_node
+                    - text
+                  comparison_operator: contains
+                  value: "status: \"active\""
+                - variable_selector:
+                    - variable_setup_node
+                    - text
+                  comparison_operator: contains
+                  value: "緊急"
+              logical_operator: and
+            - id: keyword_case
+              case_id: keyword_case
+              conditions:
+                - variable_selector:
+                    - variable_setup_node
+                    - text
+                  comparison_operator: contains
+                  value: "緊急"
+              logical_operator: and
+          desc: "複雑な条件（AND/OR、キーワード）"
+          selected: false
+          title: "複雑な条件分岐"
+        height: 250
+        id: complex_condition_node
+        position:
+          x: 1850
+          y: 300
+        positionAbsolute:
+          x: 1850
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ## 特別な条件が検出されました！
+            
+            アクティブステータスかつ緊急フラグが設定されています。
+            
+            ### 検証結果：
+            - 基本条件分岐: ✅ 合格
+            - 数値条件分岐: ✅ 合格
+            - 複雑な条件分岐（AND条件）: ✅ 合格
+            
+            {{#excellent_result_node.text#}}
+            {{#good_result_node.text#}}
+            {{#default_result_node.text#}}
+          desc: "特別条件の最終回答"
+          selected: false
+          title: "特別条件回答"
+          type: answer
+          variables: []
+        height: 374
+        id: special_answer_node
+        position:
+          x: 2150
+          y: 100
+        positionAbsolute:
+          x: 2150
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ## キーワード条件が検出されました
+            
+            説明文に"緊急"キーワードが含まれています。
+            
+            ### 検証結果：
+            - 基本条件分岐: ✅ 合格
+            - 数値条件分岐: ✅ 合格
+            - 複雑な条件分岐（キーワード）: ✅ 合格
+            
+            {{#excellent_result_node.text#}}
+            {{#good_result_node.text#}}
+            {{#default_result_node.text#}}
+          desc: "キーワード条件の最終回答"
+          selected: false
+          title: "キーワード回答"
+          type: answer
+          variables: []
+        height: 374
+        id: keyword_answer_node
+        position:
+          x: 2150
+          y: 300
+        positionAbsolute:
+          x: 2150
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ## 通常の処理結果
+            
+            特別な条件には合致しませんでした。
+            
+            ### 検証結果：
+            - 基本条件分岐: ✅ 合格
+            - 数値条件分岐: ✅ 合格
+            - 複雑な条件分岐: デフォルトケース
+            
+            {{#excellent_result_node.text#}}
+            {{#good_result_node.text#}}
+            {{#default_result_node.text#}}
+          desc: "デフォルトの最終回答"
+          selected: false
+          title: "デフォルト回答"
+          type: answer
+          variables: []
+        height: 374
+        id: default_answer_node
+        position:
+          x: 2150
+          y: 500
+        positionAbsolute:
+          x: 2150
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.5

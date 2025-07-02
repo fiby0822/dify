@@ -1,0 +1,560 @@
+app:
+  description: "ユーザーの技術的な質問をカテゴリ分類し、適切な知識ベースから回答を検索するシステム"
+  icon: "🔧"
+  icon_background: "#FFEAD5"
+  mode: advanced-chat
+  name: "技術サポート知識ベース検索システム"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      技術的な問題についてお困りですか？
+      ハードウェア、ソフトウェア、その他の技術的な質問にお答えします。
+      どのような問題でお困りか教えてください。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "パソコンの電源が入りません"
+      - "ソフトウェアのアップデートでエラーが発生しました"
+      - "プリンターの設定方法を教えてください"
+      - "画面に青いエラーメッセージが表示されます"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: if-else
+        id: start-hardware-check-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: hardware_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: knowledge-retrieval
+        id: hardware-check-hardware-kb-edge
+        selected: false
+        source: hardware_check_node
+        sourceHandle: hardware_case
+        target: hardware_kb_search_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: hardware-check-software-check-edge
+        selected: false
+        source: hardware_check_node
+        sourceHandle: "false"
+        target: software_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: knowledge-retrieval
+        id: software-check-software-kb-edge
+        selected: false
+        source: software_check_node
+        sourceHandle: software_case
+        target: software_kb_search_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: knowledge-retrieval
+        id: software-check-general-kb-edge
+        selected: false
+        source: software_check_node
+        sourceHandle: "false"
+        target: general_kb_search_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: knowledge-retrieval
+          targetType: llm
+        id: hardware-kb-hardware-llm-edge
+        selected: false
+        source: hardware_kb_search_node
+        sourceHandle: source
+        target: hardware_response_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: knowledge-retrieval
+          targetType: llm
+        id: software-kb-software-llm-edge
+        selected: false
+        source: software_kb_search_node
+        sourceHandle: source
+        target: software_response_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: knowledge-retrieval
+          targetType: llm
+        id: general-kb-general-llm-edge
+        selected: false
+        source: general_kb_search_node
+        sourceHandle: source
+        target: general_response_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: hardware-llm-answer-edge
+        selected: false
+        source: hardware_response_llm_node
+        sourceHandle: source
+        target: hardware_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: software-llm-answer-edge
+        selected: false
+        source: software_response_llm_node
+        sourceHandle: source
+        target: software_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: general-llm-answer-edge
+        selected: false
+        source: general_response_llm_node
+        sourceHandle: source
+        target: general_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "開始ノード"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 400
+        positionAbsolute:
+          x: 50
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: hardware_case
+              case_id: hardware_case
+              conditions:
+                - variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "故障"
+                - variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "破損"
+                - variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "動作しない"
+                - variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "電源"
+              logical_operator: or
+          desc: "ハードウェア関連の判定"
+          selected: false
+          title: "ハードウェア問題判定"
+        height: 198
+        id: hardware_check_node
+        position:
+          x: 350
+          y: 400
+        positionAbsolute:
+          x: 350
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: software_case
+              case_id: software_case
+              conditions:
+                - variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "エラー"
+                - variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "バグ"
+                - variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "アップデート"
+                - variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "インストール"
+              logical_operator: or
+          desc: "ソフトウェア関連の判定"
+          selected: false
+          title: "ソフトウェア問題判定"
+        height: 198
+        id: software_check_node
+        position:
+          x: 650
+          y: 600
+        positionAbsolute:
+          x: 650
+          y: 600
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          dataset_ids:
+            - "mUJqT0QSpLmBBBGsAg6tP+rLJoOBsXRCgClBvqhk7NKJWFKdH7o5AOBH9nG0DiXe"
+          desc: ''
+          query_variable_selector:
+            - sys
+            - query
+          retrieval_mode: single
+          selected: false
+          title: "ハードウェア知識検索"
+          type: knowledge-retrieval
+        height: 92
+        id: hardware_kb_search_node
+        position:
+          x: 950
+          y: 200
+        positionAbsolute:
+          x: 950
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          dataset_ids:
+            - "7ccfkMYSp7EbvPLfz84xM+MGWesznlJf6laOpWdSR4vOjJa6XZ3W7JdALMg/4IRY"
+          desc: ''
+          query_variable_selector:
+            - sys
+            - query
+          retrieval_mode: single
+          selected: false
+          title: "ソフトウェア知識検索"
+          type: knowledge-retrieval
+        height: 92
+        id: software_kb_search_node
+        position:
+          x: 950
+          y: 400
+        positionAbsolute:
+          x: 950
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          dataset_ids:
+            - "8ddglNZTq8FcwQMgz95yN+NHXftzomlKg7mbPqXeTR5wPkJb7YZ4X8KeALNh/5JSZ"
+          desc: ''
+          query_variable_selector:
+            - sys
+            - query
+          retrieval_mode: single
+          selected: false
+          title: "一般FAQ知識検索"
+          type: knowledge-retrieval
+        height: 92
+        id: general_kb_search_node
+        position:
+          x: 950
+          y: 800
+        positionAbsolute:
+          x: 950
+          y: 800
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4
+            mode: chat
+            completion_params:
+              temperature: 0.7
+              max_tokens: 1000
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          prompt_template:
+            - id: hardware-prompt
+              role: system
+              text: |
+                あなたはハードウェア問題の専門家です。
+                ユーザーの質問と知識ベースの検索結果を基に、わかりやすく具体的な解決策を提供してください。
+                技術的な用語は必要に応じて説明を加えてください。
+            - id: user-hardware-prompt
+              role: user
+              text: |
+                ユーザーの質問：{{#sys.query#}}
+                
+                知識ベースの検索結果：
+                {{#hardware_kb_search_node.result#}}
+                
+                上記の情報を基に、ユーザーに適切な回答を生成してください。
+          desc: "ハードウェア問題への回答生成"
+          selected: false
+          title: "ハードウェア回答生成"
+          type: llm
+        height: 98
+        id: hardware_response_llm_node
+        position:
+          x: 1250
+          y: 200
+        positionAbsolute:
+          x: 1250
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4
+            mode: chat
+            completion_params:
+              temperature: 0.7
+              max_tokens: 1000
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          prompt_template:
+            - id: software-prompt
+              role: system
+              text: |
+                あなたはソフトウェア問題の専門家です。
+                ユーザーの質問と知識ベースの検索結果を基に、わかりやすく具体的な解決策を提供してください。
+                手順は番号付きリストで示してください。
+            - id: user-software-prompt
+              role: user
+              text: |
+                ユーザーの質問：{{#sys.query#}}
+                
+                知識ベースの検索結果：
+                {{#software_kb_search_node.result#}}
+                
+                上記の情報を基に、ユーザーに適切な回答を生成してください。
+          desc: "ソフトウェア問題への回答生成"
+          selected: false
+          title: "ソフトウェア回答生成"
+          type: llm
+        height: 98
+        id: software_response_llm_node
+        position:
+          x: 1250
+          y: 400
+        positionAbsolute:
+          x: 1250
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4
+            mode: chat
+            completion_params:
+              temperature: 0.7
+              max_tokens: 1000
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          prompt_template:
+            - id: general-prompt
+              role: system
+              text: |
+                あなたは技術サポートの専門家です。
+                ユーザーの質問と知識ベースの検索結果を基に、丁寧で分かりやすい回答を提供してください。
+            - id: user-general-prompt
+              role: user
+              text: |
+                ユーザーの質問：{{#sys.query#}}
+                
+                知識ベースの検索結果：
+                {{#general_kb_search_node.result#}}
+                
+                上記の情報を基に、ユーザーに適切な回答を生成してください。
+          desc: "一般的な問題への回答生成"
+          selected: false
+          title: "一般回答生成"
+          type: llm
+        height: 98
+        id: general_response_llm_node
+        position:
+          x: 1250
+          y: 800
+        positionAbsolute:
+          x: 1250
+          y: 800
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#hardware_response_llm_node.text#}}"
+          desc: "ハードウェア関連の最終回答"
+          selected: false
+          title: "ハードウェア回答"
+          type: answer
+          variables: []
+        height: 107
+        id: hardware_answer_node
+        position:
+          x: 1550
+          y: 200
+        positionAbsolute:
+          x: 1550
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#software_response_llm_node.text#}}"
+          desc: "ソフトウェア関連の最終回答"
+          selected: false
+          title: "ソフトウェア回答"
+          type: answer
+          variables: []
+        height: 107
+        id: software_answer_node
+        position:
+          x: 1550
+          y: 400
+        positionAbsolute:
+          x: 1550
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#general_response_llm_node.text#}}"
+          desc: "一般的な問題の最終回答"
+          selected: false
+          title: "一般回答"
+          type: answer
+          variables: []
+        height: 107
+        id: general_answer_node
+        position:
+          x: 1550
+          y: 800
+        positionAbsolute:
+          x: 1550
+          y: 800
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.5

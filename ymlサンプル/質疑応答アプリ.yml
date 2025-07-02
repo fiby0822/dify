@@ -1,0 +1,71 @@
+app:
+  description: このアプリは一般的な質問に回答するための質疑応答アプリです。
+  icon: ❓
+  icon_background: '#007BFF'
+  mode: advanced-chat
+  name: 質疑応答アプリ
+  use_icon_as_answer_icon: false
+dependencies: []
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: こんにちは！何か質問がありますか？
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+    - 今日の天気は？
+    - AIとは何ですか？
+    - 最新のニュースを教えてください。
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - source: start_node_id
+      sourceHandle: output
+      target: llm_node_id
+      targetHandle: input
+    - source: llm_node_id
+      sourceHandle: output
+      target: answer_node_id
+      targetHandle: input
+    nodes:
+    - id: start_node_id
+      name: 開始ノード
+      position:
+        x: 0
+        y: 0
+      properties: {}
+      type: start
+    - id: llm_node_id
+      name: 質問処理ノード
+      position:
+        x: 300
+        y: 0
+      properties:
+        model: gpt-3.5-turbo
+        variable_selector:
+        - sys
+        - query
+      type: llm
+    - id: answer_node_id
+      name: 回答ノード
+      position:
+        x: 600
+        y: 0
+      properties:
+        variable_selector:
+        - llm
+      type: answer

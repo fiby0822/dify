@@ -1,0 +1,591 @@
+app:
+  description: 顧客からの問い合わせを商品仕様・在庫状況に分類し、それぞれに応じた顧客向け・メーカー向け文章を自動生成するシンプルな分岐型アプリ
+  icon: 📧
+  icon_background: '#4F46E5'
+  mode: advanced-chat
+  name: シンプル分岐型問い合わせ対応
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/openai:0.0.26@c1e643ac6a7732f6333a783320b4d3026fa5e31d8e7026375b98d44418d33f26
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: '📧 シンプル分岐型問い合わせ対応システム
+
+      顧客からの問い合わせ内容を入力すると、以下を自動生成します：
+      ✅ 問い合わせ種別の自動判定（商品仕様/在庫状況）
+      📝 顧客向けの丁寧な返信文
+      🏭 メーカー向けの確認依頼文
+
+      【対応可能な問い合わせ】
+      • 商品仕様：性能、サイズ、機能、使い方など
+      • 在庫状況：在庫確認、納期、入荷予定など
+
+      問い合わせ内容と必要情報を入力してください。'
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+    - この商品の詳しい仕様を教えてください
+    - 在庫状況と納期を確認したいです
+    - 製品の使い方について質問があります
+    - 入荷予定はいつ頃になりますか
+    suggested_questions_after_answer:
+      enabled: true
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: start
+        targetType: if-else
+      id: start-classification-edge
+      selected: false
+      source: start_node
+      sourceHandle: source
+      target: inquiry_classification_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: classification-spec-edge
+      selected: false
+      source: inquiry_classification_node
+      sourceHandle: product_spec
+      target: product_spec_response_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: classification-stock-edge
+      selected: false
+      source: inquiry_classification_node
+      sourceHandle: stock_status
+      target: stock_status_response_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: spec-integration-edge
+      selected: false
+      source: product_spec_response_node
+      sourceHandle: source
+      target: response_integration_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: stock-integration-edge
+      selected: false
+      source: stock_status_response_node
+      sourceHandle: source
+      target: response_integration_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: code
+        targetType: answer
+      id: integration-answer-edge
+      selected: false
+      source: response_integration_node
+      sourceHandle: source
+      target: final_answer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: 顧客からの問い合わせ内容と関連情報を入力してください
+        selected: false
+        title: 開始
+        type: start
+        variables:
+        - label: 問い合わせ内容
+          max_length: 1000
+          options: []
+          required: true
+          type: paragraph
+          variable: inquiry_content
+        - label: 顧客名
+          max_length: 100
+          options: []
+          required: true
+          type: text-input
+          variable: customer_name
+        - label: 商品名
+          max_length: 200
+          options: []
+          required: true
+          type: text-input
+          variable: product_name
+        - label: 商品型番
+          max_length: 100
+          options: []
+          required: false
+          type: text-input
+          variable: product_model
+        - label: メーカー名
+          max_length: 100
+          options: []
+          required: true
+          type: text-input
+          variable: manufacturer_name
+      height: 270
+      id: start_node
+      position:
+        x: 50
+        y: 150
+      positionAbsolute:
+        x: 50
+        y: 150
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        cases:
+        - case_id: product_spec
+          conditions:
+          - comparison_operator: contains
+            id: spec_keyword_check1
+            value: 仕様
+            varType: string
+            variable_selector:
+            - start_node
+            - inquiry_content
+          - comparison_operator: contains
+            id: spec_keyword_check2
+            value: 性能
+            varType: string
+            variable_selector:
+            - start_node
+            - inquiry_content
+          - comparison_operator: contains
+            id: spec_keyword_check3
+            value: サイズ
+            varType: string
+            variable_selector:
+            - start_node
+            - inquiry_content
+          - comparison_operator: contains
+            id: spec_keyword_check4
+            value: 機能
+            varType: string
+            variable_selector:
+            - start_node
+            - inquiry_content
+          - comparison_operator: contains
+            id: spec_keyword_check5
+            value: 使い方
+            varType: string
+            variable_selector:
+            - start_node
+            - inquiry_content
+          - comparison_operator: contains
+            id: spec_keyword_check6
+            value: スペック
+            varType: string
+            variable_selector:
+            - start_node
+            - inquiry_content
+          - comparison_operator: contains
+            id: spec_keyword_check7
+            value: 特徴
+            varType: string
+            variable_selector:
+            - start_node
+            - inquiry_content
+          - comparison_operator: contains
+            id: spec_keyword_check8
+            value: 重量
+            varType: string
+            variable_selector:
+            - start_node
+            - inquiry_content
+          - comparison_operator: contains
+            id: spec_keyword_check9
+            value: 寸法
+            varType: string
+            variable_selector:
+            - start_node
+            - inquiry_content
+          id: product_spec
+          logical_operator: or
+        - case_id: stock_status
+          conditions:
+          - comparison_operator: contains
+            id: stock_keyword_check1
+            value: 在庫
+            varType: string
+            variable_selector:
+            - start_node
+            - inquiry_content
+          - comparison_operator: contains
+            id: stock_keyword_check2
+            value: 納期
+            varType: string
+            variable_selector:
+            - start_node
+            - inquiry_content
+          - comparison_operator: contains
+            id: stock_keyword_check3
+            value: 取り寄せ
+            varType: string
+            variable_selector:
+            - start_node
+            - inquiry_content
+          - comparison_operator: contains
+            id: stock_keyword_check4
+            value: 入荷
+            varType: string
+            variable_selector:
+            - start_node
+            - inquiry_content
+          - comparison_operator: contains
+            id: stock_keyword_check5
+            value: 品切れ
+            varType: string
+            variable_selector:
+            - start_node
+            - inquiry_content
+          - comparison_operator: contains
+            id: stock_keyword_check6
+            value: いつ届
+            varType: string
+            variable_selector:
+            - start_node
+            - inquiry_content
+          - comparison_operator: contains
+            id: stock_keyword_check7
+            value: 配送
+            varType: string
+            variable_selector:
+            - start_node
+            - inquiry_content
+          - comparison_operator: contains
+            id: stock_keyword_check8
+            value: 発送
+            varType: string
+            variable_selector:
+            - start_node
+            - inquiry_content
+          id: stock_status
+          logical_operator: or
+        desc: 問い合わせ内容から種別を判定
+        selected: false
+        title: 問い合わせ種別判定
+        type: if-else
+      height: 198
+      id: inquiry_classification_node
+      position:
+        x: 350
+        y: 150
+      positionAbsolute:
+        x: 350
+        y: 150
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 商品仕様に関する顧客・メーカー向け文章生成
+        model:
+          completion_params:
+            temperature: 0.3
+          mode: chat
+          name: gpt-4
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: 'あなたは丁寧なカスタマーサポート担当者です。
+            商品仕様に関する問い合わせに対して、以下の2つの文章を生成してください：
+
+            1. 顧客向け返信文（丁寧で分かりやすい）
+            2. メーカー向け確認依頼文（具体的で技術的）
+
+            必ず両方の文章を生成し、明確に区別してください。'
+        - id: user-prompt
+          role: user
+          text: '【問い合わせ内容】
+            {{#start_node.inquiry_content#}}
+
+            【顧客情報】
+            顧客名: {{#start_node.customer_name#}}様
+
+            【商品情報】
+            商品名: {{#start_node.product_name#}}
+            型番: {{#start_node.product_model#}}
+            メーカー名: {{#start_node.manufacturer_name#}}
+
+            上記の問い合わせに対して、顧客向け返信文とメーカー向け確認依頼文を作成してください。'
+        selected: false
+        structured_output_enabled: false
+        title: 商品仕様対応文章生成
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 118
+      id: product_spec_response_node
+      position:
+        x: 650
+        y: 50
+      positionAbsolute:
+        x: 650
+        y: 50
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 在庫状況に関する顧客・メーカー向け文章生成
+        model:
+          completion_params:
+            temperature: 0.3
+          mode: chat
+          name: gpt-4
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: 'あなたは丁寧なカスタマーサポート担当者です。
+            在庫状況に関する問い合わせに対して、以下の2つの文章を生成してください：
+
+            1. 顧客向け返信文（在庫確認中である旨を丁寧に説明）
+            2. メーカー向け確認依頼文（在庫数と納期の確認）
+
+            必ず両方の文章を生成し、明確に区別してください。'
+        - id: user-prompt
+          role: user
+          text: '【問い合わせ内容】
+            {{#start_node.inquiry_content#}}
+
+            【顧客情報】
+            顧客名: {{#start_node.customer_name#}}様
+
+            【商品情報】
+            商品名: {{#start_node.product_name#}}
+            型番: {{#start_node.product_model#}}
+            メーカー名: {{#start_node.manufacturer_name#}}
+
+            上記の問い合わせに対して、顧客向け返信文とメーカー向け確認依頼文を作成してください。'
+        selected: false
+        structured_output_enabled: false
+        title: 在庫状況対応文章生成
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 118
+      id: stock_status_response_node
+      position:
+        x: 650
+        y: 250
+      positionAbsolute:
+        x: 650
+        y: 250
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        code: |
+          def main(spec_response: str = None, stock_response: str = None, inquiry_type: str = "") -> dict:
+              """
+              生成された文章を整形・統合
+              """
+              from datetime import datetime
+              
+              # 現在日時の取得
+              current_date = datetime.now().strftime("%Y年%m月%d日 %H:%M")
+              
+              # どちらかのレスポンスを取得
+              response_text = spec_response if spec_response is not None else stock_response
+              
+              # response_textがNoneの場合のエラーハンドリング
+              if response_text is None:
+                  return {
+                      "inquiry_type": "不明",
+                      "customer_response": "申し訳ございません。システムエラーが発生しました。",
+                      "manufacturer_request": "システムエラーにより生成できませんでした。",
+                      "processed_date": current_date,
+                      "processing_status": "エラー"
+                  }
+              
+              # 問い合わせ種別の判定
+              if spec_response is not None:
+                  inquiry_type_label = "商品仕様"
+              elif stock_response is not None:
+                  inquiry_type_label = "在庫状況"
+              else:
+                  inquiry_type_label = "不明"
+              
+              # 文章の分離処理
+              if "メーカー向け" in response_text:
+                  parts = response_text.split("メーカー向け")
+                  if len(parts) >= 2:
+                      customer_response = parts[0].replace("顧客向け返信文", "").replace("顧客向け", "").strip()
+                      manufacturer_request = "メーカー向け" + parts[1]
+                  else:
+                      customer_response = response_text
+                      manufacturer_request = "メーカー様への確認依頼文を生成できませんでした。"
+              else:
+                  # メーカー向けが見つからない場合
+                  customer_response = response_text
+                  manufacturer_request = "メーカー様への確認依頼文を生成できませんでした。"
+              
+              # 文章のクリーンアップ
+              customer_response = customer_response.strip() if customer_response else ""
+              manufacturer_request = manufacturer_request.strip() if manufacturer_request else ""
+              
+              return {
+                  "inquiry_type": inquiry_type_label,
+                  "customer_response": customer_response,
+                  "manufacturer_request": manufacturer_request,
+                  "processed_date": current_date,
+                  "processing_status": "完了"
+              }
+        code_language: python3
+        desc: 生成された文章の統合と整形
+        error_strategy: fail-branch
+        outputs:
+          customer_response:
+            children: null
+            type: string
+          inquiry_type:
+            children: null
+            type: string
+          manufacturer_request:
+            children: null
+            type: string
+          processed_date:
+            children: null
+            type: string
+          processing_status:
+            children: null
+            type: string
+        selected: false
+        title: 文章統合処理
+        type: code
+        variables:
+        - value_selector:
+          - product_spec_response_node
+          - text
+          variable: spec_response
+        - value_selector:
+          - stock_status_response_node
+          - text
+          variable: stock_response
+        - value_selector:
+          - start_node
+          - inquiry_content
+          variable: inquiry_type
+      height: 118
+      id: response_integration_node
+      position:
+        x: 950
+        y: 150
+      positionAbsolute:
+        x: 950
+        y: 150
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '## 📧 問い合わせ対応文章生成完了
+
+          **問い合わせ種別**: {{#response_integration_node.inquiry_type#}}
+          **処理日時**: {{#response_integration_node.processed_date#}}
+          **処理状態**: {{#response_integration_node.processing_status#}}
+
+          ---
+
+          ### 📝 顧客向け返信文
+
+          {{#response_integration_node.customer_response#}}
+
+          ---
+
+          ### 🏭 メーカー向け確認依頼文
+
+          {{#response_integration_node.manufacturer_request#}}
+
+          ---
+
+          ### 📋 問い合わせ情報
+          - **顧客名**: {{#start_node.customer_name#}}様
+          - **商品名**: {{#start_node.product_name#}}
+          - **型番**: {{#start_node.product_model#}}
+          - **メーカー**: {{#start_node.manufacturer_name#}}
+
+          ---
+
+          💡 **次のアクション**
+          1. 顧客向け返信文をメールシステムにコピー
+          2. メーカー向け確認依頼文を送信
+          3. 回答受領後、顧客へ最終回答
+
+          ✅ 文章生成が完了しました。内容をご確認の上、送信してください。'
+        desc: ''
+        selected: false
+        title: 最終回答
+        type: answer
+        variables: []
+      height: 470
+      id: final_answer_node
+      position:
+        x: 1250
+        y: 150
+      positionAbsolute:
+        x: 1250
+        y: 150
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

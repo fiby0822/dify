@@ -1,0 +1,241 @@
+app:
+  description: 自動車部品に関する技術的な問い合わせに自動で回答するAIアシスタント
+  icon: 🚗
+  icon_background: '#3B82F6'
+  mode: advanced-chat
+  name: 自動車部品技術サポートAI
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/openai:0.0.26@c1e643ac6a7732f6333a783320b4d3026fa5e31d8e7026375b98d44418d33f26
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        image_file_size_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: "こんにちは！自動車部品技術サポートAIです。\n\n以下のような内容についてサポートいたします：\n\U0001F527\
+      \ 部品の適用車種確認\n\U0001F4CB 製品仕様・特徴の説明  \n\U0001F6E0️ 取り付け方法・注意点\n⚠️ トラブルシューティング\n\
+      \nどのような部品についてお困りでしょうか？\n"
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+    - ブレーキパッドの交換時期を教えて
+    - トヨタ プリウス対応のエアフィルターはありますか？
+    - エンジンオイルフィルターの選び方を教えて
+    - ワイパーブレードの取り付け方法は？
+    suggested_questions_after_answer:
+      enabled: true
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: start
+        targetType: llm
+      id: start-llm-edge
+      selected: false
+      source: '1746704294027'
+      sourceHandle: source
+      target: '1746709265761'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: llm-answer-edge
+      selected: false
+      source: '1746709265761'
+      sourceHandle: source
+      target: '1746711315242'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: '自動車部品に関する技術的な質問をお受けします。
+
+          部品の適用車種、仕様、取り付け方法などについてお気軽にお尋ねください。
+
+          '
+        selected: true
+        title: 開始
+        type: start
+        variables: []
+      height: 146
+      id: '1746704294027'
+      position:
+        x: 244
+        y: 282
+      positionAbsolute:
+        x: 244
+        y: 282
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 自動車部品の技術サポートを行うAIアシスタント
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: gpt-4
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: 'あなたは自動車部品製造会社の技術サポートAIアシスタントです。
+
+            顧客からの技術的な問い合わせに対して、正確で分かりやすい回答を提供してください。
+
+
+            ## 対応範囲
+
+            - ブレーキパッド、ディスクローター
+
+            - エンジンオイルフィルター
+
+            - エアフィルター
+
+            - 点火プラグ
+
+            - バッテリー
+
+            - ワイパーブレード
+
+
+            ## 回答スタイル
+
+            - 専門用語は分かりやすく説明する
+
+            - 安全に関わる内容は特に注意深く回答する
+
+            - 製品の適用車種や仕様を明確に伝える
+
+            - 取り付け方法や注意点も含める
+
+
+            ## 知識ベース（例）
+
+            **ブレーキパッド BP-2024**
+
+            - 適用車種: トヨタ プリウス (2016-2023年式)
+
+            - 材質: セラミック系
+
+            - 特徴: 低ダスト、静粛性重視
+
+            - 交換目安: 30,000km または厚さ2mm以下
+
+
+            **エンジンオイルフィルター OF-Honda**
+
+            - 適用車種: Honda フィット、ヴェゼル (2013年式以降)
+
+            - フィルター効率: 99.5%
+
+            - 交換サイクル: オイル交換2回に1回
+
+
+            **エアフィルター AF-Nissan-001**
+
+            - 適用車種: 日産 ノート (2012-2020年式)
+
+            - 材質: 不織布＋活性炭
+
+            - 効果: PM2.5除去率95%
+
+            - 交換目安: 1年または20,000km
+
+            '
+        - id: user-prompt
+          role: user
+          text: '{{#sys.query#}}'
+        selected: false
+        structured_output_enabled: false
+        title: 技術サポートLLM
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 134
+      id: '1746709265761'
+      position:
+        x: 544
+        y: 282
+      positionAbsolute:
+        x: 544
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '{{#1746709265761.text#}}'
+        desc: ''
+        selected: false
+        title: 回答
+        type: answer
+        variables: []
+      height: 105
+      id: '1746711315242'
+      position:
+        x: 844
+        y: 282
+      positionAbsolute:
+        x: 844
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: -134.98299418896397
+      y: 103.09027423870441
+      zoom: 0.9025007274624288

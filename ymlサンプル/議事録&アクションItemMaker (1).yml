@@ -1,0 +1,673 @@
+app:
+  description: 会議の文字起こしデータから議事録作成とアクションアイテムを自動抽出するAIアシスタント
+  icon: 📝
+  icon_background: '#10B981'
+  mode: advanced-chat
+  name: 議事録&アクションItemMaker
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/openai:0.0.26@c1e643ac6a7732f6333a783320b4d3026fa5e31d8e7026375b98d44418d33f26
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .TXT
+      - .DOCX
+      - .PDF
+      - .VTT
+      - .SRT
+      allowed_file_types:
+      - document
+      allowed_file_upload_methods:
+      - local_file
+      enabled: true
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        image_file_size_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods: []
+      number_limits: 3
+    opening_statement: 'こんにちは！議事録&アクションItemMakerです。
+
+      会議の文字起こしデータから自動で議事録を作成し、担当者別のアクションアイテムを抽出します。
+
+      📝 会議内容の自動要約 ✅ アクションアイテムの抽出 👥 担当者別TODO整理 📅 期限付きタスク管理 📊 会議効果測定
+
+      文字起こしファイルをアップロードしてください。'
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+    - 週次定例会議の議事録を作成してください
+    - プロジェクト進捗会議のアクションアイテムを抽出してください
+    - 部門会議の要約とTODOリストをお願いします
+    suggested_questions_after_answer:
+      enabled: true
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: start
+        targetType: if-else
+      id: start-filecheck-edge
+      selected: false
+      source: start_node
+      sourceHandle: source
+      target: file_check_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: answer
+      id: filecheck-nofile-edge
+      selected: false
+      source: file_check_node
+      sourceHandle: 'true'
+      target: no_file_answer
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: document-extractor
+      id: filecheck-extract-edge
+      selected: false
+      source: file_check_node
+      sourceHandle: 'false'
+      target: document_extract_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: document-extractor
+        targetType: parameter-extractor
+      id: extract-analysis-edge
+      selected: false
+      source: document_extract_node
+      sourceHandle: source
+      target: content_analysis_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: parameter-extractor
+        targetType: llm
+      id: analysis-summary-edge
+      selected: false
+      source: content_analysis_node
+      sourceHandle: source
+      target: meeting_summary_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: llm
+      id: summary-action-edge
+      selected: false
+      source: meeting_summary_node
+      sourceHandle: source
+      target: action_extraction_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: action-organize-edge
+      selected: false
+      source: action_extraction_node
+      sourceHandle: source
+      target: action_organize_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: code
+        targetType: llm
+      id: organize-final-edge
+      selected: false
+      source: action_organize_node
+      sourceHandle: source
+      target: final_minutes_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: final-answer-edge
+      selected: false
+      source: final_minutes_node
+      sourceHandle: source
+      target: final_answer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: '会議の文字起こしファイルをアップロードしてください。
+
+          自動で議事録とアクションアイテムを生成します。'
+        selected: false
+        title: 開始
+        type: start
+        variables:
+        - allowed_file_extensions:
+          - .TXT
+          - .DOCX
+          - .PDF
+          - .VTT
+          - .SRT
+          allowed_file_types:
+          - document
+          allowed_file_upload_methods:
+          - local_file
+          label: 文字起こしファイル
+          max_length: 3
+          options: []
+          required: true
+          type: file
+          variable: transcript_file
+        - label: 会議タイトル
+          max_length: 100
+          options: []
+          required: false
+          type: text-input
+          variable: meeting_title
+        - label: 参加者一覧（カンマ区切り）
+          max_length: 500
+          options: []
+          required: false
+          type: text-input
+          variable: participants
+      height: 218
+      id: start_node
+      position:
+        x: 50
+        y: 100
+      positionAbsolute:
+        x: 50
+        y: 100
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        cases:
+        - case_id: 'true'
+          conditions:
+          - comparison_operator: not exists
+            id: file_check_condition
+            value: ''
+            varType: file
+            variable_selector:
+            - start_node
+            - transcript_file
+          id: 'true'
+          logical_operator: and
+        desc: 文字起こしファイルの存在確認
+        selected: false
+        title: ファイル存在チェック
+        type: if-else
+      height: 154
+      id: file_check_node
+      position:
+        x: 350
+        y: 100
+      positionAbsolute:
+        x: 350
+        y: 100
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '❌ 文字起こしファイルがアップロードされていません。
+
+          📄 以下の形式のファイルをアップロードしてください： • テキストファイル (.txt) • Word文書 (.docx) • PDF文書 (.pdf)
+          • 字幕ファイル (.vtt, .srt)
+
+          🎙️ 対応可能な内容： • Zoom会議の自動文字起こし • Google Meet の字幕データ • Teams会議の文字起こし • 手動で作成した会議メモ
+
+          ファイルをアップロード後、再度実行してください。'
+        desc: ''
+        selected: false
+        title: ファイル未アップロード
+        type: answer
+        variables: []
+      height: 262
+      id: no_file_answer
+      position:
+        x: 650
+        y: 50
+      positionAbsolute:
+        x: 650
+        y: 50
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: 文字起こしファイルからテキストを抽出
+        is_array_file: false
+        selected: false
+        title: 文字起こし抽出
+        type: document-extractor
+        variable_selector:
+        - start_node
+        - transcript_file
+      height: 136
+      id: document_extract_node
+      position:
+        x: 650
+        y: 180
+      positionAbsolute:
+        x: 650
+        y: 180
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: 会議内容の基本情報を抽出
+        instruction: '文字起こしデータを分析し、会議の基本情報を抽出してください。
+
+          発言者の特定、会議の流れ、主要なトピックを整理してください。'
+        model:
+          completion_params:
+            temperature: 0.1
+          mode: chat
+          name: gpt-4
+          provider: langgenius/openai/openai
+        parameters:
+        - description: 実際の会議開始時刻（文字起こしから推定）
+          name: meeting_start_time
+          required: false
+          type: string
+        - description: 実際の会議終了時刻（文字起こしから推定）
+          name: meeting_end_time
+          required: false
+          type: string
+        - description: 発言者一覧（カンマ区切り）
+          name: speakers_list
+          required: false
+          type: string
+        - description: 主要議題・トピック（カンマ区切り）
+          name: main_topics
+          required: false
+          type: string
+        - description: 会議の種類（定例/臨時/プロジェクト/その他）
+          name: meeting_type
+          required: false
+          type: string
+        - description: 決定事項の件数（数値）
+          name: decisions_count
+          required: false
+          type: number
+        - description: アクションアイテムの件数（数値）
+          name: action_items_count
+          required: false
+          type: number
+        query:
+        - document_extract_node
+        - text
+        reasoning_mode: prompt
+        selected: false
+        title: 会議内容分析
+        type: parameter-extractor
+        variables: []
+        vision:
+          enabled: false
+      height: 118
+      id: content_analysis_node
+      position:
+        x: 950
+        y: 180
+      positionAbsolute:
+        x: 950
+        y: 180
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 会議内容の要約作成
+        model:
+          completion_params:
+            temperature: 0.3
+          mode: chat
+          name: gpt-4
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: 'あなたは議事録作成の専門家です。
+
+            文字起こしデータから正確で読みやすい会議要約を作成してください。
+
+            ## 要約ルール 1. **時系列順**: 会議の流れに沿って整理 2. **発言者明記**: 重要な発言は発言者名を記載 3. **客観的記述**:
+            主観的な表現は避ける 4. **簡潔性**: 冗長な表現を排除 5. **重要度**: 決定事項と検討事項を明確に区別
+
+            ## 要約フォーマット **📋 会議概要** - 会議名：[会議タイトル] - 日時：[開始時刻] - [終了時刻] - 参加者：[参加者一覧]
+
+            **🎯 主要議題** 1. [議題1] 2. [議題2] 3. [議題3]
+
+            **💡 討議内容** [時系列順で主要な討議内容を要約]
+
+            **✅ 決定事項** 1. [決定事項1] 2. [決定事項2]
+
+            **🔍 検討事項** 1. [要検討事項1] 2. [要検討事項2]'
+        - id: user-prompt
+          role: user
+          text: '【会議情報】 会議タイトル: {{#start_node.meeting_title#}} 参加者: {{#start_node.participants#}}
+
+            【分析結果】 開始時刻: {{#content_analysis_node.meeting_start_time#}} 終了時刻: {{#content_analysis_node.meeting_end_time#}}
+            発言者: {{#content_analysis_node.speakers_list#}} 主要トピック: {{#content_analysis_node.main_topics#}}
+            会議種類: {{#content_analysis_node.meeting_type#}}
+
+            【文字起こしデータ】 {{#document_extract_node.text#}}
+
+            上記の文字起こしデータから、構造化された議事録要約を作成してください。'
+        selected: false
+        structured_output_enabled: false
+        title: 議事録要約生成
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 118
+      id: meeting_summary_node
+      position:
+        x: 1250
+        y: 180
+      positionAbsolute:
+        x: 1250
+        y: 180
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: アクションアイテムの抽出と整理
+        model:
+          completion_params:
+            temperature: 0.2
+          mode: chat
+          name: gpt-4
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: 'あなたはアクションアイテム抽出の専門家です。
+
+            文字起こしデータから具体的なアクションアイテムを抽出し、担当者別に整理してください。
+
+            ## 抽出基準 1. **具体的なタスク**: 「〜する」「〜を作成」「〜を検討」等の動詞を含む 2. **担当者明記**: 発言から担当者が特定できるもの
+            3. **期限設定**: 明示的または暗示的な期限があるもの 4. **実行可能性**: 現実的に実行可能なタスク
+
+            ## 出力フォーマット **🎯 アクションアイテム一覧**
+
+            **[担当者名1]** • [タスク1] - 期限：[期限] • [タスク2] - 期限：[期限]
+
+            **[担当者名2]** • [タスク1] - 期限：[期限] • [タスク2] - 期限：[期限]
+
+            **全体・未確定** • [担当者未定のタスク] - 期限：[期限]
+
+            **📅 重要な期限** • [日付]：[重要なマイルストーン] • [日付]：[重要なマイルストーン]
+
+            担当者が不明な場合は「要確認」、期限が不明な場合は「要設定」と記載してください。'
+        - id: user-prompt
+          role: user
+          text: '【会議要約】 {{#meeting_summary_node.text#}}
+
+            【文字起こしデータ】 {{#document_extract_node.text#}}
+
+            上記の会議内容から、アクションアイテムを抽出し、担当者別に整理してください。 発言の文脈から担当者と期限を推定し、具体的で実行可能なタスクリストを作成してください。'
+        selected: false
+        structured_output_enabled: false
+        title: アクションアイテム抽出
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 118
+      id: action_extraction_node
+      position:
+        x: 1550
+        y: 180
+      positionAbsolute:
+        x: 1550
+        y: 180
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        code: "def main(action_items_text: str, decisions_count: int, action_items_count:\
+          \ int) -> dict:\n    \"\"\"\n    アクションアイテムを分析して統計情報を算出\n    \"\"\"\n   \
+          \ import re\n    from datetime import datetime, timedelta\n    \n    # アクションアイテムの数をカウント\n\
+          \    action_pattern = r'•\\s+(.+?)\\s+-\\s+期限：(.+?)(?=\\n|$)'\n    actions\
+          \ = re.findall(action_pattern, action_items_text, re.MULTILINE)\n    \n\
+          \    # 担当者別の分析\n    assignee_pattern = r'\\*\\*([^*]+)\\*\\*'\n    assignees\
+          \ = re.findall(assignee_pattern, action_items_text)\n    \n    # 期限の分析\n\
+          \    urgent_count = 0\n    overdue_risk = 0\n    \n    for action, deadline\
+          \ in actions:\n        if '要設定' not in deadline and '要確認' not in deadline:\n\
+          \            # 緊急度の判定（簡易的）\n            if any(word in deadline for word\
+          \ in ['今週', '明日', '至急', '緊急']):\n                urgent_count += 1\n   \
+          \         if any(word in deadline for word in ['来週末', '月末', '来月']):\n  \
+          \              overdue_risk += 1\n    \n    # 完了予測とリスク評価\n    total_actions\
+          \ = len(actions)\n    if total_actions > 0:\n        completion_rate_prediction\
+          \ = max(70, 100 - (total_actions * 5))  # タスク数に応じて完了率予測\n        risk_score\
+          \ = min(100, (urgent_count * 20) + (overdue_risk * 10))\n    else:\n   \
+          \     completion_rate_prediction = 100\n        risk_score = 0\n    \n \
+          \   # 会議効果スコア算出\n    effectiveness_score = 0\n    if decisions_count > 0:\n\
+          \        effectiveness_score += min(40, decisions_count * 10)\n    if total_actions\
+          \ > 0:\n        effectiveness_score += min(40, total_actions * 8)\n    if\
+          \ len(assignees) > 2:\n        effectiveness_score += 20  # 多様な担当者への割り振り\n\
+          \    \n    effectiveness_score = min(100, effectiveness_score)\n    \n \
+          \   # 推奨アクション\n    recommendations = []\n    if urgent_count > 3:\n    \
+          \    recommendations.append(\"緊急タスクが多いため、優先順位の見直しを推奨\")\n    if len([a for\
+          \ a in assignees if '要確認' in a or '未確定' in a]) > 0:\n        recommendations.append(\"\
+          担当者未確定のタスクがあります。早急に責任者を決定してください\")\n    if overdue_risk > 2:\n        recommendations.append(\"\
+          期限に余裕のないタスクが複数あります。スケジュール調整を検討してください\")\n    if not recommendations:\n \
+          \       recommendations.append(\"適切なタスク配分です。定期的な進捗確認を実施してください\")\n    \n\
+          \    return {\n        \"total_action_items\": total_actions,\n        \"\
+          unique_assignees\": len(set(assignees)),\n        \"urgent_items\": urgent_count,\n\
+          \        \"overdue_risk_items\": overdue_risk,\n        \"completion_prediction\"\
+          : completion_rate_prediction,\n        \"risk_score\": risk_score,\n   \
+          \     \"effectiveness_score\": effectiveness_score,\n        \"recommendations\"\
+          : recommendations\n    }\n"
+        code_language: python3
+        desc: アクションアイテムの統計分析
+        error_strategy: fail-branch
+        outputs:
+          completion_prediction:
+            children: null
+            type: number
+          effectiveness_score:
+            children: null
+            type: number
+          overdue_risk_items:
+            children: null
+            type: number
+          recommendations:
+            children: null
+            type: array[string]
+          risk_score:
+            children: null
+            type: number
+          total_action_items:
+            children: null
+            type: number
+          unique_assignees:
+            children: null
+            type: number
+          urgent_items:
+            children: null
+            type: number
+        selected: false
+        title: アクション分析処理
+        type: code
+        variables:
+        - value_selector:
+          - action_extraction_node
+          - text
+          variable: action_items_text
+        - value_selector:
+          - content_analysis_node
+          - decisions_count
+          variable: decisions_count
+        - value_selector:
+          - content_analysis_node
+          - action_items_count
+          variable: action_items_count
+      height: 118
+      id: action_organize_node
+      position:
+        x: 1850
+        y: 180
+      positionAbsolute:
+        x: 1850
+        y: 180
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 最終議事録レポートの生成
+        model:
+          completion_params:
+            temperature: 0.4
+          mode: chat
+          name: gpt-4
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: '最終的な議事録レポートを作成してください。
+
+            実用的で後から参照しやすい形式で、会議の成果とフォローアップが明確になるよう整理してください。'
+        - id: user-prompt
+          role: user
+          text: '【会議基本情報】 タイトル: {{#start_node.meeting_title#}} 参加者: {{#start_node.participants#}}
+            時間: {{#content_analysis_node.meeting_start_time#}} - {{#content_analysis_node.meeting_end_time#}}
+
+            【議事録要約】 {{#meeting_summary_node.text#}}
+
+            【アクションアイテム】 {{#action_extraction_node.text#}}
+
+            【分析結果】 総アクション数: {{#action_organize_node.total_action_items#}}件 担当者数: {{#action_organize_node.unique_assignees#}}名
+            緊急タスク: {{#action_organize_node.urgent_items#}}件 完了予測率: {{#action_organize_node.completion_prediction#}}%
+            会議効果スコア: {{#action_organize_node.effectiveness_score#}}点 リスクスコア: {{#action_organize_node.risk_score#}}点
+
+            上記の情報を統合し、実用的な最終議事録レポートを作成してください。 次回会議までのフォローアップポイントも含めてください。'
+        selected: false
+        structured_output_enabled: false
+        title: 最終レポート生成
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 118
+      id: final_minutes_node
+      position:
+        x: 2150
+        y: 180
+      positionAbsolute:
+        x: 2150
+        y: 180
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '## 📝 議事録 & アクションアイテム完成レポート
+
+          **📊 会議効果スコア: {{#action_organize_node.effectiveness_score#}}点/100点** **🎯
+          アクション総数: {{#action_organize_node.total_action_items#}}件（担当者{{#action_organize_node.unique_assignees#}}名）**
+          **⚠️ リスクレベル: {{#action_organize_node.risk_score#}}点**
+
+          ---
+
+          {{#final_minutes_node.text#}}
+
+          ---
+
+          ### 📈 会議分析サマリー ✅ **完了予測率**: {{#action_organize_node.completion_prediction#}}%
+          🚨 **緊急タスク**: {{#action_organize_node.urgent_items#}}件 ⏰ **期限注意**: {{#action_organize_node.overdue_risk_items#}}件
+
+          ### 💡 推奨アクション {{#action_organize_node.recommendations#}}
+
+          ---
+
+          *この議事録は自動生成されました。内容に不備がある場合は手動で修正してください。*'
+        desc: ''
+        selected: false
+        title: 完成議事録
+        type: answer
+        variables: []
+      height: 424
+      id: final_answer_node
+      position:
+        x: 2450
+        y: 180
+      positionAbsolute:
+        x: 2450
+        y: 180
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: 67.34737323997183
+      y: 35.96748171418989
+      zoom: 0.8450065361472484

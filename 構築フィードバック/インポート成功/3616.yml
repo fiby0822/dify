@@ -1,0 +1,237 @@
+app:
+  description: "更新されたLLMコンポーネントルールを検証するための2段階分析チャットボット"
+  icon: "🔍"
+  icon_background: "#F59E0B"
+  mode: advanced-chat
+  name: "LLMルール検証_2段階分析ボット"
+  use_icon_as_answer_icon: false
+  
+dependencies: []
+
+kind: app
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      こんにちは！私は2段階分析チャットボットです。
+      あなたの質問を詳しく分析してから、最適な回答を生成します。
+      どのようなことでもお気軽にお尋ねください。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "AIの歴史について教えてください"
+      - "プログラミング言語の選び方を教えてください"
+      - "健康的な生活習慣について教えてください"
+      - "環境問題の現状について教えてください"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-analysis-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: analysis_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: llm
+        id: analysis-generation-edge
+        selected: false
+        source: analysis_llm_node
+        sourceHandle: source
+        target: generation_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: generation-answer-edge
+        selected: false
+        source: generation_llm_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "ユーザーからの入力を受け取る開始ノード"
+          selected: false
+          title: "開始"
+          type: start
+          variables:
+            - label: "あなたの質問"
+              max_length: 2000
+              options: []
+              required: true
+              type: text-input
+              variable: user_question
+        height: 116
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+            completion_params:
+              temperature: 0.3
+              max_tokens: 500
+          prompt_template:
+            - id: analysis-system-prompt
+              role: system
+              text: |
+                あなたは質問分析の専門家です。
+                ユーザーの質問を分析し、以下の観点で整理してください：
+                1. 質問の主要なトピック
+                2. 質問の意図や目的
+                3. 回答に必要な情報の種類
+                4. 推奨される回答の構成
+            - id: analysis-user-prompt
+              role: user
+              text: |
+                以下の質問を分析してください：
+                {{#start_node.user_question#}}
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          memory:
+            enabled: false
+          desc: "ユーザーの質問を詳しく分析するLLMノード"
+          selected: false
+          title: "質問分析"
+          type: llm
+        height: 98
+        id: analysis_llm_node
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+            completion_params:
+              temperature: 0.7
+              max_tokens: 1500
+          prompt_template:
+            - id: generation-system-prompt
+              role: system
+              text: |
+                あなたは親切で知識豊富なAIアシスタントです。
+                質問分析の結果を踏まえて、ユーザーに最適な回答を提供してください。
+                回答は以下の点に注意してください：
+                1. 明確で分かりやすい説明
+                2. 具体的な例や実用的なアドバイス
+                3. 段階的な説明（必要に応じて）
+                4. 友好的で励ましのあるトーン
+            - id: generation-user-prompt
+              role: user
+              text: |
+                元の質問：
+                {{#start_node.user_question#}}
+                
+                質問の分析結果：
+                {{#analysis_llm_node.text#}}
+                
+                上記の分析を踏まえて、ユーザーに適切な回答を生成してください。
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          memory:
+            enabled: false
+          desc: "分析結果を基に最終的な回答を生成するLLMノード"
+          selected: false
+          title: "回答生成"
+          type: llm
+        height: 98
+        id: generation_llm_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ## 回答
+            {{#generation_llm_node.text#}}
+            
+            ---
+            *この回答は、あなたの質問を詳しく分析した上で生成されました。*
+          desc: "最終的な回答をユーザーに返すノード"
+          selected: false
+          title: "回答"
+          type: answer
+          variables: []
+        height: 107
+        id: answer_node
+        position:
+          x: 950
+          y: 200
+        positionAbsolute:
+          x: 950
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

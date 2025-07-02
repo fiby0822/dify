@@ -1,0 +1,576 @@
+app:
+  description: "知識検索（knowledge-retrieval）とIF_ELSEコンポーネントの動作検証用ワークフロー。製品問い合わせを分類し、適切な知識ベースから情報を検索して回答します。"
+  icon: "🔎"
+  icon_background: "#E0F5FF"
+  mode: advanced-chat
+  name: "製品問い合わせ知識検索システム"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      製品に関するお問い合わせを承ります。
+      技術仕様、価格情報、在庫状況について、知識ベースから検索してお答えします。
+      
+      例：「製品Aの技術仕様を教えてください」「最新の価格表はありますか？」「在庫状況を確認したい」
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "新型モデルXの技術仕様を教えてください"
+      - "製品カテゴリーBの価格情報を確認したい"
+      - "商品コード12345の在庫状況は？"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-classification-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: inquiry_classification_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: if-else
+        id: classification-typecheck-edge
+        selected: false
+        source: inquiry_classification_node
+        sourceHandle: source
+        target: inquiry_type_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: knowledge-retrieval
+        id: typecheck-techsearch-edge
+        selected: false
+        source: inquiry_type_check_node
+        sourceHandle: tech_spec_case
+        target: tech_spec_search_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: knowledge-retrieval
+        id: typecheck-pricesearch-edge
+        selected: false
+        source: inquiry_type_check_node
+        sourceHandle: price_info_case
+        target: price_info_search_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: knowledge-retrieval
+        id: typecheck-stocksearch-edge
+        selected: false
+        source: inquiry_type_check_node
+        sourceHandle: false
+        target: stock_status_search_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: knowledge-retrieval
+          targetType: llm
+        id: techsearch-techresponse-edge
+        selected: false
+        source: tech_spec_search_node
+        sourceHandle: source
+        target: tech_response_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: knowledge-retrieval
+          targetType: llm
+        id: pricesearch-priceresponse-edge
+        selected: false
+        source: price_info_search_node
+        sourceHandle: source
+        target: price_response_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: knowledge-retrieval
+          targetType: llm
+        id: stocksearch-stockresponse-edge
+        selected: false
+        source: stock_status_search_node
+        sourceHandle: source
+        target: stock_response_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: techresponse-answer-edge
+        selected: false
+        source: tech_response_node
+        sourceHandle: source
+        target: tech_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: priceresponse-answer-edge
+        selected: false
+        source: price_response_node
+        sourceHandle: source
+        target: price_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: stockresponse-answer-edge
+        selected: false
+        source: stock_response_node
+        sourceHandle: source
+        target: stock_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "ユーザーからの製品問い合わせを受け取る開始ノード"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 300
+        positionAbsolute:
+          x: 50
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "問い合わせ内容を分類（技術仕様、価格情報、在庫状況）"
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+            completion_params:
+              temperature: 0.3
+              max_tokens: 100
+          prompt_template:
+            - id: system-prompt-1
+              role: system
+              text: |
+                あなたは製品問い合わせを分類する専門家です。
+                ユーザーの問い合わせを以下の3つのカテゴリーのいずれかに分類してください：
+                
+                1. 技術仕様：製品のスペック、機能、技術的な詳細に関する問い合わせ
+                2. 価格情報：価格、見積もり、割引、支払い条件に関する問い合わせ
+                3. 在庫状況：在庫の有無、納期、入荷予定に関する問い合わせ
+                
+                必ず「技術仕様」「価格情報」「在庫状況」のいずれか1つのみを回答してください。
+            - id: user-prompt-1
+              role: user
+              text: |
+                以下の問い合わせを分類してください：
+                {{#sys.query#}}
+          selected: false
+          structured_output_enabled: false
+          title: "問い合わせ分類"
+          type: llm
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+        height: 98
+        id: inquiry_classification_node
+        position:
+          x: 350
+          y: 300
+        positionAbsolute:
+          x: 350
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "問い合わせタイプによる条件分岐"
+          type: if-else
+          cases:
+            - id: tech_spec_case
+              case_id: tech_spec_case
+              conditions:
+                - variable_selector:
+                    - inquiry_classification_node
+                    - text
+                  comparison_operator: contains
+                  value: "技術仕様"
+              logical_operator: and
+            - id: price_info_case
+              case_id: price_info_case
+              conditions:
+                - variable_selector:
+                    - inquiry_classification_node
+                    - text
+                  comparison_operator: contains
+                  value: "価格情報"
+              logical_operator: and
+          selected: false
+          title: "問い合わせタイプ判定"
+        height: 154
+        id: inquiry_type_check_node
+        position:
+          x: 650
+          y: 300
+        positionAbsolute:
+          x: 650
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          dataset_ids:
+            - "7ccfkMYSp7EbvPLfz84xM+MGWesznlJf6laOpWdSR4vOjJa6XZ3W7JdALMg/4IRY"
+          desc: ''
+          query_variable_selector:
+            - start_node
+            - sys.query
+          retrieval_mode: single
+          selected: false
+          title: "技術仕様検索"
+          type: knowledge-retrieval
+        height: 92
+        id: tech_spec_search_node
+        position:
+          x: 950
+          y: 100
+        positionAbsolute:
+          x: 950
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          dataset_ids:
+            - "8ddglNZTq8FcwQMgz95yN+NHXftzomlKg7mbPqXeTR5wPkJb7YZ4X8KeALNh/5JSZ"
+          desc: ''
+          query_variable_selector:
+            - start_node
+            - sys.query
+          retrieval_mode: single
+          selected: false
+          title: "価格情報検索"
+          type: knowledge-retrieval
+        height: 92
+        id: price_info_search_node
+        position:
+          x: 950
+          y: 300
+        positionAbsolute:
+          x: 950
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          dataset_ids:
+            - "9eehMOaUr9GdxRNha06zO+OIYguaplMLh8ncQrYfUS6xQlKc8Za5Y9LfBMOi/6KTa"
+          desc: ''
+          multiple_retrieval_config:
+            reranking_enable: true
+            reranking_mode: weighted_score
+            top_k: 4
+            weights:
+              keyword_setting:
+                keyword_weight: 0.3
+              vector_setting:
+                embedding_model_name: text-embedding-3-large
+                embedding_provider_name: langgenius/openai/openai
+                vector_weight: 0.7
+          query_variable_selector:
+            - start_node
+            - sys.query
+          retrieval_mode: multiple
+          selected: false
+          title: "在庫状況検索"
+          type: knowledge-retrieval
+        height: 92
+        id: stock_status_search_node
+        position:
+          x: 950
+          y: 500
+        positionAbsolute:
+          x: 950
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "技術仕様の検索結果を基に回答生成"
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+            completion_params:
+              temperature: 0.7
+              max_tokens: 1000
+          prompt_template:
+            - id: system-prompt-2
+              role: system
+              text: |
+                あなたは製品の技術仕様に詳しいサポート担当者です。
+                知識ベースの検索結果を基に、分かりやすく正確な回答を提供してください。
+                
+                検索結果が見つからない場合は、技術部門への問い合わせ方法を案内してください。
+            - id: user-prompt-2
+              role: user
+              text: |
+                ユーザーの問い合わせ：{{#sys.query#}}
+                
+                知識ベース検索結果：
+                {{#tech_spec_search_node.result#}}
+                
+                上記の検索結果を基に適切な回答をお願いします。
+          selected: false
+          structured_output_enabled: false
+          title: "技術仕様回答生成"
+          type: llm
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+        height: 98
+        id: tech_response_node
+        position:
+          x: 1250
+          y: 100
+        positionAbsolute:
+          x: 1250
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "価格情報の検索結果を基に回答生成"
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+            completion_params:
+              temperature: 0.7
+              max_tokens: 1000
+          prompt_template:
+            - id: system-prompt-3
+              role: system
+              text: |
+                あなたは製品の価格情報に詳しいサポート担当者です。
+                知識ベースの検索結果を基に、分かりやすく正確な回答を提供してください。
+                
+                検索結果が見つからない場合は、営業部門への問い合わせ方法を案内してください。
+            - id: user-prompt-3
+              role: user
+              text: |
+                ユーザーの問い合わせ：{{#sys.query#}}
+                
+                知識ベース検索結果：
+                {{#price_info_search_node.result#}}
+                
+                上記の検索結果を基に適切な回答をお願いします。
+          selected: false
+          structured_output_enabled: false
+          title: "価格情報回答生成"
+          type: llm
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+        height: 98
+        id: price_response_node
+        position:
+          x: 1250
+          y: 300
+        positionAbsolute:
+          x: 1250
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "在庫状況の検索結果を基に回答生成"
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+            completion_params:
+              temperature: 0.7
+              max_tokens: 1000
+          prompt_template:
+            - id: system-prompt-4
+              role: system
+              text: |
+                あなたは在庫管理に詳しいサポート担当者です。
+                知識ベースの検索結果を基に、分かりやすく正確な回答を提供してください。
+                複数の検索結果がある場合は、最新の情報を優先してください。
+                
+                検索結果が見つからない場合は、物流部門への問い合わせ方法を案内してください。
+            - id: user-prompt-4
+              role: user
+              text: |
+                ユーザーの問い合わせ：{{#sys.query#}}
+                
+                知識ベース検索結果：
+                {{#stock_status_search_node.result#}}
+                
+                上記の検索結果を基に適切な回答をお願いします。
+          selected: false
+          structured_output_enabled: false
+          title: "在庫状況回答生成"
+          type: llm
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+        height: 98
+        id: stock_response_node
+        position:
+          x: 1250
+          y: 500
+        positionAbsolute:
+          x: 1250
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#tech_response_node.text#}}"
+          desc: "技術仕様に関する回答"
+          selected: false
+          title: "技術仕様回答"
+          type: answer
+          variables: []
+        height: 107
+        id: tech_answer_node
+        position:
+          x: 1550
+          y: 100
+        positionAbsolute:
+          x: 1550
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#price_response_node.text#}}"
+          desc: "価格情報に関する回答"
+          selected: false
+          title: "価格情報回答"
+          type: answer
+          variables: []
+        height: 107
+        id: price_answer_node
+        position:
+          x: 1550
+          y: 300
+        positionAbsolute:
+          x: 1550
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#stock_response_node.text#}}"
+          desc: "在庫状況に関する回答"
+          selected: false
+          title: "在庫状況回答"
+          type: answer
+          variables: []
+        height: 107
+        id: stock_answer_node
+        position:
+          x: 1550
+          y: 500
+        positionAbsolute:
+          x: 1550
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

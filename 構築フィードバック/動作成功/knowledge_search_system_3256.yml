@@ -1,0 +1,704 @@
+app:
+  description: "ユーザーの問い合わせをカテゴリ分類し、適切な知識ベースから情報を検索して回答する"
+  icon: "📚"
+  icon_background: "#FFEAD5"
+  mode: advanced-chat
+  name: "カスタマーサポート知識ベース検索システム"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_extensions: []
+      enabled: false
+    opening_statement: ""
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ""
+      voice: ""
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-to-classifier
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: query_classifier
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: if-else
+        id: classifier-to-condition
+        selected: false
+        source: query_classifier
+        sourceHandle: source
+        target: category_condition
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: knowledge-retrieval
+        id: condition-to-tech-search
+        selected: false
+        source: category_condition
+        sourceHandle: technical_case
+        target: tech_knowledge_search
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: knowledge-retrieval
+        id: condition-to-operation-search
+        selected: false
+        source: category_condition
+        sourceHandle: operation_case
+        target: operation_knowledge_search
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: knowledge-retrieval
+        id: condition-to-trouble-search
+        selected: false
+        source: category_condition
+        sourceHandle: troubleshoot_case
+        target: trouble_knowledge_search
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: knowledge-retrieval
+        id: condition-to-other-search
+        selected: false
+        source: category_condition
+        sourceHandle: "false"
+        target: other_knowledge_search
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: knowledge-retrieval
+          targetType: llm
+        id: tech-search-to-llm
+        selected: false
+        source: tech_knowledge_search
+        sourceHandle: source
+        target: tech_answer_generator
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: knowledge-retrieval
+          targetType: llm
+        id: operation-search-to-llm
+        selected: false
+        source: operation_knowledge_search
+        sourceHandle: source
+        target: operation_answer_generator
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: knowledge-retrieval
+          targetType: llm
+        id: trouble-search-to-llm
+        selected: false
+        source: trouble_knowledge_search
+        sourceHandle: source
+        target: trouble_answer_generator
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: knowledge-retrieval
+          targetType: llm
+        id: other-search-to-llm
+        selected: false
+        source: other_knowledge_search
+        sourceHandle: source
+        target: other_answer_generator
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: tech-llm-to-answer
+        selected: false
+        source: tech_answer_generator
+        sourceHandle: source
+        target: tech_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: operation-llm-to-answer
+        selected: false
+        source: operation_answer_generator
+        sourceHandle: source
+        target: operation_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: trouble-llm-to-answer
+        selected: false
+        source: trouble_answer_generator
+        sourceHandle: source
+        target: trouble_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: other-llm-to-answer
+        selected: false
+        source: other_answer_generator
+        sourceHandle: source
+        target: other_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: ""
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 80
+          y: 300
+        positionAbsolute:
+          x: 80
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: ""
+          model:
+            completion_params:
+              temperature: 0.3
+            mode: chat
+            name: gpt-4o-mini
+            provider: openai
+          prompt_template:
+            - id: assistant
+              role: assistant
+              text: "あなたはカスタマーサポートの問い合わせ分類専門家です。\nユーザーの問い合わせを以下の4つのカテゴリのいずれかに分類してください。\n\n1. 技術的な質問: エラー、不具合、動作しない、バグ、クラッシュなどのキーワードを含む\n2. 操作方法の質問: 使い方、方法、やり方、手順、設定などのキーワードを含む\n3. トラブルシューティング: 解決、直す、修正、対処、復旧などのキーワードを含む\n4. その他: 上記に該当しない一般的な問い合わせ\n\n問い合わせ内容: {{#sys.query#}}\n\n最も適切なカテゴリを1つ選んで回答してください。"
+          selected: false
+          title: "問い合わせ分類"
+          type: llm
+          variables: []
+          vision:
+            enabled: false
+        height: 98
+        id: query_classifier
+        position:
+          x: 380
+          y: 300
+        positionAbsolute:
+          x: 380
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - id: technical_case
+              case_id: technical_case
+              conditions:
+                - variable_selector:
+                    - query_classifier
+                    - text
+                  comparison_operator: contains
+                  value: "エラー"
+                - variable_selector:
+                    - query_classifier
+                    - text
+                  comparison_operator: contains
+                  value: "不具合"
+                - variable_selector:
+                    - query_classifier
+                    - text
+                  comparison_operator: contains
+                  value: "動作しない"
+                - variable_selector:
+                    - query_classifier
+                    - text
+                  comparison_operator: contains
+                  value: "バグ"
+                - variable_selector:
+                    - query_classifier
+                    - text
+                  comparison_operator: contains
+                  value: "クラッシュ"
+                - variable_selector:
+                    - query_classifier
+                    - text
+                  comparison_operator: contains
+                  value: "技術的"
+              logical_operator: or
+            - id: operation_case
+              case_id: operation_case
+              conditions:
+                - variable_selector:
+                    - query_classifier
+                    - text
+                  comparison_operator: contains
+                  value: "使い方"
+                - variable_selector:
+                    - query_classifier
+                    - text
+                  comparison_operator: contains
+                  value: "方法"
+                - variable_selector:
+                    - query_classifier
+                    - text
+                  comparison_operator: contains
+                  value: "やり方"
+                - variable_selector:
+                    - query_classifier
+                    - text
+                  comparison_operator: contains
+                  value: "手順"
+                - variable_selector:
+                    - query_classifier
+                    - text
+                  comparison_operator: contains
+                  value: "設定"
+                - variable_selector:
+                    - query_classifier
+                    - text
+                  comparison_operator: contains
+                  value: "操作"
+              logical_operator: or
+            - id: troubleshoot_case
+              case_id: troubleshoot_case
+              conditions:
+                - variable_selector:
+                    - query_classifier
+                    - text
+                  comparison_operator: contains
+                  value: "解決"
+                - variable_selector:
+                    - query_classifier
+                    - text
+                  comparison_operator: contains
+                  value: "直す"
+                - variable_selector:
+                    - query_classifier
+                    - text
+                  comparison_operator: contains
+                  value: "修正"
+                - variable_selector:
+                    - query_classifier
+                    - text
+                  comparison_operator: contains
+                  value: "対処"
+                - variable_selector:
+                    - query_classifier
+                    - text
+                  comparison_operator: contains
+                  value: "復旧"
+                - variable_selector:
+                    - query_classifier
+                    - text
+                  comparison_operator: contains
+                  value: "トラブル"
+              logical_operator: or
+          desc: "カテゴリによる分岐"
+          selected: false
+          title: "カテゴリ条件分岐"
+          type: if-else
+        height: 210
+        id: category_condition
+        position:
+          x: 680
+          y: 280
+        positionAbsolute:
+          x: 680
+          y: 280
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          dataset_ids:
+            - "mUJqT0QSpLmBBBGsAg6tP+rLJoOBsXRCgClBvqhk7NKJWFKdH7o5AOBH9nG0DiXe"
+          desc: ""
+          query_variable_selector:
+            - sys
+            - query
+          retrieval_mode: single
+          selected: false
+          title: "技術知識検索"
+          type: knowledge-retrieval
+        height: 92
+        id: tech_knowledge_search
+        position:
+          x: 980
+          y: 100
+        positionAbsolute:
+          x: 980
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          dataset_ids:
+            - "7ccfkMYSp7EbvPLfz84xM+MGWesznlJf6laOpWdSR4vOjJa6XZ3W7JdALMg/4IRY"
+          desc: ""
+          query_variable_selector:
+            - sys
+            - query
+          retrieval_mode: single
+          selected: false
+          title: "操作方法知識検索"
+          type: knowledge-retrieval
+        height: 92
+        id: operation_knowledge_search
+        position:
+          x: 980
+          y: 250
+        positionAbsolute:
+          x: 980
+          y: 250
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          dataset_ids:
+            - "8ddglNZTq8FcwQMgz95yN+NHXftzomlKg7mbPqXeTR5wPkJb7YZ4X8KeALNh/5JSZ"
+          desc: ""
+          query_variable_selector:
+            - sys
+            - query
+          retrieval_mode: single
+          selected: false
+          title: "トラブル知識検索"
+          type: knowledge-retrieval
+        height: 92
+        id: trouble_knowledge_search
+        position:
+          x: 980
+          y: 400
+        positionAbsolute:
+          x: 980
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          dataset_ids:
+            - "9eehMOaUr9GdxRNha06zO+OIYguaplMLh8ncQrYfUS6xQlKc8Za5Y9LfBMOi/6KTa"
+          desc: ""
+          query_variable_selector:
+            - sys
+            - query
+          retrieval_mode: single
+          selected: false
+          title: "一般知識検索"
+          type: knowledge-retrieval
+        height: 92
+        id: other_knowledge_search
+        position:
+          x: 980
+          y: 550
+        positionAbsolute:
+          x: 980
+          y: 550
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          context:
+            enabled: true
+            variable_selector:
+              - tech_knowledge_search
+              - result
+          desc: ""
+          model:
+            completion_params:
+              temperature: 0.5
+            mode: chat
+            name: gpt-4o-mini
+            provider: openai
+          prompt_template:
+            - id: assistant
+              role: assistant
+              text: "技術的な問題に関する回答を生成します。\n\n検索結果:\n{{#tech_knowledge_search.result#}}\n\nユーザーの質問:\n{{#sys.query#}}\n\n上記の検索結果を基に、技術的な問題に対する適切な回答を生成してください。"
+          selected: false
+          title: "技術回答生成"
+          type: llm
+          variables: []
+          vision:
+            enabled: false
+        height: 98
+        id: tech_answer_generator
+        position:
+          x: 1280
+          y: 100
+        positionAbsolute:
+          x: 1280
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          context:
+            enabled: true
+            variable_selector:
+              - operation_knowledge_search
+              - result
+          desc: ""
+          model:
+            completion_params:
+              temperature: 0.5
+            mode: chat
+            name: gpt-4o-mini
+            provider: openai
+          prompt_template:
+            - id: assistant
+              role: assistant
+              text: "操作方法に関する回答を生成します。\n\n検索結果:\n{{#operation_knowledge_search.result#}}\n\nユーザーの質問:\n{{#sys.query#}}\n\n上記の検索結果を基に、操作方法に関する分かりやすい回答を生成してください。"
+          selected: false
+          title: "操作方法回答生成"
+          type: llm
+          variables: []
+          vision:
+            enabled: false
+        height: 98
+        id: operation_answer_generator
+        position:
+          x: 1280
+          y: 250
+        positionAbsolute:
+          x: 1280
+          y: 250
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          context:
+            enabled: true
+            variable_selector:
+              - trouble_knowledge_search
+              - result
+          desc: ""
+          model:
+            completion_params:
+              temperature: 0.5
+            mode: chat
+            name: gpt-4o-mini
+            provider: openai
+          prompt_template:
+            - id: assistant
+              role: assistant
+              text: "トラブルシューティングに関する回答を生成します。\n\n検索結果:\n{{#trouble_knowledge_search.result#}}\n\nユーザーの質問:\n{{#sys.query#}}\n\n上記の検索結果を基に、問題解決のための具体的な手順を含む回答を生成してください。"
+          selected: false
+          title: "トラブル回答生成"
+          type: llm
+          variables: []
+          vision:
+            enabled: false
+        height: 98
+        id: trouble_answer_generator
+        position:
+          x: 1280
+          y: 400
+        positionAbsolute:
+          x: 1280
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          context:
+            enabled: true
+            variable_selector:
+              - other_knowledge_search
+              - result
+          desc: ""
+          model:
+            completion_params:
+              temperature: 0.5
+            mode: chat
+            name: gpt-4o-mini
+            provider: openai
+          prompt_template:
+            - id: assistant
+              role: assistant
+              text: "一般的な問い合わせに対する回答を生成します。\n\n検索結果:\n{{#other_knowledge_search.result#}}\n\nユーザーの質問:\n{{#sys.query#}}\n\n上記の検索結果を基に、適切な回答を生成してください。"
+          selected: false
+          title: "一般回答生成"
+          type: llm
+          variables: []
+          vision:
+            enabled: false
+        height: 98
+        id: other_answer_generator
+        position:
+          x: 1280
+          y: 550
+        positionAbsolute:
+          x: 1280
+          y: 550
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#tech_answer_generator.text#}}"
+          desc: ""
+          selected: false
+          title: "技術的な回答"
+          type: answer
+          variables: []
+        height: 107
+        id: tech_answer
+        position:
+          x: 1580
+          y: 100
+        positionAbsolute:
+          x: 1580
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#operation_answer_generator.text#}}"
+          desc: ""
+          selected: false
+          title: "操作方法の回答"
+          type: answer
+          variables: []
+        height: 107
+        id: operation_answer
+        position:
+          x: 1580
+          y: 250
+        positionAbsolute:
+          x: 1580
+          y: 250
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#trouble_answer_generator.text#}}"
+          desc: ""
+          selected: false
+          title: "トラブルシューティング回答"
+          type: answer
+          variables: []
+        height: 107
+        id: trouble_answer
+        position:
+          x: 1580
+          y: 400
+        positionAbsolute:
+          x: 1580
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#other_answer_generator.text#}}"
+          desc: ""
+          selected: false
+          title: "一般的な回答"
+          type: answer
+          variables: []
+        height: 107
+        id: other_answer
+        position:
+          x: 1580
+          y: 550
+        positionAbsolute:
+          x: 1580
+          y: 550
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.5

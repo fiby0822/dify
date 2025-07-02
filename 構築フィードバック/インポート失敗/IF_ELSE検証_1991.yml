@@ -1,0 +1,125 @@
+# IF_ELSEルール検証用YMLファイル
+# 作成日時: 2025-07-01 17:38
+# 目的: YMLでのIF_ELSE記述パターンの検証
+
+# 基本的なIF_ELSE構造
+basic_if_else:
+  condition: true
+  if_true: "条件が真の場合の処理"
+  if_false: "条件が偽の場合の処理"
+
+# 数値比較を使ったIF_ELSE
+numeric_comparison:
+  value: 10
+  threshold: 5
+  result: 
+    if: "value > threshold"
+    then: "値が閾値を超えています"
+    else: "値が閾値以下です"
+
+# ネストされたIF_ELSE
+nested_conditions:
+  user_type: "premium"
+  access_level:
+    if_premium:
+      condition: "user_type == premium"
+      then:
+        feature_a: enabled
+        feature_b: enabled
+        feature_c: enabled
+    if_standard:
+      condition: "user_type == standard"
+      then:
+        feature_a: enabled
+        feature_b: disabled
+        feature_c: disabled
+    else:
+      feature_a: disabled
+      feature_b: disabled
+      feature_c: disabled
+
+# リスト内でのIF_ELSE
+conditional_list:
+  items:
+    - name: "アイテム1"
+      status: "active"
+      display: 
+        if: "status == active"
+        then: true
+        else: false
+    - name: "アイテム2"
+      status: "inactive"
+      display:
+        if: "status == active"
+        then: true
+        else: false
+
+# 複数条件のIF_ELSE
+multiple_conditions:
+  age: 25
+  member: true
+  discount:
+    conditions:
+      - if: "age >= 65"
+        then: "シニア割引"
+      - if: "age < 18"
+        then: "学生割引"
+      - if: "member == true"
+        then: "会員割引"
+      - else: "通常料金"
+
+# 環境変数を使ったIF_ELSE
+environment_based:
+  env: "production"
+  config:
+    database:
+      if_production:
+        condition: "env == production"
+        host: "prod-db.example.com"
+        port: 5432
+      if_development:
+        condition: "env == development"
+        host: "localhost"
+        port: 5433
+      else:
+        host: "test-db.example.com"
+        port: 5434
+
+# YMLアンカーとエイリアスを使った条件分岐
+anchors_and_aliases:
+  defaults: &default_config
+    timeout: 30
+    retry: 3
+  
+  services:
+    api:
+      <<: *default_config
+      if_critical:
+        condition: "priority == high"
+        timeout: 60
+        retry: 5
+    
+    background:
+      <<: *default_config
+      if_low_priority:
+        condition: "priority == low"
+        timeout: 10
+        retry: 1
+
+# 検証用のテストケース
+test_cases:
+  - scenario: "基本的な条件分岐"
+    input: 
+      value: true
+    expected: "真の場合の出力"
+  
+  - scenario: "数値比較"
+    input:
+      value: 15
+      threshold: 10
+    expected: "閾値超過"
+  
+  - scenario: "文字列マッチング"
+    input:
+      status: "active"
+    expected: "アクティブ状態"

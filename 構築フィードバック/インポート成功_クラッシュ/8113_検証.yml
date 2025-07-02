@@ -1,0 +1,908 @@
+app:
+  description: "更新されたIF_ELSEコンポーネントルールの完全検証用アプリケーション"
+  icon: "🔄"
+  icon_background: "#F3F4F6"
+  mode: advanced-chat
+  name: "IF_ELSE完全検証テスト"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: code
+        id: start-data_prep-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: data_prep_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: code
+          targetType: if-else
+        id: data_prep-string_test-edge
+        selected: false
+        source: data_prep_node
+        sourceHandle: source
+        target: string_test_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: string_test-contains_answer-edge
+        selected: false
+        source: string_test_node
+        sourceHandle: contains_case
+        target: contains_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: string_test-not_contains_answer-edge
+        selected: false
+        source: string_test_node
+        sourceHandle: not_contains_case
+        target: not_contains_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: string_test-start_with_answer-edge
+        selected: false
+        source: string_test_node
+        sourceHandle: start_with_case
+        target: start_with_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: string_test-end_with_answer-edge
+        selected: false
+        source: string_test_node
+        sourceHandle: end_with_case
+        target: end_with_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: string_test-is_answer-edge
+        selected: false
+        source: string_test_node
+        sourceHandle: is_case
+        target: is_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: string_test-is_not_answer-edge
+        selected: false
+        source: string_test_node
+        sourceHandle: is_not_case
+        target: is_not_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: string_test-numeric_test-edge
+        selected: false
+        source: string_test_node
+        sourceHandle: false
+        target: numeric_test_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: numeric_test-equal_answer-edge
+        selected: false
+        source: numeric_test_node
+        sourceHandle: equal_case
+        target: equal_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: numeric_test-not_equal_answer-edge
+        selected: false
+        source: numeric_test_node
+        sourceHandle: not_equal_case
+        target: not_equal_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: numeric_test-greater_answer-edge
+        selected: false
+        source: numeric_test_node
+        sourceHandle: greater_case
+        target: greater_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: numeric_test-less_answer-edge
+        selected: false
+        source: numeric_test_node
+        sourceHandle: less_case
+        target: less_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: numeric_test-greater_equal_answer-edge
+        selected: false
+        source: numeric_test_node
+        sourceHandle: greater_equal_case
+        target: greater_equal_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: numeric_test-less_equal_answer-edge
+        selected: false
+        source: numeric_test_node
+        sourceHandle: less_equal_case
+        target: less_equal_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: numeric_test-null_test-edge
+        selected: false
+        source: numeric_test_node
+        sourceHandle: false
+        target: null_test_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: null_test-empty_answer-edge
+        selected: false
+        source: null_test_node
+        sourceHandle: empty_case
+        target: empty_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: null_test-not_empty_answer-edge
+        selected: false
+        source: null_test_node
+        sourceHandle: not_empty_case
+        target: not_empty_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: null_test-null_answer-edge
+        selected: false
+        source: null_test_node
+        sourceHandle: null_case
+        target: null_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: null_test-not_null_answer-edge
+        selected: false
+        source: null_test_node
+        sourceHandle: not_null_case
+        target: not_null_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: null_test-default_answer-edge
+        selected: false
+        source: null_test_node
+        sourceHandle: false
+        target: default_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "開始ノード"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 500
+        positionAbsolute:
+          x: 50
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          code: |
+            def main(user_input):
+                import json
+                
+                test_text = user_input.get('test_text', 'テスト文字列contains確認')
+                test_number = int(user_input.get('test_number', '75'))
+                test_empty = user_input.get('test_empty', '')
+                test_null = user_input.get('test_null', None)
+                test_list = ['apple', 'banana', 'orange']
+                
+                return {
+                    'test_text': test_text,
+                    'test_number': test_number,
+                    'test_empty': test_empty,
+                    'test_null': test_null,
+                    'test_list': json.dumps(test_list),
+                    'status': 'active',
+                    'category': '緊急対応'
+                }
+          code_language: python3
+          desc: "テストデータ準備"
+          outputs:
+            test_text:
+              type: string
+            test_number:
+              type: number
+            test_empty:
+              type: string
+            test_null:
+              type: string
+            test_list:
+              type: string
+            status:
+              type: string
+            category:
+              type: string
+          selected: false
+          title: "データ準備"
+          type: code
+          variables:
+            - value_selector:
+                - sys
+                - query
+              variable: user_input
+        height: 122
+        id: data_prep_node
+        position:
+          x: 350
+          y: 500
+        positionAbsolute:
+          x: 350
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: contains_case
+              case_id: contains_case
+              conditions:
+                - id: contains_check
+                  variable_selector:
+                    - data_prep_node
+                    - test_text
+                  comparison_operator: contains
+                  value: "contains"
+              logical_operator: and
+            - id: not_contains_case
+              case_id: not_contains_case
+              conditions:
+                - variable_selector:
+                    - data_prep_node
+                    - test_text
+                  comparison_operator: not contains
+                  value: "exclude"
+              logical_operator: and
+            - id: start_with_case
+              case_id: start_with_case
+              conditions:
+                - variable_selector:
+                    - data_prep_node
+                    - test_text
+                  comparison_operator: start with
+                  value: "テスト"
+              logical_operator: and
+            - id: end_with_case
+              case_id: end_with_case
+              conditions:
+                - variable_selector:
+                    - data_prep_node
+                    - test_text
+                  comparison_operator: end with
+                  value: "確認"
+              logical_operator: and
+            - id: is_case
+              case_id: is_case
+              conditions:
+                - variable_selector:
+                    - data_prep_node
+                    - status
+                  comparison_operator: is
+                  value: "active"
+              logical_operator: and
+            - id: is_not_case
+              case_id: is_not_case
+              conditions:
+                - variable_selector:
+                    - data_prep_node
+                    - status
+                  comparison_operator: is not
+                  value: "inactive"
+              logical_operator: and
+          desc: "文字列比較テスト"
+          selected: false
+          title: "文字列比較検証"
+        height: 250
+        id: string_test_node
+        position:
+          x: 650
+          y: 300
+        positionAbsolute:
+          x: 650
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【文字列比較検証結果】\n✅ contains演算子: 成功\nテキスト「{{#data_prep_node.test_text#}}」に「contains」が含まれています。"
+          desc: "contains結果"
+          selected: false
+          title: "contains成功"
+          type: answer
+          variables: []
+        height: 107
+        id: contains_answer_node
+        position:
+          x: 950
+          y: 50
+        positionAbsolute:
+          x: 950
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【文字列比較検証結果】\n✅ not contains演算子: 成功\nテキスト「{{#data_prep_node.test_text#}}」に「exclude」が含まれていません。"
+          desc: "not contains結果"
+          selected: false
+          title: "not contains成功"
+          type: answer
+          variables: []
+        height: 107
+        id: not_contains_answer_node
+        position:
+          x: 950
+          y: 200
+        positionAbsolute:
+          x: 950
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【文字列比較検証結果】\n✅ start with演算子: 成功\nテキスト「{{#data_prep_node.test_text#}}」は「テスト」で始まっています。"
+          desc: "start with結果"
+          selected: false
+          title: "start with成功"
+          type: answer
+          variables: []
+        height: 107
+        id: start_with_answer_node
+        position:
+          x: 950
+          y: 350
+        positionAbsolute:
+          x: 950
+          y: 350
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【文字列比較検証結果】\n✅ end with演算子: 成功\nテキスト「{{#data_prep_node.test_text#}}」は「確認」で終わっています。"
+          desc: "end with結果"
+          selected: false
+          title: "end with成功"
+          type: answer
+          variables: []
+        height: 107
+        id: end_with_answer_node
+        position:
+          x: 950
+          y: 500
+        positionAbsolute:
+          x: 950
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【文字列比較検証結果】\n✅ is演算子: 成功\nstatus「{{#data_prep_node.status#}}」は「active」と完全一致しています。"
+          desc: "is結果"
+          selected: false
+          title: "is成功"
+          type: answer
+          variables: []
+        height: 107
+        id: is_answer_node
+        position:
+          x: 950
+          y: 650
+        positionAbsolute:
+          x: 950
+          y: 650
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【文字列比較検証結果】\n✅ is not演算子: 成功\nstatus「{{#data_prep_node.status#}}」は「inactive」と一致していません。"
+          desc: "is not結果"
+          selected: false
+          title: "is not成功"
+          type: answer
+          variables: []
+        height: 107
+        id: is_not_answer_node
+        position:
+          x: 950
+          y: 800
+        positionAbsolute:
+          x: 950
+          y: 800
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: equal_case
+              case_id: equal_case
+              conditions:
+                - variable_selector:
+                    - data_prep_node
+                    - test_number
+                  comparison_operator: "="
+                  value: 75
+              logical_operator: and
+            - id: not_equal_case
+              case_id: not_equal_case
+              conditions:
+                - variable_selector:
+                    - data_prep_node
+                    - test_number
+                  comparison_operator: "≠"
+                  value: 100
+              logical_operator: and
+            - id: greater_case
+              case_id: greater_case
+              conditions:
+                - variable_selector:
+                    - data_prep_node
+                    - test_number
+                  comparison_operator: ">"
+                  value: 50
+              logical_operator: and
+            - id: less_case
+              case_id: less_case
+              conditions:
+                - variable_selector:
+                    - data_prep_node
+                    - test_number
+                  comparison_operator: "<"
+                  value: 100
+              logical_operator: and
+            - id: greater_equal_case
+              case_id: greater_equal_case
+              conditions:
+                - variable_selector:
+                    - data_prep_node
+                    - test_number
+                  comparison_operator: "≥"
+                  value: 75
+              logical_operator: and
+            - id: less_equal_case
+              case_id: less_equal_case
+              conditions:
+                - variable_selector:
+                    - data_prep_node
+                    - test_number
+                  comparison_operator: "≤"
+                  value: 75
+              logical_operator: and
+          desc: "数値比較テスト（Unicode演算子）"
+          selected: false
+          title: "数値比較検証"
+        height: 250
+        id: numeric_test_node
+        position:
+          x: 650
+          y: 950
+        positionAbsolute:
+          x: 650
+          y: 950
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【数値比較検証結果】\n✅ =演算子: 成功\n数値{{#data_prep_node.test_number#}}は75と等しいです。"
+          desc: "=結果"
+          selected: false
+          title: "=成功"
+          type: answer
+          variables: []
+        height: 107
+        id: equal_answer_node
+        position:
+          x: 950
+          y: 950
+        positionAbsolute:
+          x: 950
+          y: 950
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【数値比較検証結果】\n✅ ≠演算子: 成功\n数値{{#data_prep_node.test_number#}}は100と等しくありません。"
+          desc: "≠結果"
+          selected: false
+          title: "≠成功"
+          type: answer
+          variables: []
+        height: 107
+        id: not_equal_answer_node
+        position:
+          x: 950
+          y: 1100
+        positionAbsolute:
+          x: 950
+          y: 1100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【数値比較検証結果】\n✅ >演算子: 成功\n数値{{#data_prep_node.test_number#}}は50より大きいです。"
+          desc: ">結果"
+          selected: false
+          title: ">成功"
+          type: answer
+          variables: []
+        height: 107
+        id: greater_answer_node
+        position:
+          x: 950
+          y: 1250
+        positionAbsolute:
+          x: 950
+          y: 1250
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【数値比較検証結果】\n✅ <演算子: 成功\n数値{{#data_prep_node.test_number#}}は100より小さいです。"
+          desc: "<結果"
+          selected: false
+          title: "<成功"
+          type: answer
+          variables: []
+        height: 107
+        id: less_answer_node
+        position:
+          x: 950
+          y: 1400
+        positionAbsolute:
+          x: 950
+          y: 1400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【数値比較検証結果】\n✅ ≥演算子: 成功\n数値{{#data_prep_node.test_number#}}は75以上です。"
+          desc: "≥結果"
+          selected: false
+          title: "≥成功"
+          type: answer
+          variables: []
+        height: 107
+        id: greater_equal_answer_node
+        position:
+          x: 950
+          y: 1550
+        positionAbsolute:
+          x: 950
+          y: 1550
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【数値比較検証結果】\n✅ ≤演算子: 成功\n数値{{#data_prep_node.test_number#}}は75以下です。"
+          desc: "≤結果"
+          selected: false
+          title: "≤成功"
+          type: answer
+          variables: []
+        height: 107
+        id: less_equal_answer_node
+        position:
+          x: 950
+          y: 1700
+        positionAbsolute:
+          x: 950
+          y: 1700
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: empty_case
+              case_id: empty_case
+              conditions:
+                - variable_selector:
+                    - data_prep_node
+                    - test_empty
+                  comparison_operator: empty
+                  value: ""
+              logical_operator: and
+            - id: not_empty_case
+              case_id: not_empty_case
+              conditions:
+                - variable_selector:
+                    - data_prep_node
+                    - test_text
+                  comparison_operator: not empty
+                  value: ""
+              logical_operator: and
+            - id: null_case
+              case_id: null_case
+              conditions:
+                - variable_selector:
+                    - data_prep_node
+                    - test_null
+                  comparison_operator: null
+                  value: ""
+              logical_operator: and
+            - id: not_null_case
+              case_id: not_null_case
+              conditions:
+                - variable_selector:
+                    - data_prep_node
+                    - test_text
+                  comparison_operator: not null
+                  value: ""
+              logical_operator: and
+          desc: "NULL/存在チェックテスト"
+          selected: false
+          title: "NULL/存在検証"
+        height: 198
+        id: null_test_node
+        position:
+          x: 650
+          y: 1850
+        positionAbsolute:
+          x: 650
+          y: 1850
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【NULL/存在検証結果】\n✅ empty演算子: 成功\ntest_emptyフィールドは空です。"
+          desc: "empty結果"
+          selected: false
+          title: "empty成功"
+          type: answer
+          variables: []
+        height: 107
+        id: empty_answer_node
+        position:
+          x: 950
+          y: 1850
+        positionAbsolute:
+          x: 950
+          y: 1850
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【NULL/存在検証結果】\n✅ not empty演算子: 成功\ntest_textフィールドは空ではありません。値: {{#data_prep_node.test_text#}}"
+          desc: "not empty結果"
+          selected: false
+          title: "not empty成功"
+          type: answer
+          variables: []
+        height: 107
+        id: not_empty_answer_node
+        position:
+          x: 950
+          y: 2000
+        positionAbsolute:
+          x: 950
+          y: 2000
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【NULL/存在検証結果】\n✅ null演算子: 成功\ntest_nullフィールドはNULLです。"
+          desc: "null結果"
+          selected: false
+          title: "null成功"
+          type: answer
+          variables: []
+        height: 107
+        id: null_answer_node
+        position:
+          x: 950
+          y: 2150
+        positionAbsolute:
+          x: 950
+          y: 2150
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【NULL/存在検証結果】\n✅ not null演算子: 成功\ntest_textフィールドはNULLではありません。"
+          desc: "not null結果"
+          selected: false
+          title: "not null成功"
+          type: answer
+          variables: []
+        height: 107
+        id: not_null_answer_node
+        position:
+          x: 950
+          y: 2300
+        positionAbsolute:
+          x: 950
+          y: 2300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【IF_ELSE検証完了】\nすべての演算子テストが想定通りに動作しています。\n\n検証項目:\n- 文字列比較: 6種類\n- 数値比較: 6種類（Unicode演算子使用）\n- NULL/存在チェック: 4種類\n\n✅ 外側type属性: custom\n✅ case_id: 全て設定済み\n✅ YAMLコメント: なし"
+          desc: "デフォルト結果"
+          selected: false
+          title: "検証完了"
+          type: answer
+          variables: []
+        height: 200
+        id: default_answer_node
+        position:
+          x: 950
+          y: 2450
+        positionAbsolute:
+          x: 950
+          y: 2450
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.3

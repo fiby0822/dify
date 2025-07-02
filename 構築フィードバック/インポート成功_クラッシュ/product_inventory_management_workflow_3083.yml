@@ -1,0 +1,973 @@
+app:
+  description: "製品在庫管理を自動化するワークフロー。カテゴリー別の在庫閾値チェックと発注提案を行います。"
+  icon: "📦"
+  icon_background: "#FFEAD5"
+  mode: advanced-chat
+  name: "製品在庫管理ワークフロー"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      製品在庫管理ワークフローへようこそ！
+      
+      以下の形式で製品情報を入力してください：
+      - 製品名
+      - カテゴリー（food/electronics/clothing）
+      - 在庫数
+      - 売上傾向（increasing/stable/decreasing）
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "コーヒー豆、food、15個、stable"
+      - "スマートフォン、electronics、8個、increasing"
+      - "冬用コート、clothing、45個、decreasing"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: code
+        id: start-parse_input-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: parse_input_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: code
+          targetType: if-else
+        id: parse_input-category_check-edge
+        selected: false
+        source: parse_input_node
+        sourceHandle: source
+        target: category_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: category_check-food_stock_check-edge
+        selected: false
+        source: category_check_node
+        sourceHandle: food_case
+        target: food_stock_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: category_check-electronics_stock_check-edge
+        selected: false
+        source: category_check_node
+        sourceHandle: electronics_case
+        target: electronics_stock_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: category_check-clothing_check-edge
+        selected: false
+        source: category_check_node
+        sourceHandle: clothing_case
+        target: clothing_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: food_stock_check-emergency_food-edge
+        selected: false
+        source: food_stock_check_node
+        sourceHandle: emergency_case
+        target: food_emergency_order_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: food_stock_check-normal_food-edge
+        selected: false
+        source: food_stock_check_node
+        sourceHandle: normal_case
+        target: food_normal_order_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: food_stock_check-optimal_food-edge
+        selected: false
+        source: food_stock_check_node
+        sourceHandle: optimal_case
+        target: food_optimal_stock_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: food_stock_check-excess_food-edge
+        selected: false
+        source: food_stock_check_node
+        sourceHandle: false
+        target: food_excess_stock_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: electronics_stock_check-emergency_electronics-edge
+        selected: false
+        source: electronics_stock_check_node
+        sourceHandle: emergency_large_case
+        target: electronics_emergency_order_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: electronics_stock_check-normal_electronics-edge
+        selected: false
+        source: electronics_stock_check_node
+        sourceHandle: normal_case
+        target: electronics_normal_order_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: electronics_stock_check-optimal_electronics-edge
+        selected: false
+        source: electronics_stock_check_node
+        sourceHandle: false
+        target: electronics_optimal_stock_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: clothing_check-seasonal_clothing-edge
+        selected: false
+        source: clothing_check_node
+        sourceHandle: seasonal_case
+        target: clothing_seasonal_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: clothing_check-regular_clothing-edge
+        selected: false
+        source: clothing_check_node
+        sourceHandle: false
+        target: clothing_regular_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: food_emergency_order-answer-edge
+        selected: false
+        source: food_emergency_order_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: food_normal_order-answer-edge
+        selected: false
+        source: food_normal_order_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: food_optimal_stock-answer-edge
+        selected: false
+        source: food_optimal_stock_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: food_excess_stock-answer-edge
+        selected: false
+        source: food_excess_stock_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: electronics_emergency_order-answer-edge
+        selected: false
+        source: electronics_emergency_order_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: electronics_normal_order-answer-edge
+        selected: false
+        source: electronics_normal_order_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: electronics_optimal_stock-answer-edge
+        selected: false
+        source: electronics_optimal_stock_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: clothing_seasonal-answer-edge
+        selected: false
+        source: clothing_seasonal_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: clothing_regular-answer-edge
+        selected: false
+        source: clothing_regular_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "開始ノード"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 350
+        positionAbsolute:
+          x: 50
+          y: 350
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          code: |
+            import re
+            
+            input_text = sys.query
+            
+            lines = input_text.strip().split('、')
+            
+            product_name = ""
+            category = "unknown"
+            stock_quantity = 0
+            sales_trend = "stable"
+            
+            if len(lines) >= 1:
+                product_name = lines[0].strip()
+            if len(lines) >= 2:
+                category = lines[1].strip().lower()
+            if len(lines) >= 3:
+                stock_str = re.sub(r'[^0-9]', '', lines[2])
+                if stock_str:
+                    stock_quantity = int(stock_str)
+            if len(lines) >= 4:
+                sales_trend = lines[3].strip().lower()
+            
+            return {
+                "product_name": product_name,
+                "category": category,
+                "stock_quantity": stock_quantity,
+                "sales_trend": sales_trend
+            }
+          code_language: python3
+          desc: "入力データを解析"
+          outputs:
+            product_name:
+              description: "製品名"
+              type: string
+            category:
+              description: "カテゴリー"
+              type: string
+            stock_quantity:
+              description: "在庫数"
+              type: number
+            sales_trend:
+              description: "売上傾向"
+              type: string
+          selected: false
+          title: "入力解析"
+          type: code
+          variables:
+            - value_selector:
+              - sys
+              - query
+              variable: sys.query
+        height: 98
+        id: parse_input_node
+        position:
+          x: 350
+          y: 350
+        positionAbsolute:
+          x: 350
+          y: 350
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: food_case
+              case_id: food_case
+              conditions:
+                - variable_selector:
+                    - parse_input_node
+                    - category
+                  comparison_operator: is
+                  value: "food"
+              logical_operator: and
+            - id: electronics_case
+              case_id: electronics_case
+              conditions:
+                - variable_selector:
+                    - parse_input_node
+                    - category
+                  comparison_operator: is
+                  value: "electronics"
+              logical_operator: and
+            - id: clothing_case
+              case_id: clothing_case
+              conditions:
+                - variable_selector:
+                    - parse_input_node
+                    - category
+                  comparison_operator: is
+                  value: "clothing"
+              logical_operator: and
+          desc: "カテゴリー別分岐"
+          selected: false
+          title: "カテゴリー判定"
+        height: 198
+        id: category_check_node
+        position:
+          x: 650
+          y: 350
+        positionAbsolute:
+          x: 650
+          y: 350
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: emergency_case
+              case_id: emergency_case
+              conditions:
+                - variable_selector:
+                    - parse_input_node
+                    - stock_quantity
+                  comparison_operator: "≤"
+                  value: 20
+              logical_operator: and
+            - id: normal_case
+              case_id: normal_case
+              conditions:
+                - variable_selector:
+                    - parse_input_node
+                    - stock_quantity
+                  comparison_operator: "≤"
+                  value: 50
+              logical_operator: and
+            - id: optimal_case
+              case_id: optimal_case
+              conditions:
+                - variable_selector:
+                    - parse_input_node
+                    - stock_quantity
+                  comparison_operator: "≤"
+                  value: 100
+              logical_operator: and
+          desc: "food在庫レベル判定"
+          selected: false
+          title: "Food在庫チェック"
+        height: 198
+        id: food_stock_check_node
+        position:
+          x: 950
+          y: 50
+        positionAbsolute:
+          x: 950
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: emergency_large_case
+              case_id: emergency_large_case
+              conditions:
+                - variable_selector:
+                    - parse_input_node
+                    - stock_quantity
+                  comparison_operator: "≤"
+                  value: 10
+                - variable_selector:
+                    - parse_input_node
+                    - sales_trend
+                  comparison_operator: is
+                  value: "increasing"
+              logical_operator: and
+            - id: normal_case
+              case_id: normal_case
+              conditions:
+                - variable_selector:
+                    - parse_input_node
+                    - stock_quantity
+                  comparison_operator: "≤"
+                  value: 30
+              logical_operator: and
+          desc: "electronics在庫レベル判定"
+          selected: false
+          title: "Electronics在庫チェック"
+        height: 198
+        id: electronics_stock_check_node
+        position:
+          x: 950
+          y: 350
+        positionAbsolute:
+          x: 950
+          y: 350
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: seasonal_case
+              case_id: seasonal_case
+              conditions:
+                - variable_selector:
+                    - parse_input_node
+                    - product_name
+                  comparison_operator: contains
+                  value: "冬"
+              logical_operator: and
+          desc: "clothing特別処理判定"
+          selected: false
+          title: "Clothing特別チェック"
+        height: 154
+        id: clothing_check_node
+        position:
+          x: 950
+          y: 650
+        positionAbsolute:
+          x: 950
+          y: 650
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "Food緊急発注処理"
+          model:
+            completion_params:
+              temperature: 0.7
+            mode: chat
+            name: gpt-4
+            provider: openai
+          prompt_template:
+            - id: system-prompt
+              role: system
+              text: |
+                あなたは在庫管理のエキスパートです。緊急発注が必要な商品について、具体的な発注提案を行ってください。
+            - id: user-prompt
+              role: user
+              text: |
+                以下の商品で緊急発注が必要です：
+                製品名：{{#parse_input_node.product_name#}}
+                カテゴリー：food
+                現在庫：{{#parse_input_node.stock_quantity#}}個
+                売上傾向：{{#parse_input_node.sales_trend#}}
+                
+                在庫の200%（{{#parse_input_node.stock_quantity#}}×2={{#parse_input_node.stock_quantity#}}×2個）の緊急発注を提案してください。
+          selected: false
+          title: "Food緊急発注"
+          type: llm
+        height: 98
+        id: food_emergency_order_node
+        position:
+          x: 1250
+          y: -100
+        positionAbsolute:
+          x: 1250
+          y: -100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "Food通常発注処理"
+          model:
+            completion_params:
+              temperature: 0.7
+            mode: chat
+            name: gpt-4
+            provider: openai
+          prompt_template:
+            - id: system-prompt
+              role: system
+              text: |
+                あなたは在庫管理のエキスパートです。通常発注が必要な商品について、具体的な発注提案を行ってください。
+            - id: user-prompt
+              role: user
+              text: |
+                以下の商品で通常発注が必要です：
+                製品名：{{#parse_input_node.product_name#}}
+                カテゴリー：food
+                現在庫：{{#parse_input_node.stock_quantity#}}個
+                売上傾向：{{#parse_input_node.sales_trend#}}
+                
+                在庫の100%（{{#parse_input_node.stock_quantity#}}個）の通常発注を提案してください。
+          selected: false
+          title: "Food通常発注"
+          type: llm
+        height: 98
+        id: food_normal_order_node
+        position:
+          x: 1250
+          y: 20
+        positionAbsolute:
+          x: 1250
+          y: 20
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "Food適正在庫"
+          model:
+            completion_params:
+              temperature: 0.7
+            mode: chat
+            name: gpt-4
+            provider: openai
+          prompt_template:
+            - id: system-prompt
+              role: system
+              text: |
+                あなたは在庫管理のエキスパートです。適正在庫の商品について、現状維持の提案を行ってください。
+            - id: user-prompt
+              role: user
+              text: |
+                以下の商品は適正在庫です：
+                製品名：{{#parse_input_node.product_name#}}
+                カテゴリー：food
+                現在庫：{{#parse_input_node.stock_quantity#}}個
+                売上傾向：{{#parse_input_node.sales_trend#}}
+                
+                発注は不要です。現状維持の提案をしてください。
+          selected: false
+          title: "Food適正在庫"
+          type: llm
+        height: 98
+        id: food_optimal_stock_node
+        position:
+          x: 1250
+          y: 140
+        positionAbsolute:
+          x: 1250
+          y: 140
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "Food過剰在庫"
+          model:
+            completion_params:
+              temperature: 0.7
+            mode: chat
+            name: gpt-4
+            provider: openai
+          prompt_template:
+            - id: system-prompt
+              role: system
+              text: |
+                あなたは在庫管理のエキスパートです。過剰在庫の商品について、在庫削減の提案を行ってください。
+            - id: user-prompt
+              role: user
+              text: |
+                以下の商品は過剰在庫です：
+                製品名：{{#parse_input_node.product_name#}}
+                カテゴリー：food
+                現在庫：{{#parse_input_node.stock_quantity#}}個
+                売上傾向：{{#parse_input_node.sales_trend#}}
+                
+                在庫削減の提案をしてください。
+          selected: false
+          title: "Food過剰在庫"
+          type: llm
+        height: 98
+        id: food_excess_stock_node
+        position:
+          x: 1250
+          y: 260
+        positionAbsolute:
+          x: 1250
+          y: 260
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "Electronics緊急大量発注"
+          model:
+            completion_params:
+              temperature: 0.7
+            mode: chat
+            name: gpt-4
+            provider: openai
+          prompt_template:
+            - id: system-prompt
+              role: system
+              text: |
+                あなたは在庫管理のエキスパートです。売上増加中の電子機器について、緊急大量発注の提案を行ってください。
+            - id: user-prompt
+              role: user
+              text: |
+                以下の商品で緊急大量発注が必要です：
+                製品名：{{#parse_input_node.product_name#}}
+                カテゴリー：electronics
+                現在庫：{{#parse_input_node.stock_quantity#}}個
+                売上傾向：{{#parse_input_node.sales_trend#}}（増加中）
+                
+                売上が増加しているため、通常より多めの発注を提案してください。
+          selected: false
+          title: "Electronics緊急大量発注"
+          type: llm
+        height: 98
+        id: electronics_emergency_order_node
+        position:
+          x: 1250
+          y: 380
+        positionAbsolute:
+          x: 1250
+          y: 380
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "Electronics通常発注"
+          model:
+            completion_params:
+              temperature: 0.7
+            mode: chat
+            name: gpt-4
+            provider: openai
+          prompt_template:
+            - id: system-prompt
+              role: system
+              text: |
+                あなたは在庫管理のエキスパートです。電子機器の通常発注について提案を行ってください。
+            - id: user-prompt
+              role: user
+              text: |
+                以下の商品で通常発注が必要です：
+                製品名：{{#parse_input_node.product_name#}}
+                カテゴリー：electronics
+                現在庫：{{#parse_input_node.stock_quantity#}}個
+                売上傾向：{{#parse_input_node.sales_trend#}}
+                
+                通常発注の提案をしてください。
+          selected: false
+          title: "Electronics通常発注"
+          type: llm
+        height: 98
+        id: electronics_normal_order_node
+        position:
+          x: 1250
+          y: 500
+        positionAbsolute:
+          x: 1250
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "Electronics適正在庫"
+          model:
+            completion_params:
+              temperature: 0.7
+            mode: chat
+            name: gpt-4
+            provider: openai
+          prompt_template:
+            - id: system-prompt
+              role: system
+              text: |
+                あなたは在庫管理のエキスパートです。電子機器の適正在庫について現状維持の提案を行ってください。
+            - id: user-prompt
+              role: user
+              text: |
+                以下の商品は適正在庫です：
+                製品名：{{#parse_input_node.product_name#}}
+                カテゴリー：electronics
+                現在庫：{{#parse_input_node.stock_quantity#}}個
+                売上傾向：{{#parse_input_node.sales_trend#}}
+                
+                現状維持の提案をしてください。
+          selected: false
+          title: "Electronics適正在庫"
+          type: llm
+        height: 98
+        id: electronics_optimal_stock_node
+        position:
+          x: 1250
+          y: 620
+        positionAbsolute:
+          x: 1250
+          y: 620
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "Clothing季節商品処理"
+          model:
+            completion_params:
+              temperature: 0.7
+            mode: chat
+            name: gpt-4
+            provider: openai
+          prompt_template:
+            - id: system-prompt
+              role: system
+              text: |
+                あなたは在庫管理のエキスパートです。季節商品の在庫管理について特別な提案を行ってください。
+            - id: user-prompt
+              role: user
+              text: |
+                以下の商品は季節商品です：
+                製品名：{{#parse_input_node.product_name#}}
+                カテゴリー：clothing
+                現在庫：{{#parse_input_node.stock_quantity#}}個
+                売上傾向：{{#parse_input_node.sales_trend#}}
+                
+                「冬」を含む季節商品のため、特別な在庫管理提案をしてください。
+          selected: false
+          title: "Clothing季節商品"
+          type: llm
+        height: 98
+        id: clothing_seasonal_node
+        position:
+          x: 1250
+          y: 740
+        positionAbsolute:
+          x: 1250
+          y: 740
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "Clothing通常管理"
+          model:
+            completion_params:
+              temperature: 0.7
+            mode: chat
+            name: gpt-4
+            provider: openai
+          prompt_template:
+            - id: system-prompt
+              role: system
+              text: |
+                あなたは在庫管理のエキスパートです。衣料品の通常在庫管理について提案を行ってください。
+            - id: user-prompt
+              role: user
+              text: |
+                以下の商品の在庫管理提案をしてください：
+                製品名：{{#parse_input_node.product_name#}}
+                カテゴリー：clothing
+                現在庫：{{#parse_input_node.stock_quantity#}}個
+                売上傾向：{{#parse_input_node.sales_trend#}}
+                
+                通常の衣料品在庫管理の提案をしてください。
+          selected: false
+          title: "Clothing通常管理"
+          type: llm
+        height: 98
+        id: clothing_regular_node
+        position:
+          x: 1250
+          y: 860
+        positionAbsolute:
+          x: 1250
+          y: 860
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            {{#food_emergency_order_node.text#}}{{#food_normal_order_node.text#}}{{#food_optimal_stock_node.text#}}{{#food_excess_stock_node.text#}}{{#electronics_emergency_order_node.text#}}{{#electronics_normal_order_node.text#}}{{#electronics_optimal_stock_node.text#}}{{#clothing_seasonal_node.text#}}{{#clothing_regular_node.text#}}
+          desc: "在庫管理レポート出力"
+          selected: false
+          title: "在庫管理レポート"
+          type: answer
+          variables: []
+        height: 107
+        id: answer_node
+        position:
+          x: 1550
+          y: 380
+        positionAbsolute:
+          x: 1550
+          y: 380
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

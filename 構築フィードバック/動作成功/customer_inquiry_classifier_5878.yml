@@ -1,0 +1,502 @@
+app:
+  description: "顧客からの問い合わせ内容を自動分類し、適切な回答を生成するシステム"
+  icon: "📧"
+  icon_background: "#E4F2FF"
+  mode: advanced-chat
+  name: "顧客問い合わせ自動分類システム"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      お問い合わせ内容をお聞かせください。
+      技術的な問題、料金・請求関連、製品情報など、どのような内容でも対応いたします。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "エラーが発生して動作しません"
+      - "料金プランについて教えてください"
+      - "製品の機能について知りたいです"
+      - "その他のお問い合わせ"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: if-else
+        id: start-classifier-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: inquiry_classifier_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: classifier-technical-edge
+        selected: false
+        source: inquiry_classifier_node
+        sourceHandle: technical_case
+        target: technical_support_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: classifier-billing-edge
+        selected: false
+        source: inquiry_classifier_node
+        sourceHandle: billing_case
+        target: billing_support_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: classifier-product-edge
+        selected: false
+        source: inquiry_classifier_node
+        sourceHandle: product_case
+        target: product_info_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: classifier-other-edge
+        selected: false
+        source: inquiry_classifier_node
+        sourceHandle: "false"
+        target: general_support_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: technical-answer-edge
+        selected: false
+        source: technical_support_node
+        sourceHandle: source
+        target: technical_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: billing-answer-edge
+        selected: false
+        source: billing_support_node
+        sourceHandle: source
+        target: billing_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: product-answer-edge
+        selected: false
+        source: product_info_node
+        sourceHandle: source
+        target: product_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: general-answer-edge
+        selected: false
+        source: general_support_node
+        sourceHandle: source
+        target: general_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "ユーザーからの問い合わせを受け付ける"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 300
+        positionAbsolute:
+          x: 50
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: technical_case
+              case_id: technical_case
+              conditions:
+                - variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "エラー"
+                - variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "不具合"
+                - variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "動作しない"
+              logical_operator: or
+            - id: billing_case
+              case_id: billing_case
+              conditions:
+                - variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "料金"
+                - variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "請求"
+                - variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "支払い"
+              logical_operator: or
+            - id: product_case
+              case_id: product_case
+              conditions:
+                - variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "仕様"
+                - variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "機能"
+                - variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "性能"
+              logical_operator: or
+          desc: "問い合わせ内容を分類"
+          selected: false
+          title: "問い合わせ分類"
+        height: 198
+        id: inquiry_classifier_node
+        position:
+          x: 350
+          y: 300
+        positionAbsolute:
+          x: 350
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-prompt-technical
+              role: system
+              text: |
+                あなたは技術サポートの専門家です。
+                エラーや不具合、動作に関する問題について、親切丁寧に回答してください。
+                具体的な解決手順を示し、必要に応じて追加の情報を求めてください。
+            - id: user-prompt-technical
+              role: user
+              text: |
+                お客様からの問い合わせ：
+                {{#sys.query#}}
+          completion_params:
+            temperature: 0.7
+            max_tokens: 500
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "技術的な問題への回答生成"
+          selected: false
+          title: "技術サポート"
+          type: llm
+        height: 98
+        id: technical_support_node
+        position:
+          x: 650
+          y: 100
+        positionAbsolute:
+          x: 650
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-prompt-billing
+              role: system
+              text: |
+                あなたは料金・請求に関する専門家です。
+                料金プラン、請求内容、支払い方法について、分かりやすく説明してください。
+                お客様の疑問を解消し、必要に応じて具体的な手続き方法をご案内してください。
+            - id: user-prompt-billing
+              role: user
+              text: |
+                お客様からの問い合わせ：
+                {{#sys.query#}}
+          completion_params:
+            temperature: 0.7
+            max_tokens: 500
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "料金・請求関連への回答生成"
+          selected: false
+          title: "料金サポート"
+          type: llm
+        height: 98
+        id: billing_support_node
+        position:
+          x: 650
+          y: 250
+        positionAbsolute:
+          x: 650
+          y: 250
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-prompt-product
+              role: system
+              text: |
+                あなたは製品情報の専門家です。
+                製品の仕様、機能、性能について、詳細かつ分かりやすく説明してください。
+                お客様のニーズに合った情報を提供し、製品の特徴をアピールしてください。
+            - id: user-prompt-product
+              role: user
+              text: |
+                お客様からの問い合わせ：
+                {{#sys.query#}}
+          completion_params:
+            temperature: 0.7
+            max_tokens: 500
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "製品情報への回答生成"
+          selected: false
+          title: "製品情報提供"
+          type: llm
+        height: 98
+        id: product_info_node
+        position:
+          x: 650
+          y: 400
+        positionAbsolute:
+          x: 650
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-prompt-general
+              role: system
+              text: |
+                あなたは親切なカスタマーサポート担当者です。
+                お客様からの様々な問い合わせに対して、丁寧で分かりやすい回答を提供してください。
+                問い合わせ内容を理解し、適切な部門への案内も含めて対応してください。
+            - id: user-prompt-general
+              role: user
+              text: |
+                お客様からの問い合わせ：
+                {{#sys.query#}}
+          completion_params:
+            temperature: 0.7
+            max_tokens: 500
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "その他の問い合わせへの回答生成"
+          selected: false
+          title: "一般サポート"
+          type: llm
+        height: 98
+        id: general_support_node
+        position:
+          x: 650
+          y: 550
+        positionAbsolute:
+          x: 650
+          y: 550
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#technical_support_node.text#}}"
+          desc: "技術サポートの回答"
+          selected: false
+          title: "技術的問題の回答"
+          type: answer
+          variables: []
+        height: 107
+        id: technical_answer_node
+        position:
+          x: 950
+          y: 100
+        positionAbsolute:
+          x: 950
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#billing_support_node.text#}}"
+          desc: "料金サポートの回答"
+          selected: false
+          title: "料金関連の回答"
+          type: answer
+          variables: []
+        height: 107
+        id: billing_answer_node
+        position:
+          x: 950
+          y: 250
+        positionAbsolute:
+          x: 950
+          y: 250
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#product_info_node.text#}}"
+          desc: "製品情報の回答"
+          selected: false
+          title: "製品情報の回答"
+          type: answer
+          variables: []
+        height: 107
+        id: product_answer_node
+        position:
+          x: 950
+          y: 400
+        positionAbsolute:
+          x: 950
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#general_support_node.text#}}"
+          desc: "一般サポートの回答"
+          selected: false
+          title: "その他の回答"
+          type: answer
+          variables: []
+        height: 107
+        id: general_answer_node
+        position:
+          x: 950
+          y: 550
+        positionAbsolute:
+          x: 950
+          y: 550
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

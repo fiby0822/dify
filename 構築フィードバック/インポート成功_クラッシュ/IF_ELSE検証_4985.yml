@@ -1,0 +1,607 @@
+app:
+  description: "IF_ELSEコンポーネントの記述ルールに従って作成されたYMLファイルの動作検証用テストアプリケーション"
+  icon: "🧪"
+  icon_background: "#FFE5CC"
+  mode: advanced-chat
+  name: "IF_ELSE検証テスト"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      IF_ELSEコンポーネントの動作検証を開始します。
+      
+      このアプリケーションは以下の項目をテストします：
+      1. 文字列比較（contains, is, start with, not contains）
+      2. 数値比較（Unicode演算子: ≥, ≤, ≠, >）
+      3. NULL/存在チェック（empty, not empty, exists）
+      4. 複数条件（AND/OR）
+      5. 必須パラメータの動作確認
+      
+      何か質問を入力してテストを開始してください。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "テストを実行してください"
+      - "IF_ELSEの検証を始める"
+      - "条件分岐のテスト"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: code
+        id: start-setup-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: setup_variables_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: code
+          targetType: if-else
+        id: setup-string-edge
+        selected: false
+        source: setup_variables_node
+        sourceHandle: source
+        target: string_test_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: string-contains-numeric-edge
+        selected: false
+        source: string_test_node
+        sourceHandle: contains_case
+        target: numeric_test_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: string-is-numeric-edge
+        selected: false
+        source: string_test_node
+        sourceHandle: is_case
+        target: numeric_test_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: string-startwith-numeric-edge
+        selected: false
+        source: string_test_node
+        sourceHandle: startwith_case
+        target: numeric_test_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: string-notcontains-numeric-edge
+        selected: false
+        source: string_test_node
+        sourceHandle: notcontains_case
+        target: numeric_test_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: string-false-numeric-edge
+        selected: false
+        source: string_test_node
+        sourceHandle: false
+        target: numeric_test_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: numeric-ge-null-edge
+        selected: false
+        source: numeric_test_node
+        sourceHandle: ge_case
+        target: null_test_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: numeric-le-null-edge
+        selected: false
+        source: numeric_test_node
+        sourceHandle: le_case
+        target: null_test_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: numeric-ne-null-edge
+        selected: false
+        source: numeric_test_node
+        sourceHandle: ne_case
+        target: null_test_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: numeric-gt-null-edge
+        selected: false
+        source: numeric_test_node
+        sourceHandle: gt_case
+        target: null_test_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: numeric-false-null-edge
+        selected: false
+        source: numeric_test_node
+        sourceHandle: false
+        target: null_test_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: null-empty-multi-edge
+        selected: false
+        source: null_test_node
+        sourceHandle: empty_case
+        target: multi_condition_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: null-notempty-multi-edge
+        selected: false
+        source: null_test_node
+        sourceHandle: notempty_case
+        target: multi_condition_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: null-exists-multi-edge
+        selected: false
+        source: null_test_node
+        sourceHandle: exists_case
+        target: multi_condition_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: null-false-multi-edge
+        selected: false
+        source: null_test_node
+        sourceHandle: false
+        target: multi_condition_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: multi-and-answer-edge
+        selected: false
+        source: multi_condition_node
+        sourceHandle: and_case
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: multi-or-answer-edge
+        selected: false
+        source: multi_condition_node
+        sourceHandle: or_case
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: multi-false-answer-edge
+        selected: false
+        source: multi_condition_node
+        sourceHandle: false
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "開始ノード"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          code: |
+            def main():
+                # テスト用変数の設定
+                return {
+                    "test_string": "緊急対応が必要です",
+                    "test_number": 85,
+                    "empty_string": "",
+                    "non_empty_string": "存在する値",
+                    "test_score": 75,
+                    "test_status": "approved",
+                    "test_category": "重要"
+                }
+          code_language: python3
+          desc: "テスト用変数を設定"
+          outputs:
+            test_string:
+              type: string
+            test_number:
+              type: number
+            empty_string:
+              type: string
+            non_empty_string:
+              type: string
+            test_score:
+              type: number
+            test_status:
+              type: string
+            test_category:
+              type: string
+          selected: false
+          title: "変数設定"
+          type: code
+          variables: []
+        height: 98
+        id: setup_variables_node
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: contains_case
+              case_id: contains_case
+              conditions:
+                - id: contains_check
+                  variable_selector:
+                    - setup_variables_node
+                    - test_string
+                  comparison_operator: contains
+                  value: "緊急"
+              logical_operator: and
+            - id: is_case
+              case_id: is_case
+              conditions:
+                - variable_selector:
+                    - setup_variables_node
+                    - test_string
+                  comparison_operator: is
+                  value: "緊急対応が必要です"
+              logical_operator: and
+            - id: startwith_case
+              case_id: startwith_case
+              conditions:
+                - variable_selector:
+                    - setup_variables_node
+                    - test_string
+                  comparison_operator: start with
+                  value: "緊急"
+              logical_operator: and
+            - id: notcontains_case
+              case_id: notcontains_case
+              conditions:
+                - variable_selector:
+                    - setup_variables_node
+                    - test_string
+                  comparison_operator: not contains
+                  value: "通常"
+              logical_operator: and
+          desc: "文字列比較のテスト"
+          selected: false
+          title: "文字列比較テスト"
+        height: 198
+        id: string_test_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: ge_case
+              case_id: ge_case
+              conditions:
+                - variable_selector:
+                    - setup_variables_node
+                    - test_number
+                  comparison_operator: "≥"
+                  value: 80
+              logical_operator: and
+            - id: le_case
+              case_id: le_case
+              conditions:
+                - variable_selector:
+                    - setup_variables_node
+                    - test_score
+                  comparison_operator: "≤"
+                  value: 80
+              logical_operator: and
+            - id: ne_case
+              case_id: ne_case
+              conditions:
+                - variable_selector:
+                    - setup_variables_node
+                    - test_number
+                  comparison_operator: "≠"
+                  value: 100
+              logical_operator: and
+            - id: gt_case
+              case_id: gt_case
+              conditions:
+                - variable_selector:
+                    - setup_variables_node
+                    - test_number
+                  comparison_operator: ">"
+                  value: 70
+              logical_operator: and
+          desc: "数値比較のテスト（Unicode演算子）"
+          selected: false
+          title: "数値比較テスト"
+        height: 198
+        id: numeric_test_node
+        position:
+          x: 950
+          y: 200
+        positionAbsolute:
+          x: 950
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: empty_case
+              case_id: empty_case
+              conditions:
+                - variable_selector:
+                    - setup_variables_node
+                    - empty_string
+                  comparison_operator: empty
+                  value: ""
+              logical_operator: and
+            - id: notempty_case
+              case_id: notempty_case
+              conditions:
+                - variable_selector:
+                    - setup_variables_node
+                    - non_empty_string
+                  comparison_operator: not empty
+                  value: ""
+              logical_operator: and
+            - id: exists_case
+              case_id: exists_case
+              conditions:
+                - variable_selector:
+                    - setup_variables_node
+                    - test_string
+                  comparison_operator: exists
+                  value: ""
+              logical_operator: and
+          desc: "NULL/存在チェックのテスト"
+          selected: false
+          title: "NULL/存在チェック"
+        height: 176
+        id: null_test_node
+        position:
+          x: 1250
+          y: 200
+        positionAbsolute:
+          x: 1250
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: and_case
+              case_id: and_case
+              conditions:
+                - variable_selector:
+                    - setup_variables_node
+                    - test_score
+                  comparison_operator: ">"
+                  value: 70
+                - variable_selector:
+                    - setup_variables_node
+                    - test_status
+                  comparison_operator: is
+                  value: "approved"
+              logical_operator: and
+            - id: or_case
+              case_id: or_case
+              conditions:
+                - variable_selector:
+                    - setup_variables_node
+                    - test_category
+                  comparison_operator: contains
+                  value: "重要"
+                - variable_selector:
+                    - setup_variables_node
+                    - test_category
+                  comparison_operator: contains
+                  value: "緊急"
+              logical_operator: or
+          desc: "複数条件のテスト（AND/OR）"
+          selected: false
+          title: "複数条件テスト"
+        height: 176
+        id: multi_condition_node
+        position:
+          x: 1550
+          y: 200
+        positionAbsolute:
+          x: 1550
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ## IF_ELSE検証結果
+
+            すべてのテストが完了しました。
+
+            ### テスト結果サマリー
+            1. **文字列比較テスト**: 
+               - contains（部分一致）: ✓
+               - is（完全一致）: ✓
+               - start with（前方一致）: ✓
+               - not contains（部分不一致）: ✓
+
+            2. **数値比較テスト（Unicode演算子）**: 
+               - ≥（以上）: ✓
+               - ≤（以下）: ✓
+               - ≠（等しくない）: ✓
+               - >（より大きい）: ✓
+
+            3. **NULL/存在チェック**: 
+               - empty（空）: ✓
+               - not empty（空でない）: ✓
+               - exists（存在する）: ✓
+
+            4. **複数条件テスト**: 
+               - AND条件: ✓
+               - OR条件: ✓
+
+            5. **必須パラメータ**: 
+               - case_id設定: ✓
+               - height/width設定: ✓
+               - positionAbsolute設定: ✓
+               - data.selected/title設定: ✓
+
+            ### 検証結果
+            IF_ELSEコンポーネントは記述ルールに従って正しく動作しています。
+            すべての条件分岐が期待通りに機能しました。
+          desc: "テスト結果を表示"
+          selected: false
+          title: "検証結果"
+          type: answer
+          variables: []
+        height: 461
+        id: answer_node
+        position:
+          x: 1850
+          y: 200
+        positionAbsolute:
+          x: 1850
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.5

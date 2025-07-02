@@ -1,0 +1,178 @@
+app:
+  description: "テキスト分析を行うアプリケーション。入力されたテキストに対して感情分析、要約、キーワード抽出を実施します。"
+  icon: "🔍"
+  icon_background: "#E0F2FE"
+  mode: advanced-chat
+  name: "テキスト分析アシスタント"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      こんにちは！テキスト分析アシスタントです。
+      入力されたテキストを以下の観点で分析します：
+      - 感情分析（ポジティブ/ネガティブ/ニュートラル）
+      - 要約（3文以内）
+      - キーワード抽出（最大5個）
+      
+      分析したいテキストを入力してください。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "今日は素晴らしい天気で、公園でピクニックを楽しみました。"
+      - "製品の不具合により、多くのお客様にご迷惑をおかけしました。"
+      - "新しいプロジェクトの立ち上げにあたり、チーム全体で協力して進めています。"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-llm-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: text_analysis_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: llm-answer-edge
+        selected: false
+        source: text_analysis_llm_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "ユーザーからのテキスト入力を受け取る"
+          selected: false
+          title: "開始"
+          type: start
+          variables:
+            - label: "分析対象テキスト"
+              max_length: 5000
+              options: []
+              required: true
+              type: text-input
+              variable: user_input_text
+        height: 116
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: start
+        width: 244
+      - data:
+          desc: "テキストの感情分析、要約、キーワード抽出を実行"
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+            completion_params:
+              temperature: 0.3
+              max_tokens: 1000
+          prompt_template:
+            - id: system-prompt-1
+              role: system
+              text: |
+                あなたは優秀なテキスト分析アシスタントです。
+                入力されたテキストを以下の3つの観点で分析してください：
+                
+                1. 感情分析：テキストの感情をポジティブ、ネガティブ、ニュートラルのいずれかに分類
+                2. 要約：テキストの内容を3文以内で簡潔にまとめる
+                3. キーワード抽出：重要なキーワードを最大5個抽出
+                
+                出力形式は以下のようにしてください：
+                
+                【感情分析】
+                [感情の分類]
+                
+                【要約】
+                [3文以内の要約]
+                
+                【キーワード】
+                - [キーワード1]
+                - [キーワード2]
+                - [キーワード3]
+                （最大5個まで）
+            - id: user-prompt-1
+              role: user
+              text: |
+                以下のテキストを分析してください：
+                
+                {{#start_node.user_input_text#}}
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          selected: false
+          title: "テキスト分析LLM"
+          type: llm
+        height: 98
+        id: text_analysis_llm_node
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: llm
+        width: 244
+      - data:
+          answer: "{{#text_analysis_llm_node.text#}}"
+          desc: "分析結果を表示"
+          selected: false
+          title: "分析結果"
+          type: answer
+          variables: []
+        height: 107
+        id: answer_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: answer
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

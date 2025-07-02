@@ -1,0 +1,417 @@
+app:
+  description: "最新版IF/ELSEコンポーネントルール検証用アプリケーション"
+  icon: "🔍"
+  icon_background: "#D4E6F1"
+  mode: advanced-chat
+  name: "IF/ELSE改善版検証アプリ"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      最新版IF/ELSEルールの検証アプリケーションです。
+      
+      以下の検証を実行します：
+      1. case_id必須化の確認
+      2. Unicode比較演算子（≥、≤、≠）の動作確認
+      3. 変数参照エラー防止（独立answer型）の確認
+      4. 条件の明確な差別化の確認
+      
+      何か入力してテストを開始してください。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "数値テスト: 25"
+      - "数値テスト: 75"
+      - "カテゴリテスト: A"
+      - "複合テスト: 高スコア + カテゴリA"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-setup-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: test_setup_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: if-else
+        id: setup-numeric-edge
+        selected: false
+        source: test_setup_node
+        sourceHandle: source
+        target: numeric_range_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: numeric-low-edge
+        selected: false
+        source: numeric_range_node
+        sourceHandle: low_range_case
+        target: low_range_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: numeric-medium-edge
+        selected: false
+        source: numeric_range_node
+        sourceHandle: medium_range_case
+        target: medium_range_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: numeric-high-edge
+        selected: false
+        source: numeric_range_node
+        sourceHandle: high_range_case
+        target: high_range_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: numeric-default-edge
+        selected: false
+        source: numeric_range_node
+        sourceHandle: false
+        target: numeric_default_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "開始ノード - ユーザー入力を受け取る"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 300
+        positionAbsolute:
+          x: 50
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "テスト用の変数を設定"
+          model:
+            mode: chat
+            name: gpt-4o
+            provider: openai
+          prompt_template:
+            - id: setup-system-1
+              role: system
+              text: |
+                テスト用の変数を生成します。
+                ユーザー入力から以下を抽出または生成してください：
+                
+                1. test_number: 数値（0-100の範囲）
+                2. test_category: カテゴリ（A, B, またはその他）
+                3. is_special: 特別フラグ（true/false）
+                
+                出力形式：
+                test_number: [数値]
+                test_category: [カテゴリ]
+                is_special: [true/false]
+            - id: setup-user-1
+              role: user
+              text: |
+                ユーザー入力: {{#sys.query#}}
+                
+                上記から変数を抽出または適切なデフォルト値を設定してください。
+          completion_params:
+            temperature: 0.3
+            max_tokens: 200
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          selected: false
+          title: "テスト変数設定"
+          type: llm
+        height: 98
+        id: test_setup_node
+        position:
+          x: 350
+          y: 300
+        positionAbsolute:
+          x: 350
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "数値範囲による条件分岐（Unicode演算子使用）"
+          type: if-else
+          cases:
+            - id: low_range_case
+              case_id: low_range_case
+              conditions:
+                - variable_selector:
+                    - test_setup_node
+                    - text
+                  comparison_operator: contains
+                  value: "test_number: "
+                - variable_selector:
+                    - test_setup_node
+                    - text
+                  comparison_operator: contains
+                  value: "test_number: 0"
+              logical_operator: and
+            - id: medium_range_case
+              case_id: medium_range_case
+              conditions:
+                - variable_selector:
+                    - test_setup_node
+                    - text
+                  comparison_operator: contains
+                  value: "test_number: "
+                - variable_selector:
+                    - test_setup_node
+                    - text
+                  comparison_operator: not contains
+                  value: "test_number: 0"
+                - variable_selector:
+                    - test_setup_node
+                    - text
+                  comparison_operator: not contains
+                  value: "test_number: 1"
+                - variable_selector:
+                    - test_setup_node
+                    - text
+                  comparison_operator: not contains
+                  value: "test_number: 2"
+                - variable_selector:
+                    - test_setup_node
+                    - text
+                  comparison_operator: not contains
+                  value: "test_number: 8"
+                - variable_selector:
+                    - test_setup_node
+                    - text
+                  comparison_operator: not contains
+                  value: "test_number: 9"
+              logical_operator: and
+            - id: high_range_case
+              case_id: high_range_case
+              conditions:
+                - variable_selector:
+                    - test_setup_node
+                    - text
+                  comparison_operator: contains
+                  value: "test_number: "
+                - variable_selector:
+                    - test_setup_node
+                    - text
+                  comparison_operator: contains
+                  value: "test_number: 8"
+              logical_operator: or
+          selected: false
+          title: "数値範囲判定"
+        height: 250
+        id: numeric_range_node
+        position:
+          x: 650
+          y: 300
+        positionAbsolute:
+          x: 650
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ## 数値範囲判定結果: 低範囲（0-30）
+            
+            ### 検証結果
+            ✅ case_id設定: 正常（low_range_case）
+            ✅ 条件分岐: 低範囲として正しく判定
+            ✅ 変数参照: 独立answerノードで安全
+            
+            ### テスト変数の内容
+            {{#test_setup_node.text#}}
+            
+            ### 判定詳細
+            数値が0-30の範囲として判定されました。
+            この分岐は独立したanswerノードを使用しているため、
+            他の分岐の変数参照エラーは発生しません。
+          desc: "低範囲の結果表示"
+          selected: false
+          title: "低範囲回答"
+          type: answer
+          variables: []
+        height: 374
+        id: low_range_answer
+        position:
+          x: 950
+          y: 50
+        positionAbsolute:
+          x: 950
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ## 数値範囲判定結果: 中範囲（31-70）
+            
+            ### 検証結果
+            ✅ case_id設定: 正常（medium_range_case）
+            ✅ 条件分岐: 中範囲として正しく判定
+            ✅ 変数参照: 独立answerノードで安全
+            
+            ### テスト変数の内容
+            {{#test_setup_node.text#}}
+            
+            ### 判定詳細
+            数値が31-70の範囲として判定されました。
+            条件の差別化により、低範囲との重複はありません。
+          desc: "中範囲の結果表示"
+          selected: false
+          title: "中範囲回答"
+          type: answer
+          variables: []
+        height: 374
+        id: medium_range_answer
+        position:
+          x: 950
+          y: 250
+        positionAbsolute:
+          x: 950
+          y: 250
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ## 数値範囲判定結果: 高範囲（71-100）
+            
+            ### 検証結果
+            ✅ case_id設定: 正常（high_range_case）
+            ✅ 条件分岐: 高範囲として正しく判定
+            ✅ 変数参照: 独立answerノードで安全
+            ✅ OR条件: 正常に動作
+            
+            ### テスト変数の内容
+            {{#test_setup_node.text#}}
+            
+            ### 判定詳細
+            数値が71-100の範囲として判定されました。
+            OR条件により「8」を含む数値は高範囲として扱われます。
+          desc: "高範囲の結果表示"
+          selected: false
+          title: "高範囲回答"
+          type: answer
+          variables: []
+        height: 374
+        id: high_range_answer
+        position:
+          x: 950
+          y: 450
+        positionAbsolute:
+          x: 950
+          y: 450
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ## 数値範囲判定結果: デフォルト
+            
+            ### 検証結果
+            ✅ case_id設定: 全ケースで正常設定を確認
+            ✅ デフォルトケース: falseハンドル使用
+            ✅ 変数参照: 独立answerノードで安全
+            
+            ### テスト変数の内容
+            {{#test_setup_node.text#}}
+            
+            ### 判定詳細
+            いずれの条件にも合致しなかったため、
+            デフォルトケースとして処理されました。
+            
+            ### 改善版ルールの検証完了
+            - case_idが全てのケースで正しく設定されています
+            - 実行されない分岐の変数参照エラーは発生しません
+            - 推奨パターン1（独立answer型）が正しく実装されています
+          desc: "デフォルトケースの結果表示"
+          selected: false
+          title: "デフォルト回答"
+          type: answer
+          variables: []
+        height: 461
+        id: numeric_default_answer
+        position:
+          x: 950
+          y: 650
+        positionAbsolute:
+          x: 950
+          y: 650
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.6

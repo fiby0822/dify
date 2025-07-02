@@ -1,0 +1,475 @@
+app:
+  description: "IF/ELSEコンポーネントの記述ルールを検証するためのテストアプリケーション"
+  icon: "🔍"
+  icon_background: "#FFEAD5"
+  mode: advanced-chat
+  name: "IF/ELSE検証テスト"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      IF/ELSEコンポーネントの検証テストへようこそ！
+      
+      以下の形式で入力してテストしてください：
+      - 文字列テスト: "text:緊急対応"
+      - 数値テスト: "number:85" 
+      - 空値テスト: "empty:" または "null:"
+      - 複数条件テスト: "multi:true,approved"
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "text:緊急対応が必要です"
+      - "number:95"
+      - "empty:"
+      - "multi:true,approved"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: code
+        id: start-parse-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: parse_input_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: code
+          targetType: if-else
+        id: parse-condition-edge
+        selected: false
+        source: parse_input_node
+        sourceHandle: source
+        target: condition_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: condition-text-edge
+        selected: false
+        source: condition_check_node
+        sourceHandle: text_contains_case
+        target: text_match_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: condition-number-edge
+        selected: false
+        source: condition_check_node
+        sourceHandle: number_high_case
+        target: number_high_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: condition-empty-edge
+        selected: false
+        source: condition_check_node
+        sourceHandle: empty_value_case
+        target: empty_value_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: condition-multi-edge
+        selected: false
+        source: condition_check_node
+        sourceHandle: multi_condition_case
+        target: multi_condition_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: condition-default-edge
+        selected: false
+        source: condition_check_node
+        sourceHandle: false
+        target: default_answer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "ユーザー入力を受け取る"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          code: |
+            import re
+            
+            # 入力を解析
+            user_input = sys.query
+            
+            # デフォルト値
+            test_type = "unknown"
+            test_value = ""
+            multi_value1 = ""
+            multi_value2 = ""
+            
+            # パターンマッチング
+            if user_input.startswith("text:"):
+                test_type = "text"
+                test_value = user_input[5:]
+            elif user_input.startswith("number:"):
+                test_type = "number"
+                test_value = user_input[7:]
+            elif user_input.startswith("empty:"):
+                test_type = "empty"
+                test_value = ""
+            elif user_input.startswith("null:"):
+                test_type = "null"
+                test_value = None
+            elif user_input.startswith("multi:"):
+                test_type = "multi"
+                values = user_input[6:].split(",")
+                if len(values) >= 2:
+                    multi_value1 = values[0].strip()
+                    multi_value2 = values[1].strip()
+            
+            return {
+                "test_type": test_type,
+                "test_value": test_value,
+                "multi_value1": multi_value1,
+                "multi_value2": multi_value2
+            }
+          code_language: python3
+          desc: "入力を解析してテストタイプと値を抽出"
+          outputs:
+            test_type:
+              type: string
+            test_value:
+              type: string
+            multi_value1:
+              type: string
+            multi_value2:
+              type: string
+          selected: false
+          title: "入力解析"
+          type: code
+          variables:
+            - value_selector:
+                - sys
+                - query
+              variable: sys.query
+        height: 98
+        id: parse_input_node
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: text_contains_case
+              case_id: text_contains_case
+              conditions:
+                - id: text_type_check
+                  variable_selector:
+                    - parse_input_node
+                    - test_type
+                  comparison_operator: is
+                  value: "text"
+                - id: text_value_check
+                  variable_selector:
+                    - parse_input_node
+                    - test_value
+                  comparison_operator: contains
+                  value: "緊急"
+              logical_operator: and
+            
+            - id: number_high_case
+              case_id: number_high_case
+              conditions:
+                - id: number_type_check
+                  variable_selector:
+                    - parse_input_node
+                    - test_type
+                  comparison_operator: is
+                  value: "number"
+                - id: number_value_check
+                  variable_selector:
+                    - parse_input_node
+                    - test_value
+                  comparison_operator: "≥"
+                  value: 80
+              logical_operator: and
+            
+            - id: empty_value_case
+              case_id: empty_value_case
+              conditions:
+                - id: empty_type_check
+                  variable_selector:
+                    - parse_input_node
+                    - test_type
+                  comparison_operator: is
+                  value: "empty"
+                - id: empty_value_check
+                  variable_selector:
+                    - parse_input_node
+                    - test_value
+                  comparison_operator: empty
+                  value: ""
+              logical_operator: and
+            
+            - id: multi_condition_case
+              case_id: multi_condition_case
+              conditions:
+                - id: multi_type_check
+                  variable_selector:
+                    - parse_input_node
+                    - test_type
+                  comparison_operator: is
+                  value: "multi"
+                - id: multi_value1_check
+                  variable_selector:
+                    - parse_input_node
+                    - multi_value1
+                  comparison_operator: is
+                  value: "true"
+                - id: multi_value2_check
+                  variable_selector:
+                    - parse_input_node
+                    - multi_value2
+                  comparison_operator: is
+                  value: "approved"
+              logical_operator: and
+          desc: "様々な条件パターンをテスト"
+          selected: false
+          title: "条件分岐テスト"
+        height: 250
+        id: condition_check_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ✅ 文字列比較テスト成功！
+            
+            テスト結果：
+            - 条件タイプ: contains（部分一致）
+            - 入力値: {{#parse_input_node.test_value#}}
+            - 検索文字列: "緊急"
+            - 結果: マッチしました
+            
+            ルール検証：
+            - ✓ comparison_operator: "contains" が正しく動作
+            - ✓ 日本語文字列の部分一致が可能
+          desc: "文字列マッチ時の回答"
+          selected: false
+          title: "文字列マッチ"
+          type: answer
+          variables: []
+        height: 200
+        id: text_match_answer
+        position:
+          x: 950
+          y: 50
+        positionAbsolute:
+          x: 950
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ✅ 数値比較テスト成功！
+            
+            テスト結果：
+            - 条件タイプ: ≥（以上）
+            - 入力値: {{#parse_input_node.test_value#}}
+            - 閾値: 80
+            - 結果: 条件を満たしました
+            
+            ルール検証：
+            - ✓ comparison_operator: "≥" (Unicode)が正しく動作
+            - ✓ 数値の大小比較が可能
+          desc: "数値が高い時の回答"
+          selected: false
+          title: "数値高"
+          type: answer
+          variables: []
+        height: 200
+        id: number_high_answer
+        position:
+          x: 950
+          y: 150
+        positionAbsolute:
+          x: 950
+          y: 150
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ✅ 空値チェックテスト成功！
+            
+            テスト結果：
+            - 条件タイプ: empty
+            - 入力値: "{{#parse_input_node.test_value#}}"（空文字列）
+            - 結果: 空値として検出されました
+            
+            ルール検証：
+            - ✓ comparison_operator: "empty" が正しく動作
+            - ✓ 空文字列の検出が可能
+          desc: "空値時の回答"
+          selected: false
+          title: "空値検出"
+          type: answer
+          variables: []
+        height: 200
+        id: empty_value_answer
+        position:
+          x: 950
+          y: 250
+        positionAbsolute:
+          x: 950
+          y: 250
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ✅ 複数条件テスト成功！
+            
+            テスト結果：
+            - 条件タイプ: 複数条件AND
+            - 値1: {{#parse_input_node.multi_value1#}} = "true"
+            - 値2: {{#parse_input_node.multi_value2#}} = "approved"
+            - 論理演算子: AND
+            - 結果: すべての条件を満たしました
+            
+            ルール検証：
+            - ✓ logical_operator: "and" が正しく動作
+            - ✓ 複数条件の組み合わせが可能
+            - ✓ 各条件のidとcase_idが正しく設定
+          desc: "複数条件マッチ時の回答"
+          selected: false
+          title: "複数条件マッチ"
+          type: answer
+          variables: []
+        height: 250
+        id: multi_condition_answer
+        position:
+          x: 950
+          y: 350
+        positionAbsolute:
+          x: 950
+          y: 350
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ℹ️ デフォルトケース
+            
+            入力された条件はどの分岐にもマッチしませんでした。
+            
+            入力形式を確認してください：
+            - 文字列テスト: "text:緊急対応"
+            - 数値テスト: "number:85"
+            - 空値テスト: "empty:"
+            - 複数条件テスト: "multi:true,approved"
+            
+            ルール検証：
+            - ✓ falseハンドル（デフォルトケース）が正しく動作
+            - ✓ すべての必須パラメータが正しく設定されている
+          desc: "デフォルトケースの回答"
+          selected: false
+          title: "デフォルト回答"
+          type: answer
+          variables: []
+        height: 250
+        id: default_answer
+        position:
+          x: 950
+          y: 450
+        positionAbsolute:
+          x: 950
+          y: 450
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

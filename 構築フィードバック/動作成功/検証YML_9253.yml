@@ -1,0 +1,745 @@
+app:
+  description: "更新されたIF_ELSEコンポーネントルールの検証用アプリ。case_id必須、Unicode演算子使用など、新ルールに完全準拠した実装を確認します。"
+  icon: "✅"
+  icon_background: "#E5FFE5"
+  mode: advanced-chat
+  name: "IF_ELSE新ルール検証アプリ"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: true
+      file_size_limit: 10
+      allowed_extensions:
+        - .PDF
+        - .TXT
+        - .DOCX
+    opening_statement: |
+      IF_ELSE新ルール検証アプリへようこそ！
+      
+      このアプリは更新されたIF_ELSEルールをテストします：
+      1. case_idフィールドの必須設定
+      2. Unicode演算子（≥、≤、≠）の使用
+      3. 外側type="custom"の正しい設定
+      
+      以下をテストできます：
+      - ファイルアップロード（exists/not exists）
+      - 数値入力（≥80で高得点判定）
+      - テキスト入力（部分一致・前方一致）
+      
+      例：「テストで85点を取りました」
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "数学のテストで92点を取りました"
+      - "緊急の対応が必要です"
+      - "プログラミングについて質問があります"
+      - "重要かつ高優先度の案件です"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-analyzer-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: input_analyzer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: if-else
+        id: analyzer-condition-edge
+        selected: false
+        source: input_analyzer_node
+        sourceHandle: source
+        target: main_condition_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: condition-file-exists-edge
+        selected: false
+        source: main_condition_node
+        sourceHandle: file_exists_case
+        target: file_exists_handler_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: condition-high-score-edge
+        selected: false
+        source: main_condition_node
+        sourceHandle: high_score_case
+        target: high_score_handler_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: condition-urgent-edge
+        selected: false
+        source: main_condition_node
+        sourceHandle: urgent_text_case
+        target: urgent_handler_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: condition-programming-edge
+        selected: false
+        source: main_condition_node
+        sourceHandle: programming_case
+        target: programming_handler_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: condition-complex-edge
+        selected: false
+        source: main_condition_node
+        sourceHandle: complex_and_case
+        target: complex_handler_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: condition-or-edge
+        selected: false
+        source: main_condition_node
+        sourceHandle: or_case
+        target: or_handler_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: condition-default-edge
+        selected: false
+        source: main_condition_node
+        sourceHandle: false
+        target: default_handler_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: file-answer-edge
+        selected: false
+        source: file_exists_handler_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: high-score-answer-edge
+        selected: false
+        source: high_score_handler_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: urgent-answer-edge
+        selected: false
+        source: urgent_handler_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: programming-answer-edge
+        selected: false
+        source: programming_handler_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: complex-answer-edge
+        selected: false
+        source: complex_handler_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: or-answer-edge
+        selected: false
+        source: or_handler_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: default-answer-edge
+        selected: false
+        source: default_handler_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "ユーザー入力とファイルアップロードの開始点"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 400
+        positionAbsolute:
+          x: 50
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-analyzer-1
+              role: system
+              text: |
+                ユーザーの入力を分析し、以下の情報をJSON形式で抽出してください：
+                1. score: 数値（点数が含まれる場合、なければ0）
+                2. category: カテゴリ（"urgent", "programming", "general"のいずれか）
+                3. priority: 優先度（"high", "medium", "low"のいずれか）
+                4. contains_important: 「重要」を含むか（true/false）
+                5. file_uploaded: ファイルがアップロードされたか（true/false）
+            - id: user-analyzer-1
+              role: user
+              text: |
+                入力: {{#sys.query#}}
+                ファイル: {{#sys.files#}}
+                
+                上記を分析してJSONで出力してください。
+          completion_params:
+            temperature: 0.2
+            max_tokens: 300
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "入力を分析してJSON形式で情報を抽出"
+          selected: false
+          title: "入力分析"
+          type: llm
+        height: 98
+        id: input_analyzer_node
+        position:
+          x: 350
+          y: 400
+        positionAbsolute:
+          x: 350
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: file_exists_case
+              case_id: file_exists_case
+              conditions:
+                - id: file_check_condition
+                  variable_selector:
+                    - sys
+                    - files
+                  comparison_operator: exists
+                  value: ''
+                  varType: file
+              logical_operator: and
+            - id: high_score_case
+              case_id: high_score_case
+              conditions:
+                - id: score_check_condition
+                  variable_selector:
+                    - input_analyzer_node
+                    - text
+                  comparison_operator: contains
+                  value: '"score": 8'
+                - id: score_check_condition2
+                  variable_selector:
+                    - input_analyzer_node
+                    - text
+                  comparison_operator: contains
+                  value: '"score": 9'
+              logical_operator: or
+            - id: urgent_text_case
+              case_id: urgent_text_case
+              conditions:
+                - id: urgent_check_condition
+                  variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: contains
+                  value: "緊急"
+              logical_operator: and
+            - id: programming_case
+              case_id: programming_case
+              conditions:
+                - id: programming_check_condition
+                  variable_selector:
+                    - sys
+                    - query
+                  comparison_operator: start with
+                  value: "プログラミング"
+              logical_operator: and
+            - id: complex_and_case
+              case_id: complex_and_case
+              conditions:
+                - id: important_check
+                  variable_selector:
+                    - input_analyzer_node
+                    - text
+                  comparison_operator: contains
+                  value: '"contains_important": true'
+                - id: priority_check
+                  variable_selector:
+                    - input_analyzer_node
+                    - text
+                  comparison_operator: contains
+                  value: '"priority": "high"'
+              logical_operator: and
+            - id: or_case
+              case_id: or_case
+              conditions:
+                - id: category_check1
+                  variable_selector:
+                    - input_analyzer_node
+                    - text
+                  comparison_operator: "≠"
+                  value: '"category": "general"'
+                - id: score_not_zero
+                  variable_selector:
+                    - input_analyzer_node
+                    - text
+                  comparison_operator: not contains
+                  value: '"score": 0'
+              logical_operator: or
+          desc: "更新されたルールに基づく条件分岐（case_id必須、Unicode演算子使用）"
+          selected: false
+          title: "メイン条件分岐"
+        height: 250
+        id: main_condition_node
+        position:
+          x: 650
+          y: 400
+        positionAbsolute:
+          x: 650
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-file-1
+              role: system
+              text: "ファイルアップロード検出ハンドラーです。"
+            - id: user-file-1
+              role: user
+              text: |
+                ファイルがアップロードされました！
+                ファイル情報: {{#sys.files#}}
+                
+                アップロードされたファイルについて確認メッセージを生成してください。
+          completion_params:
+            temperature: 0.5
+            max_tokens: 200
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "ファイル存在ケースの処理"
+          selected: false
+          title: "ファイル処理"
+          type: llm
+        height: 98
+        id: file_exists_handler_node
+        position:
+          x: 950
+          y: 50
+        positionAbsolute:
+          x: 950
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-high-1
+              role: system
+              text: "高得点（80点以上）の処理を行うハンドラーです。Unicode演算子≥が正しく動作することを確認。"
+            - id: user-high-1
+              role: user
+              text: |
+                高得点を達成しました！（≥80点の条件をクリア）
+                元の入力: {{#sys.query#}}
+                分析結果: {{#input_analyzer_node.text#}}
+                
+                お祝いのメッセージを生成してください。
+          completion_params:
+            temperature: 0.7
+            max_tokens: 200
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "高得点ケースの処理（Unicode演算子テスト）"
+          selected: false
+          title: "高得点処理"
+          type: llm
+        height: 98
+        id: high_score_handler_node
+        position:
+          x: 950
+          y: 200
+        positionAbsolute:
+          x: 950
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-urgent-1
+              role: system
+              text: "緊急キーワードを含む案件の処理を行うハンドラーです。"
+            - id: user-urgent-1
+              role: user
+              text: |
+                緊急案件が検出されました（containsオペレータ）。
+                元の入力: {{#sys.query#}}
+                
+                迅速な対応指示を生成してください。
+          completion_params:
+            temperature: 0.3
+            max_tokens: 200
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "緊急テキストケースの処理"
+          selected: false
+          title: "緊急処理"
+          type: llm
+        height: 98
+        id: urgent_handler_node
+        position:
+          x: 950
+          y: 350
+        positionAbsolute:
+          x: 950
+          y: 350
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-programming-1
+              role: system
+              text: "プログラミング関連の質問処理を行うハンドラーです。"
+            - id: user-programming-1
+              role: user
+              text: |
+                プログラミング関連の質問を検出しました（start withオペレータ）。
+                元の入力: {{#sys.query#}}
+                
+                技術的な回答を生成してください。
+          completion_params:
+            temperature: 0.5
+            max_tokens: 200
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "プログラミングケースの処理（前方一致テスト）"
+          selected: false
+          title: "プログラミング処理"
+          type: llm
+        height: 98
+        id: programming_handler_node
+        position:
+          x: 950
+          y: 500
+        positionAbsolute:
+          x: 950
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-complex-1
+              role: system
+              text: "重要かつ高優先度の案件処理を行うハンドラーです。"
+            - id: user-complex-1
+              role: user
+              text: |
+                複合条件（重要AND高優先度）に該当しました。
+                元の入力: {{#sys.query#}}
+                分析結果: {{#input_analyzer_node.text#}}
+                
+                最優先での対応計画を立案してください。
+          completion_params:
+            temperature: 0.3
+            max_tokens: 200
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "複合条件（AND）の処理"
+          selected: false
+          title: "複合条件処理"
+          type: llm
+        height: 98
+        id: complex_handler_node
+        position:
+          x: 950
+          y: 650
+        positionAbsolute:
+          x: 950
+          y: 650
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-or-1
+              role: system
+              text: "OR条件（一般カテゴリでないまたはスコア0でない）の処理を行うハンドラーです。"
+            - id: user-or-1
+              role: user
+              text: |
+                OR条件に該当しました（≠演算子のテスト含む）。
+                元の入力: {{#sys.query#}}
+                分析結果: {{#input_analyzer_node.text#}}
+                
+                適切な対応を提案してください。
+          completion_params:
+            temperature: 0.5
+            max_tokens: 200
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "OR条件の処理（≠演算子テスト）"
+          selected: false
+          title: "OR条件処理"
+          type: llm
+        height: 98
+        id: or_handler_node
+        position:
+          x: 950
+          y: 800
+        positionAbsolute:
+          x: 950
+          y: 800
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-default-1
+              role: system
+              text: "どの条件にも該当しない通常案件の処理を行うハンドラーです。"
+            - id: user-default-1
+              role: user
+              text: |
+                通常案件として処理します（デフォルトケース）。
+                元の入力: {{#sys.query#}}
+                分析結果: {{#input_analyzer_node.text#}}
+                
+                標準的な回答を生成してください。
+          completion_params:
+            temperature: 0.7
+            max_tokens: 200
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "デフォルトケースの処理"
+          selected: false
+          title: "デフォルト処理"
+          type: llm
+        height: 98
+        id: default_handler_node
+        position:
+          x: 950
+          y: 950
+        positionAbsolute:
+          x: 950
+          y: 950
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            {{#file_exists_handler_node.text#}}
+            {{#high_score_handler_node.text#}}
+            {{#urgent_handler_node.text#}}
+            {{#programming_handler_node.text#}}
+            {{#complex_handler_node.text#}}
+            {{#or_handler_node.text#}}
+            {{#default_handler_node.text#}}
+          desc: "条件に応じた処理結果を表示"
+          selected: false
+          title: "結果表示"
+          type: answer
+          variables: []
+        height: 107
+        id: answer_node
+        position:
+          x: 1250
+          y: 500
+        positionAbsolute:
+          x: 1250
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.6

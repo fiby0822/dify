@@ -1,0 +1,358 @@
+app:
+  description: 手書き作業日報の画像から作業データを読み取り、画像のヘッダー構成のままCSVファイルとして出力するOCRボット
+  icon: 📋
+  icon_background: '#3B82F6'
+  mode: advanced-chat
+  name: 作業日報OCR-CSV出力ボット
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/openai:0.0.26@c1e643ac6a7732f6333a783320b4d3026fa5e31d8e7026375b98d44418d33f26
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .WEBP
+      - .HEIC
+      - .PDF
+      allowed_file_types:
+      - image
+      - document
+      allowed_file_upload_methods:
+      - local_file
+      enabled: true
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        image_file_size_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 5
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 10
+    opening_statement: '📋 作業日報OCR-CSV出力ボット
+
+      手書きの作業日報画像をアップロードすると、画像のヘッダー構成のままCSVファイルを出力します。
+
+      画像をドラッグ&ドロップしてください。'
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+    - CSV出力する
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: start
+        targetType: if-else
+      id: start-filecheck-edge
+      selected: false
+      source: start_node
+      sourceHandle: source
+      target: file_check_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: answer
+      id: filecheck-nofile-edge
+      selected: false
+      source: file_check_node
+      sourceHandle: 'true'
+      target: no_file_answer
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: filecheck-ocr-edge
+      selected: false
+      source: file_check_node
+      sourceHandle: 'false'
+      target: ocr_analysis_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: ocr-csv-edge
+      selected: false
+      source: ocr_analysis_node
+      sourceHandle: source
+      target: csv_generation_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: code
+        targetType: answer
+      id: csv-answer-edge
+      selected: false
+      source: csv_generation_node
+      sourceHandle: source
+      target: final_answer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: 手書き作業日報の画像をアップロードしてください。
+        selected: false
+        title: 開始
+        type: start
+        variables:
+        - allowed_file_extensions:
+          - .JPG
+          - .JPEG
+          - .PNG
+          - .WEBP
+          - .HEIC
+          - .PDF
+          allowed_file_types:
+          - image
+          - document
+          allowed_file_upload_methods:
+          - local_file
+          label: 作業日報画像
+          max_length: 10
+          options: []
+          required: true
+          type: file
+          variable: work_report_images
+      height: 134
+      id: start_node
+      position:
+        x: 50
+        y: 100
+      positionAbsolute:
+        x: 50
+        y: 100
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        cases:
+        - case_id: 'true'
+          conditions:
+          - comparison_operator: not exists
+            id: file_check_condition
+            value: ''
+            varType: file
+            variable_selector:
+            - start_node
+            - work_report_images
+          id: 'true'
+          logical_operator: and
+        desc: 作業日報画像ファイルの存在確認
+        selected: false
+        title: ファイル存在チェック
+        type: if-else
+      height: 154
+      id: file_check_node
+      position:
+        x: 350
+        y: 100
+      positionAbsolute:
+        x: 350
+        y: 100
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '❌ 作業日報の画像がアップロードされていません。
+
+          画像をアップロード後、「CSV出力する」ボタンをクリックしてください。'
+        desc: ''
+        selected: false
+        title: ファイル未アップロード
+        type: answer
+        variables: []
+      height: 150
+      id: no_file_answer
+      position:
+        x: 650
+        y: 20.81439075778431
+      positionAbsolute:
+        x: 650
+        y: 20.81439075778431
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 画像からOCRでテキスト情報を抽出し、画像のヘッダー構成のままCSV形式で出力
+        model:
+          completion_params: {}
+          mode: chat
+          name: gpt-4o
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: '手書き作業日報画像を読み取り、CSV形式で出力してください。
+
+            画像のヘッダー行をそのまま使用し、各作業を1行ずつ出力。 説明は不要、CSVデータのみ出力。'
+        - id: user-prompt
+          role: user
+          text: アップロードされた作業日報画像を読み取り、CSV形式で出力してください。
+        selected: false
+        structured_output_enabled: false
+        title: OCR画像解析・CSV出力
+        type: llm
+        variables: []
+        vision:
+          configs:
+            detail: high
+            variable_selector: []
+          enabled: true
+      height: 150
+      id: ocr_analysis_node
+      position:
+        x: 650
+        y: 180
+      positionAbsolute:
+        x: 650
+        y: 180
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        code: "def main(ocr_result: str) -> dict:\n    \"\"\"\n    OCR結果を整形してCSVファイルを生成\n\
+          \    \"\"\"\n    from datetime import datetime\n    \n    # OCR結果の整形\n \
+          \   csv_content = ocr_result.strip()\n    \n    # 行の分割\n    lines = csv_content.split('\\\
+          n')\n    \n    # データ行数のカウント（ヘッダー行を除く）\n    data_lines = []\n    header_found\
+          \ = False\n    for i, line in enumerate(lines):\n        if line.strip():\n\
+          \            if i == 0 or not header_found:\n                # 最初の行をヘッダーとして扱う\n\
+          \                header_found = True\n            else:\n              \
+          \  data_lines.append(line)\n    \n    record_count = len(data_lines)\n \
+          \   \n    # ファイル名の生成\n    current_date = datetime.now().strftime(\"%Y%m%d_%H%M%S\"\
+          )\n    csv_filename = f\"作業日報_{current_date}.csv\"\n    \n    return {\n\
+          \        \"csv_content\": csv_content,\n        \"csv_filename\": csv_filename,\n\
+          \        \"record_count\": record_count,\n        \"processing_status\"\
+          : \"成功\" if record_count > 0 else \"データなし\"\n    }\n"
+        code_language: python3
+        desc: CSV生成処理
+        error_strategy: fail-branch
+        outputs:
+          csv_content:
+            children: null
+            type: string
+          csv_filename:
+            children: null
+            type: string
+          processing_status:
+            children: null
+            type: string
+          record_count:
+            children: null
+            type: number
+        selected: false
+        title: CSV生成処理
+        type: code
+        variables:
+        - value_selector:
+          - ocr_analysis_node
+          - text
+          variable: ocr_result
+      height: 118
+      id: csv_generation_node
+      position:
+        x: 950
+        y: 180
+      positionAbsolute:
+        x: 950
+        y: 180
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '## ✅ CSV出力完了
+
+
+          **ファイル名**: {{#csv_generation_node.csv_filename#}}
+
+          **データ件数**: {{#csv_generation_node.record_count#}}件
+
+          **処理状態**: {{#csv_generation_node.processing_status#}}
+
+
+          ### 📄 CSVデータ
+
+
+          ```csv
+
+          {{#csv_generation_node.csv_content#}}
+
+          ```
+
+
+          ---
+
+          💾 上記のCSVデータをコピーして、テキストエディタに貼り付けて保存してください。
+
+          '
+        desc: ''
+        selected: true
+        title: CSV出力結果
+        type: answer
+        variables: []
+      height: 270
+      id: final_answer_node
+      position:
+        x: 1250
+        y: 180
+      positionAbsolute:
+        x: 1250
+        y: 180
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: 108.85924039562553
+      y: 117.77570543635505
+      zoom: 0.782314569669177

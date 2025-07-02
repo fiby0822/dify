@@ -1,0 +1,56 @@
+# 8591.yml エラー原因分析
+
+## 1. ナレッジ未選択の問題
+
+### 該当箇所：
+- tech_knowledge_node（行364）: dataset_idsに暗号化されたID
+- product_knowledge_node（行378-381）: dataset_idsに暗号化されたID（複数）
+- general_knowledge_node（行414）: dataset_idsに暗号化されたID
+
+### エラー原因：
+これらのdataset_idsは実際のDifyナレッジベースのIDではなく、プレースホルダー（ダミーID）として生成されたものです。
+
+### 詳細分析：
+```yaml
+dataset_ids:
+  - "mUJqT0QSpLmBBBGsAg6tP+rLJoOBsXRCgClBvqhk7NKJWFKdH7o5AOBH9nG0DiXe"
+```
+
+これらのIDは実際のDifyシステムに存在しないため、実行時にナレッジベースが見つからないエラーが発生します。
+
+### 根本原因：
+コーディングルールでダミーIDの使用が明記されていますが、実装時にナレッジベースの事前作成の必要性が明確に伝わっていない。
+
+## 2. IF_ELSEのELSEノード未接続の問題
+
+### 該当箇所：
+tech_result_check_node、product_result_check_node、general_result_check_node（行437-508）
+
+### エラー原因：
+各IF_ELSEノードでfalseケース（デフォルトケース）へのエッジが定義されているものの、targetノード（tech_notfound_answer_node等）の位置やワークフローの接続が不完全。
+
+### 詳細分析：
+- エッジは定義されている（例：行156-164で tech_result_check_node → tech_notfound_answer_node）
+- しかし、実行時にfalseパスが正しく認識されない可能性がある
+
+### 推測される原因：
+1. sourceHandleが"false"（文字列）で正しく設定されているが、Difyシステムがこれを認識していない
+2. IF_ELSEノードの条件設定で、すべてのケースが網羅されていない可能性
+
+## 3. 共通の問題点
+
+### ナレッジ検索の設定不備：
+- retrieval_modeが"single"と"multiple"で混在
+- multiple_retrieval_configの詳細設定が一部欠落
+- 実際のナレッジベースIDとの紐付けが未完了
+
+### IF_ELSE分岐の設計問題：
+- 条件分岐後の処理が複雑（結果確認ノード → 回答生成ノード → 最終回答ノード）
+- エラーハンドリングのフローが冗長
+
+## 4. 改善すべき点
+
+1. ナレッジベースIDの管理方法を明確化
+2. IF_ELSEノードのfalseケース処理をシンプル化
+3. エラー時の代替フローを簡潔に設計
+4. 実装前のナレッジベース準備を必須化

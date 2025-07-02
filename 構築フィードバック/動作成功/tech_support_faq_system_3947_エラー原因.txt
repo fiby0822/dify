@@ -1,0 +1,84 @@
+# tech_support_faq_system_3947.yml エラー原因分析
+
+## 1. ナレッジ未選択の問題
+
+### 該当箇所：
+3つの知識検索ノードすべてでナレッジが未選択：
+- hardware_knowledge_node（行290-291）
+- software_knowledge_node（行325-326）
+- other_knowledge_node（行360-361）
+
+### エラー原因：
+```yaml
+dataset_ids:
+  - "7ccfkMYSp7EbvPLfz84xM+MGWesznlJf6laOpWdSR4vOjJa6XZ3W7JdALMg/4IRY"
+  - "8ddglNZTq8FcwQMgz95yN+NHXftzomlKg7mbPqXeTR5wPkJb7YZ4X8KeALNh/5JSZ"
+  - "9eehMOaUr9GdxRNha06zO+OIYguaplMLh8ncQrYfUS6xQlKc8Za5Y9LfBMOi/6KTa"
+```
+
+これらはすべてダミーIDで、実際のDifyナレッジベースには存在しません。
+
+### 詳細分析：
+
+1. **multipleモードの設定問題**：
+   - 全ノードでretrieval_mode: multipleを使用
+   - multiple_retrieval_configが詳細に設定されているが、ナレッジベース自体が存在しない
+
+2. **設定の矛盾**：
+   ```yaml
+   weights:
+     keyword_setting:
+       keyword_weight: 0  # キーワード検索を無効化
+     vector_setting:
+       vector_weight: 1   # ベクトル検索のみ使用
+   ```
+   - ベクトル検索のみに依存しているが、embedding_model_nameも正しく設定されているか不明
+
+3. **query_variable_selectorの問題**：
+   - analyze_question_node.textを参照
+   - しかし、このノードの出力形式が知識検索に適しているか不明
+
+## 2. その他の構造的問題
+
+### 複雑な質問分析フロー：
+1. analyze_question_nodeで質問を分析
+2. category_branch_nodeで3方向に分岐
+3. 各分岐で知識検索 → 回答生成 → 最終回答
+
+### 問題点：
+- 質問分析の出力が「カテゴリー: [カテゴリー名]」形式
+- これが知識検索のクエリとして適切でない可能性
+- 元の質問（sys.query）が知識検索に使用されていない
+
+## 3. 根本原因
+
+### 設計上の欠陥：
+1. **クエリ変換の問題**：
+   - 分析結果を検索クエリとして使用
+   - 元の質問内容が失われている
+
+2. **ナレッジベース設計の不備**：
+   - カテゴリ別のナレッジベースを想定
+   - しかし、実際の実装方法が不明確
+
+3. **エラーハンドリングの欠如**：
+   - 検索結果が空の場合の処理がない
+   - 全てのパスで同じダミーIDを使用
+
+## 4. 改善すべき点
+
+1. **クエリの適切な使用**：
+   - sys.queryを直接検索に使用
+   - または、analyze_question_nodeで検索キーワードを抽出
+
+2. **ナレッジベース管理**：
+   - 実際のIDの設定方法を明確化
+   - カテゴリ別のナレッジベース作成手順を文書化
+
+3. **フロー簡素化**：
+   - 不要な中間ノードを削減
+   - 直接的なパスを設計
+
+4. **検索設定の見直し**：
+   - keyword_weightを0にする理由を再検討
+   - ハイブリッド検索の活用を検討

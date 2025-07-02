@@ -1,0 +1,110 @@
+# 知識検索検証ワークフロー_7670.yml エラー原因分析
+
+## 1. ナレッジ未選択の問題
+
+### 該当箇所：
+3つの知識検索ノードすべてでナレッジが未選択：
+- tech_spec_search_node（行284）
+- price_info_search_node（行308）  
+- stock_status_search_node（行332-333）
+
+### エラー原因：
+```yaml
+dataset_ids:
+  - "7ccfkMYSp7EbvPLfz84xM+MGWesznlJf6laOpWdSR4vOjJa6XZ3W7JdALMg/4IRY"
+  - "8ddglNZTq8FcwQMgz95yN+NHXftzomlKg7mbPqXeTR5wPkJb7YZ4X8KeALNh/5JSZ"
+  - "9eehMOaUr9GdxRNha06zO+OIYguaplMLh8ncQrYfUS6xQlKc8Za5Y9LfBMOi/6KTa"
+```
+
+すべてダミーIDで、実際のナレッジベースが存在しません。
+
+### 詳細分析：
+
+1. **異なる検索モードの混在**：
+   - tech_spec_search_node: single mode
+   - price_info_search_node: single mode
+   - stock_status_search_node: multiple mode（詳細設定あり）
+
+2. **stock_status_search_nodeの特殊設定**：
+   ```yaml
+   multiple_retrieval_config:
+     reranking_enable: true
+     reranking_mode: weighted_score
+     top_k: 4
+     weights:
+       keyword_setting:
+         keyword_weight: 0.3
+       vector_setting:
+         vector_weight: 0.7
+   ```
+   - ハイブリッド検索を使用（良い設計）
+   - しかし、ナレッジベース自体が存在しない
+
+## 2. IF_ELSEのELSEノード未接続の問題
+
+### 該当箇所：
+inquiry_type_check_node（行245-281）
+
+### 問題の詳細：
+- tech_spec_caseとprice_info_caseの2つのケースのみ定義
+- デフォルトケース（false）はstock_status_search_nodeへ接続（行96-103）
+- しかし、「在庫状況」の明示的な条件がない
+
+### 設計上の問題：
+1. 3つのカテゴリを想定しているが、2つしか条件定義がない
+2. デフォルトケースが「在庫状況」として扱われている（暗黙的）
+3. この設計は理解しにくく、エラーの原因となりやすい
+
+## 3. query_variable_selectorの問題
+
+### 不適切なクエリ参照：
+```yaml
+query_variable_selector:
+  - start_node
+  - sys.query
+```
+
+### 問題点：
+- 正しい形式は[sys, query]または[start_node, 変数名]
+- start_node.sys.queryという参照は無効
+- これにより検索クエリが正しく渡されない
+
+## 4. 根本原因
+
+### システム設計の欠陥：
+1. **変数参照の理解不足**：
+   - advanced-chatモードでの変数参照方法の誤解
+   - sys.queryの正しい使用方法が不明確
+
+2. **条件分岐の不完全な設計**：
+   - 3つのカテゴリに対して2つの条件のみ
+   - デフォルトケースの扱いが曖昧
+
+3. **ナレッジベース管理**：
+   - すべてのケースでダミーID使用
+   - 実装時の置き換えプロセスなし
+
+## 5. 改善すべき点
+
+1. **変数参照の修正**：
+   ```yaml
+   query_variable_selector:
+     - sys
+     - query
+   ```
+
+2. **条件分岐の明確化**：
+   - 3つ目のケース（在庫状況）を明示的に定義
+   - または、2つのケースとデフォルトの設計意図を明確化
+
+3. **検索モードの統一**：
+   - すべてsingleまたはmultipleに統一
+   - 必要性に応じて選択
+
+4. **エラーハンドリング**：
+   - 検索結果が空の場合の処理
+   - カテゴリ判定失敗時の処理
+
+5. **開発プロセスの改善**：
+   - ナレッジベースIDの管理方法確立
+   - テスト環境での検証プロセス追加

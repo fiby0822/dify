@@ -1,0 +1,53 @@
+# Dify YMLファイル作成依頼プロンプト
+
+## 要件
+LLMコンポーネント記述ルールの動作検証を目的として、以下の機能を含むDifyアプリケーションを作成してください：
+
+1. **基本的なLLMノードの実装**
+   - systemロールとuserロールを使用したプロンプト設定
+   - 変数参照を含むプロンプトテンプレート
+   - completion_paramsの各種設定（temperature, max_tokens等）
+
+2. **複数ノードの連携検証**
+   - 開始ノード（start）
+   - LLMノード（最低2つ）
+   - 終了ノード（end）
+   - ノード間のedge接続
+
+3. **必須パラメータの検証**
+   - すべての必須フィールドが正しく設定されているか
+   - structured_output_enabled: false
+   - vision.enabled: false
+   - variables: []
+   - height/width/position等の座標設定
+
+4. **具体的な処理内容**
+   - ユーザーから質問を受け取る
+   - 1つ目のLLMノードで質問を分析・整理
+   - 2つ目のLLMノードで回答を生成
+   - 最終的な回答を返す
+
+## アウトプットフォルダパス
+/Users/tatsuya/Documents/01_fiby/09_ゼット/Dev/LLM/llm_validation_test_6675.yml
+
+## 参考資料フォルダパス（あれば）
+/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/コンポーネント別コーディングルール/コンポーネント記述ルール_LLM.txt
+
+## コーディングルール
+Dify YMLファイルの作成にあたっては、以下のコーディングルールに従ってください：
+
+### 1. 全体コーディングルール
+/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/全体コーディングルール/全体コーディングルール.md を参照してください。
+
+### 2. コンポーネント別コーディングルール
+各コンポーネントを使用する際は、/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/コンポーネント別コーディングルール フォルダ内の該当するtxtファイルを参照してください。
+
+特に、LLMコンポーネントについては以下の点に注意してください：
+- 外側のtype属性は"llm"（"custom"ではない）
+- positionAbsoluteは必須
+- prompt_templateには必ずid属性を付ける
+- structured_output_enabledとvision.enabledは必須（false）
+- variablesフィールドは空配列でも必須
+
+### 3. 品質チェック
+YMLファイル作成後は、/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/品質チェック/品質チェックリスト.md を参照し、必ずセルフレビューを実施してください。

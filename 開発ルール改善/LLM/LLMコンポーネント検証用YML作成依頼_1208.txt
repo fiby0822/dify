@@ -1,0 +1,76 @@
+# Dify YMLファイル作成依頼プロンプト
+
+## 要件
+LLMコンポーネントの記述ルールが正しく動作するかを検証するため、以下の要素を含むDifyアプリケーションのYMLファイルを作成してください：
+
+### 検証対象項目（最新ルールに基づく）
+1. **必須パラメータの完全性**
+   - 外側のtype属性が"custom"固定であること
+   - data内のtype属性が"llm"であること
+   - positionAbsoluteがpositionと同じ値であること
+   - height/widthが適切に設定されていること
+   - structured_output_enabled: false
+   - vision.enabled: false
+   - contextフィールドの設定（推奨）
+
+2. **プロンプトテンプレートの正確性**
+   - id属性がユニークで設定されていること
+   - systemロールとuserロールの両方を使用すること
+   - 変数参照の形式を確認
+
+3. **advanced-chatモードの検証**
+   - モードがadvanced-chatであること
+   - startノードのvariablesは必ず空配列[]であること
+   - ユーザー入力は{{#sys.query#}}で参照すること（{{#start_node.xxx#}}ではない）
+
+4. **プロバイダー設定**
+   - provider: "openai"（シンプルな形式を使用）
+   - 詳細パス（"langgenius/openai/openai"）は使用しない
+
+5. **YAMLコメントの排除**
+   - ノード定義内にコメントを含めない（クラッシュ防止）
+
+6. **全体構造の必須要素**
+   - dependencies: []
+   - kind: app
+   - version: 0.3.0
+   - workflow.conversation_variables: []
+   - workflow.environment_variables: []
+   - app.use_icon_as_answer_icon: false
+
+### アプリケーション概要
+AIアシスタントアプリケーションを作成します：
+- advanced-chatモードを使用
+- 開始ノードでユーザーの質問を受け取る（システム変数sys.queryを使用）
+- LLMノードで質問に対する回答を生成する
+- 終了ノードで回答を出力する
+
+## アウトプットフォルダパス
+/Users/tatsuya/Documents/01_fiby/09_ゼット/Dev/LLM
+
+## 参考資料フォルダパス（あれば）
+なし
+
+## コーディングルール
+Dify YMLファイルの作成にあたっては、以下のコーディングルールに従ってください：
+
+### 1. 全体コーディングルール
+/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/全体コーディングルール/全体コーディングルール.md を参照してください。
+
+### 2. コンポーネント別コーディングルール
+各コンポーネントを使用する際は、/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/コンポーネント別コーディングルール フォルダ内の該当するtxtファイルを参照してください。
+特に以下のファイルを重点的に参照してください：
+- コンポーネント記述ルール_LLM.txt（最新版）
+- コンポーネント記述ルール_開始.txt（最新版）
+- コンポーネント記述ルール_回答.txt
+
+### 3. 品質チェック
+YMLファイル作成後は、/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/品質チェック/品質チェックリスト.md を参照し、必ずセルフレビューを実施してください。
+
+## 特記事項
+- 最新のルールに従い、advanced-chatモードでの実装を行ってください
+- startノードの変数は空配列、ユーザー入力は{{#sys.query#}}で参照
+- YAMLファイル内にコメントを含めないでください
+- providerは"openai"のシンプルな形式を使用
+- 全ての必須フィールドが含まれていることを確認してください
+- ファイル名には指定されたランダム番号を必ず含めてください

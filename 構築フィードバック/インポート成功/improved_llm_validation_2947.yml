@@ -1,0 +1,253 @@
+app:
+  description: "改善されたLLMコンポーネント記述ルールの検証用アプリケーション。質問分析と回答生成の2段階処理でルールの正確性を確認します。"
+  icon: "🔧"
+  icon_background: "#F0F9FF"
+  mode: advanced-chat
+  name: "LLMルール改善版検証アプリ"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      改善されたLLMコンポーネントルールの検証アプリケーションです。
+      質問を入力すると、以下の処理を実行します：
+      1. 質問内容を分析してポイントを整理
+      2. 分析結果に基づいて詳細な回答を生成
+      
+      どのような質問でもお気軽にどうぞ。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "プログラミング学習の効果的な方法を教えてください"
+      - "健康的な生活習慣について3つのアドバイスをください"
+      - "AIの進化が社会に与える影響について説明してください"
+      - "効率的な時間管理のテクニックを教えてください"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-analyzer-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: question_analyzer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: llm
+        id: analyzer-generator-edge
+        selected: false
+        source: question_analyzer
+        sourceHandle: source
+        target: answer_generator
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: generator-answer-edge
+        selected: false
+        source: answer_generator
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "ユーザーからの質問を受け取る開始ノード"
+          selected: false
+          title: "質問入力"
+          type: start
+          variables:
+            - label: "あなたの質問"
+              variable: "user_question"
+              type: "text-input"
+              required: true
+              max_length: 3000
+        height: 116
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "質問を分析し、回答のポイントを整理"
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+            completion_params:
+              temperature: 0.3
+              max_tokens: 800
+              top_p: 0.9
+          prompt_template:
+            - id: analyzer-system-prompt
+              role: system
+              text: |
+                あなたは質問分析の専門家です。
+                ユーザーの質問を以下の観点で分析してください：
+                
+                1. 質問の主要なテーマを特定
+                2. 質問者が知りたいポイントを3-5個に整理
+                3. 回答に含めるべき重要な要素をリストアップ
+                4. 質問の背景や文脈を推測
+                
+                分析結果は箇条書きで簡潔にまとめてください。
+            - id: analyzer-user-prompt
+              role: user
+              text: |
+                以下の質問を分析してください：
+                
+                {{#start_node.user_question#}}
+          structured_output_enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          memory:
+            enabled: false
+          selected: false
+          title: "質問分析器"
+          type: llm
+          vision:
+            enabled: false
+        height: 98
+        id: question_analyzer
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "分析結果を基に詳細な回答を生成"
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+            completion_params:
+              temperature: 0.7
+              max_tokens: 1500
+              top_p: 0.95
+          prompt_template:
+            - id: generator-system-prompt
+              role: system
+              text: |
+                あなたは親切で知識豊富なアシスタントです。
+                質問分析結果を参考にしながら、以下の点に注意して回答してください：
+                
+                1. 分析で特定されたすべてのポイントをカバーする
+                2. 具体例や実践的なアドバイスを含める
+                3. 段階的で理解しやすい説明をする
+                4. 専門用語は適切に説明する
+                5. 回答の最後に要点をまとめる
+                
+                回答は構造化され、読みやすい形式で提供してください。
+            - id: generator-user-prompt
+              role: user
+              text: |
+                元の質問：
+                {{#start_node.user_question#}}
+                
+                質問の分析結果：
+                {{#question_analyzer.text#}}
+                
+                上記の分析結果を踏まえて、元の質問に対する包括的で実用的な回答を提供してください。
+          structured_output_enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          memory:
+            enabled: false
+          selected: false
+          title: "回答生成器"
+          type: llm
+          vision:
+            enabled: false
+        height: 98
+        id: answer_generator
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ## 質問
+            {{#start_node.user_question#}}
+            
+            ---
+            
+            ## 回答
+            {{#answer_generator.text#}}
+            
+            ---
+            
+            ### 質問分析内容（参考）
+            {{#question_analyzer.text#}}
+          desc: "最終的な回答と分析内容を表示"
+          selected: false
+          title: "結果出力"
+          type: answer
+          variables: []
+        height: 374
+        id: answer_node
+        position:
+          x: 950
+          y: 200
+        positionAbsolute:
+          x: 950
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

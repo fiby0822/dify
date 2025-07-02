@@ -1,0 +1,39 @@
+YMLファイル: 知識検索検証ワークフロー_7670.yml（製品問い合わせ知識検索システム）
+分析日時: 2025-07-02
+
+【報告された問題】
+1. ナレッジが選択されていないものがあった
+2. IF_ELSEのELSEノードが接続されていなかった
+
+【詳細分析結果】
+
+1. ナレッジ選択に関する分析：
+   - tech_spec_search_node（行283-284）: dataset_idsが1つ指定されている（暗号化されたID形式）
+     - query_variable_selector: start_node.sys.query（特殊な形式）
+   
+   - price_info_search_node（行307-308）: dataset_idsが1つ指定されている（暗号化されたID形式）
+     - query_variable_selector: start_node.sys.query（特殊な形式）
+   
+   - stock_status_search_node（行331-332）: dataset_idsが1つ指定されている（暗号化されたID形式）
+     - retrieval_mode: multiple（他の2つはsingle）
+     - multiple_retrieval_configで詳細設定あり（reranking有効、top_k: 4）
+
+   すべての知識検索ノードでdataset_idsが正しく指定されている。
+
+2. IF_ELSEのELSEノード接続に関する分析：
+   - inquiry_type_check_node（行245-281）:
+     - tech_spec_case: tech_spec_search_nodeに接続（正常）
+     - price_info_case: price_info_search_nodeに接続（正常）
+     - false（ELSEケース）: stock_status_search_nodeに接続（行99-100で確認、正常）
+
+   YMLファイル上ではELSEノード（falseケース）は正しく接続されている。
+
+【推測される問題の原因】
+1. query_variable_selectorの形式が特殊（start_node.sys.query）で、実行時に値が正しく渡されていない可能性
+2. 在庫状況検索のみmultiple retrieval modeを使用しており、設定の不整合の可能性
+3. IF_ELSEの条件判定で使用されている文字列（"技術仕様"、"価格情報"）と分類LLMの出力が完全一致していない可能性
+
+【特記事項】
+- query_variable_selectorの記述が他のYMLと異なる（start_nodeを明示的に指定）
+- 在庫状況検索のみ高度な検索設定（multiple retrieval、reranking）を使用
+- 条件分岐が3つのケース（技術仕様、価格情報、その他=在庫状況）で構成

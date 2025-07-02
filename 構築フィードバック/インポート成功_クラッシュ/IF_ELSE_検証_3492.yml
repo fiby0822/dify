@@ -1,0 +1,925 @@
+app:
+  description: "更新されたIF_ELSEコンポーネントルールの完全検証用アプリケーション。case_id必須化、Unicode比較演算子、全ての比較演算子タイプをテストします。"
+  icon: "🔬"
+  icon_background: "#E5F7FF"
+  mode: advanced-chat
+  name: "IF_ELSE完全検証アプリ"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      IF_ELSEコンポーネントの完全検証アプリケーションです。
+      
+      以下の形式で入力してテストしてください：
+      
+      【数値テスト】
+      - score:95（≥90のテスト）
+      - score:75（≤80のテスト）
+      - score:50（≠100のテスト）
+      
+      【文字列テスト】
+      - text:緊急対応が必要です（contains）
+      - text:urgent_task（start with）
+      - text:タスク完了（end with）
+      
+      【ステータステスト】
+      - status:active（is）
+      - status:pending（is not）
+      
+      【NULL/空チェック】
+      - empty:（空文字）
+      - null:null
+      
+      【複合条件】
+      - multi:score=85,status=active（AND条件）
+      - multi:category=urgent|priority=high（OR条件）
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "score:95"
+      - "text:緊急対応が必要です"
+      - "status:active"
+      - "multi:score=85,status=active"
+      - "empty:"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: code
+        id: start-parser-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: input_parser_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: code
+          targetType: if-else
+        id: parser-unicode-edge
+        selected: false
+        source: input_parser_node
+        sourceHandle: source
+        target: unicode_operator_test_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: unicode-gte-answer-edge
+        selected: false
+        source: unicode_operator_test_node
+        sourceHandle: score_gte_90_case
+        target: score_gte_90_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: unicode-lte-answer-edge
+        selected: false
+        source: unicode_operator_test_node
+        sourceHandle: score_lte_80_case
+        target: score_lte_80_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: unicode-neq-answer-edge
+        selected: false
+        source: unicode_operator_test_node
+        sourceHandle: score_neq_100_case
+        target: score_neq_100_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: unicode-default-string-edge
+        selected: false
+        source: unicode_operator_test_node
+        sourceHandle: false
+        target: string_operator_test_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: string-contains-answer-edge
+        selected: false
+        source: string_operator_test_node
+        sourceHandle: text_contains_case
+        target: text_contains_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: string-startwith-answer-edge
+        selected: false
+        source: string_operator_test_node
+        sourceHandle: text_startwith_case
+        target: text_startwith_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: string-endwith-answer-edge
+        selected: false
+        source: string_operator_test_node
+        sourceHandle: text_endwith_case
+        target: text_endwith_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: string-default-status-edge
+        selected: false
+        source: string_operator_test_node
+        sourceHandle: false
+        target: status_test_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: status-is-answer-edge
+        selected: false
+        source: status_test_node
+        sourceHandle: status_is_active_case
+        target: status_is_active_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: status-isnot-answer-edge
+        selected: false
+        source: status_test_node
+        sourceHandle: status_isnot_active_case
+        target: status_isnot_active_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: status-default-null-edge
+        selected: false
+        source: status_test_node
+        sourceHandle: false
+        target: null_empty_test_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: null-empty-answer-edge
+        selected: false
+        source: null_empty_test_node
+        sourceHandle: is_empty_case
+        target: is_empty_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: null-null-answer-edge
+        selected: false
+        source: null_empty_test_node
+        sourceHandle: is_null_case
+        target: is_null_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: null-default-logical-edge
+        selected: false
+        source: null_empty_test_node
+        sourceHandle: false
+        target: logical_operator_test_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: logical-and-answer-edge
+        selected: false
+        source: logical_operator_test_node
+        sourceHandle: and_condition_case
+        target: and_condition_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: logical-or-answer-edge
+        selected: false
+        source: logical_operator_test_node
+        sourceHandle: or_condition_case
+        target: or_condition_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: logical-default-answer-edge
+        selected: false
+        source: logical_operator_test_node
+        sourceHandle: false
+        target: default_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "開始ノード"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 400
+        positionAbsolute:
+          x: 50
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          code: |
+            import re
+            
+            def main(query):
+                result = {
+                    'input_type': 'unknown',
+                    'score': 0,
+                    'text': '',
+                    'status': '',
+                    'empty_value': '',
+                    'null_value': '',
+                    'multi_score': 0,
+                    'multi_status': '',
+                    'multi_category': '',
+                    'multi_priority': ''
+                }
+                
+                # スコア入力の解析
+                score_match = re.search(r'score:(\d+)', query)
+                if score_match:
+                    result['score'] = int(score_match.group(1))
+                    result['input_type'] = 'score'
+                
+                # テキスト入力の解析
+                text_match = re.search(r'text:(.+)', query)
+                if text_match:
+                    result['text'] = text_match.group(1).strip()
+                    result['input_type'] = 'text'
+                
+                # ステータス入力の解析
+                status_match = re.search(r'status:(.+)', query)
+                if status_match:
+                    result['status'] = status_match.group(1).strip()
+                    result['input_type'] = 'status'
+                
+                # 空値テスト
+                if query.startswith('empty:'):
+                    result['empty_value'] = query[6:]
+                    result['input_type'] = 'empty'
+                
+                # nullテスト
+                if query.startswith('null:'):
+                    result['null_value'] = query[5:] if query[5:] != 'null' else None
+                    result['input_type'] = 'null'
+                
+                # 複合条件の解析
+                multi_match = re.search(r'multi:(.+)', query)
+                if multi_match:
+                    multi_data = multi_match.group(1)
+                    result['input_type'] = 'multi'
+                    
+                    # AND条件（カンマ区切り）
+                    if ',' in multi_data:
+                        parts = multi_data.split(',')
+                        for part in parts:
+                            if 'score=' in part:
+                                result['multi_score'] = int(part.split('=')[1])
+                            elif 'status=' in part:
+                                result['multi_status'] = part.split('=')[1]
+                    
+                    # OR条件（パイプ区切り）
+                    elif '|' in multi_data:
+                        parts = multi_data.split('|')
+                        for part in parts:
+                            if 'category=' in part:
+                                result['multi_category'] = part.split('=')[1]
+                            elif 'priority=' in part:
+                                result['multi_priority'] = part.split('=')[1]
+                
+                return result
+          desc: "入力を解析して各種テスト用変数を設定"
+          outputs:
+            input_type:
+              type: string
+            score:
+              type: number
+            text:
+              type: string
+            status:
+              type: string
+            empty_value:
+              type: string
+            null_value:
+              type: any
+            multi_score:
+              type: number
+            multi_status:
+              type: string
+            multi_category:
+              type: string
+            multi_priority:
+              type: string
+          selected: false
+          title: "入力解析"
+          type: code
+          variables:
+            - value_selector:
+                - sys
+                - query
+              variable: query
+        height: 98
+        id: input_parser_node
+        position:
+          x: 350
+          y: 400
+        positionAbsolute:
+          x: 350
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - id: score_gte_90_case
+              case_id: score_gte_90_case
+              conditions:
+                - id: gte_check
+                  variable_selector:
+                    - input_parser_node
+                    - score
+                  comparison_operator: "≥"
+                  value: 90
+              logical_operator: and
+            - id: score_lte_80_case
+              case_id: score_lte_80_case
+              conditions:
+                - id: lte_check
+                  variable_selector:
+                    - input_parser_node
+                    - score
+                  comparison_operator: "≤"
+                  value: 80
+                - id: score_positive
+                  variable_selector:
+                    - input_parser_node
+                    - score
+                  comparison_operator: ">"
+                  value: 0
+              logical_operator: and
+            - id: score_neq_100_case
+              case_id: score_neq_100_case
+              conditions:
+                - id: neq_check
+                  variable_selector:
+                    - input_parser_node
+                    - score
+                  comparison_operator: "≠"
+                  value: 100
+                - id: type_check
+                  variable_selector:
+                    - input_parser_node
+                    - input_type
+                  comparison_operator: is
+                  value: "score"
+              logical_operator: and
+          desc: "Unicode比較演算子（≥、≤、≠）のテスト"
+          selected: false
+          title: "Unicode演算子テスト"
+          type: if-else
+        height: 198
+        id: unicode_operator_test_node
+        position:
+          x: 650
+          y: 300
+        positionAbsolute:
+          x: 650
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - id: text_contains_case
+              case_id: text_contains_case
+              conditions:
+                - variable_selector:
+                    - input_parser_node
+                    - text
+                  comparison_operator: contains
+                  value: "緊急"
+              logical_operator: and
+            - id: text_startwith_case
+              case_id: text_startwith_case
+              conditions:
+                - variable_selector:
+                    - input_parser_node
+                    - text
+                  comparison_operator: "start with"
+                  value: "urgent"
+              logical_operator: and
+            - id: text_endwith_case
+              case_id: text_endwith_case
+              conditions:
+                - variable_selector:
+                    - input_parser_node
+                    - text
+                  comparison_operator: "end with"
+                  value: "完了"
+              logical_operator: and
+          desc: "文字列比較演算子のテスト"
+          selected: false
+          title: "文字列演算子テスト"
+          type: if-else
+        height: 198
+        id: string_operator_test_node
+        position:
+          x: 950
+          y: 500
+        positionAbsolute:
+          x: 950
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - id: status_is_active_case
+              case_id: status_is_active_case
+              conditions:
+                - variable_selector:
+                    - input_parser_node
+                    - status
+                  comparison_operator: is
+                  value: "active"
+              logical_operator: and
+            - id: status_isnot_active_case
+              case_id: status_isnot_active_case
+              conditions:
+                - variable_selector:
+                    - input_parser_node
+                    - status
+                  comparison_operator: "is not"
+                  value: "active"
+                - variable_selector:
+                    - input_parser_node
+                    - input_type
+                  comparison_operator: is
+                  value: "status"
+              logical_operator: and
+          desc: "is/is not演算子のテスト"
+          selected: false
+          title: "ステータステスト"
+          type: if-else
+        height: 154
+        id: status_test_node
+        position:
+          x: 1250
+          y: 600
+        positionAbsolute:
+          x: 1250
+          y: 600
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - id: is_empty_case
+              case_id: is_empty_case
+              conditions:
+                - variable_selector:
+                    - input_parser_node
+                    - empty_value
+                  comparison_operator: empty
+                  value: ""
+              logical_operator: and
+            - id: is_null_case
+              case_id: is_null_case
+              conditions:
+                - variable_selector:
+                    - input_parser_node
+                    - null_value
+                  comparison_operator: null
+                  value: ""
+              logical_operator: and
+          desc: "empty/null演算子のテスト"
+          selected: false
+          title: "NULL/空チェック"
+          type: if-else
+        height: 154
+        id: null_empty_test_node
+        position:
+          x: 1550
+          y: 700
+        positionAbsolute:
+          x: 1550
+          y: 700
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - id: and_condition_case
+              case_id: and_condition_case
+              conditions:
+                - variable_selector:
+                    - input_parser_node
+                    - multi_score
+                  comparison_operator: "≥"
+                  value: 80
+                - variable_selector:
+                    - input_parser_node
+                    - multi_status
+                  comparison_operator: is
+                  value: "active"
+              logical_operator: and
+            - id: or_condition_case
+              case_id: or_condition_case
+              conditions:
+                - variable_selector:
+                    - input_parser_node
+                    - multi_category
+                  comparison_operator: is
+                  value: "urgent"
+                - variable_selector:
+                    - input_parser_node
+                    - multi_priority
+                  comparison_operator: is
+                  value: "high"
+              logical_operator: or
+          desc: "AND/OR論理演算子のテスト"
+          selected: false
+          title: "論理演算子テスト"
+          type: if-else
+        height: 154
+        id: logical_operator_test_node
+        position:
+          x: 1850
+          y: 800
+        positionAbsolute:
+          x: 1850
+          y: 800
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "✅ Unicode演算子テスト成功：≥（以上）\n\nスコア: {{#input_parser_node.score#}}\n\n条件「score ≥ 90」が正常に動作しました。\n\nテスト結果:\n- Unicode文字「≥」が正しく認識されました\n- case_idフィールドが正常に動作しています\n- 90以上の値で条件が成立しました"
+          desc: "≥演算子の成功結果"
+          selected: false
+          title: "≥90成功"
+          type: answer
+          variables: []
+        height: 161
+        id: score_gte_90_answer_node
+        position:
+          x: 950
+          y: 50
+        positionAbsolute:
+          x: 950
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "✅ Unicode演算子テスト成功：≤（以下）\n\nスコア: {{#input_parser_node.score#}}\n\n条件「score ≤ 80 AND score > 0」が正常に動作しました。\n\nテスト結果:\n- Unicode文字「≤」が正しく認識されました\n- 複数条件のAND演算が正常に動作しています\n- 80以下かつ0より大きい値で条件が成立しました"
+          desc: "≤演算子の成功結果"
+          selected: false
+          title: "≤80成功"
+          type: answer
+          variables: []
+        height: 161
+        id: score_lte_80_answer_node
+        position:
+          x: 950
+          y: 230
+        positionAbsolute:
+          x: 950
+          y: 230
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "✅ Unicode演算子テスト成功：≠（等しくない）\n\nスコア: {{#input_parser_node.score#}}\n\n条件「score ≠ 100」が正常に動作しました。\n\nテスト結果:\n- Unicode文字「≠」が正しく認識されました\n- 100以外の値で条件が成立しました\n- 入力タイプの確認も正常に動作しています"
+          desc: "≠演算子の成功結果"
+          selected: false
+          title: "≠100成功"
+          type: answer
+          variables: []
+        height: 161
+        id: score_neq_100_answer_node
+        position:
+          x: 950
+          y: 410
+        positionAbsolute:
+          x: 950
+          y: 410
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "✅ 文字列演算子テスト成功：contains\n\nテキスト: {{#input_parser_node.text#}}\n\n条件「text contains '緊急'」が正常に動作しました。\n\nテスト結果:\n- contains演算子が正しく動作しています\n- 部分一致検索が成功しました\n- 日本語文字列の処理も正常です"
+          desc: "contains演算子の成功結果"
+          selected: false
+          title: "contains成功"
+          type: answer
+          variables: []
+        height: 161
+        id: text_contains_answer_node
+        position:
+          x: 1250
+          y: 300
+        positionAbsolute:
+          x: 1250
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "✅ 文字列演算子テスト成功：start with\n\nテキスト: {{#input_parser_node.text#}}\n\n条件「text start with 'urgent'」が正常に動作しました。\n\nテスト結果:\n- start with演算子が正しく動作しています\n- 前方一致検索が成功しました\n- 英語文字列の処理も正常です"
+          desc: "start with演算子の成功結果"
+          selected: false
+          title: "start with成功"
+          type: answer
+          variables: []
+        height: 161
+        id: text_startwith_answer_node
+        position:
+          x: 1250
+          y: 480
+        positionAbsolute:
+          x: 1250
+          y: 480
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "✅ 文字列演算子テスト成功：end with\n\nテキスト: {{#input_parser_node.text#}}\n\n条件「text end with '完了'」が正常に動作しました。\n\nテスト結果:\n- end with演算子が正しく動作しています\n- 後方一致検索が成功しました\n- 日本語文字列の末尾判定も正常です"
+          desc: "end with演算子の成功結果"
+          selected: false
+          title: "end with成功"
+          type: answer
+          variables: []
+        height: 161
+        id: text_endwith_answer_node
+        position:
+          x: 1250
+          y: 660
+        positionAbsolute:
+          x: 1250
+          y: 660
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "✅ ステータステスト成功：is\n\nステータス: {{#input_parser_node.status#}}\n\n条件「status is 'active'」が正常に動作しました。\n\nテスト結果:\n- is演算子による完全一致が正常に動作しています\n- 文字列の厳密な比較が成功しました"
+          desc: "is演算子の成功結果"
+          selected: false
+          title: "is成功"
+          type: answer
+          variables: []
+        height: 161
+        id: status_is_active_answer_node
+        position:
+          x: 1550
+          y: 400
+        positionAbsolute:
+          x: 1550
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "✅ ステータステスト成功：is not\n\nステータス: {{#input_parser_node.status#}}\n\n条件「status is not 'active'」が正常に動作しました。\n\nテスト結果:\n- is not演算子による否定判定が正常に動作しています\n- 複数条件のAND演算も成功しました"
+          desc: "is not演算子の成功結果"
+          selected: false
+          title: "is not成功"
+          type: answer
+          variables: []
+        height: 161
+        id: status_isnot_active_answer_node
+        position:
+          x: 1550
+          y: 580
+        positionAbsolute:
+          x: 1550
+          y: 580
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "✅ NULL/空チェック成功：empty\n\n空値: '{{#input_parser_node.empty_value#}}'\n\n条件「value empty」が正常に動作しました。\n\nテスト結果:\n- empty演算子が正しく動作しています\n- 空文字列の判定が成功しました"
+          desc: "empty演算子の成功結果"
+          selected: false
+          title: "empty成功"
+          type: answer
+          variables: []
+        height: 161
+        id: is_empty_answer_node
+        position:
+          x: 1850
+          y: 500
+        positionAbsolute:
+          x: 1850
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "✅ NULL/空チェック成功：null\n\nNULL値: {{#input_parser_node.null_value#}}\n\n条件「value null」が正常に動作しました。\n\nテスト結果:\n- null演算子が正しく動作しています\n- NULL値の判定が成功しました"
+          desc: "null演算子の成功結果"
+          selected: false
+          title: "null成功"
+          type: answer
+          variables: []
+        height: 161
+        id: is_null_answer_node
+        position:
+          x: 1850
+          y: 680
+        positionAbsolute:
+          x: 1850
+          y: 680
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "✅ 論理演算子テスト成功：AND\n\nスコア: {{#input_parser_node.multi_score#}}\nステータス: {{#input_parser_node.multi_status#}}\n\n条件「score ≥ 80 AND status is 'active'」が正常に動作しました。\n\nテスト結果:\n- AND論理演算子が正しく動作しています\n- 複数条件がすべて満たされた場合に成立しました\n- Unicode演算子との組み合わせも正常です"
+          desc: "AND論理演算子の成功結果"
+          selected: false
+          title: "AND成功"
+          type: answer
+          variables: []
+        height: 197
+        id: and_condition_answer_node
+        position:
+          x: 2150
+          y: 600
+        positionAbsolute:
+          x: 2150
+          y: 600
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "✅ 論理演算子テスト成功：OR\n\nカテゴリ: {{#input_parser_node.multi_category#}}\n優先度: {{#input_parser_node.multi_priority#}}\n\n条件「category is 'urgent' OR priority is 'high'」が正常に動作しました。\n\nテスト結果:\n- OR論理演算子が正しく動作しています\n- いずれかの条件が満たされた場合に成立しました"
+          desc: "OR論理演算子の成功結果"
+          selected: false
+          title: "OR成功"
+          type: answer
+          variables: []
+        height: 197
+        id: or_condition_answer_node
+        position:
+          x: 2150
+          y: 820
+        positionAbsolute:
+          x: 2150
+          y: 820
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "ℹ️ デフォルトケース\n\n入力: {{#sys.query#}}\n入力タイプ: {{#input_parser_node.input_type#}}\n\n解析結果:\n- スコア: {{#input_parser_node.score#}}\n- テキスト: {{#input_parser_node.text#}}\n- ステータス: {{#input_parser_node.status#}}\n- 空値: '{{#input_parser_node.empty_value#}}'\n- NULL値: {{#input_parser_node.null_value#}}\n- 複合スコア: {{#input_parser_node.multi_score#}}\n- 複合ステータス: {{#input_parser_node.multi_status#}}\n- 複合カテゴリ: {{#input_parser_node.multi_category#}}\n- 複合優先度: {{#input_parser_node.multi_priority#}}\n\nすべての条件に該当しなかったため、デフォルトケースに到達しました。\n\nIF_ELSEコンポーネントの検証結果:\n- case_idフィールドが正常に動作しています\n- Unicode比較演算子が正しく認識されています\n- 複数のIF_ELSEノードの連鎖が正常に動作しています\n- デフォルトケース（falseハンドル）も正常に動作しています"
+          desc: "すべての条件に該当しない場合のデフォルト回答"
+          selected: false
+          title: "デフォルト回答"
+          type: answer
+          variables: []
+        height: 374
+        id: default_answer_node
+        position:
+          x: 2150
+          y: 1050
+        positionAbsolute:
+          x: 2150
+          y: 1050
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: -500
+      y: -200
+      zoom: 0.5

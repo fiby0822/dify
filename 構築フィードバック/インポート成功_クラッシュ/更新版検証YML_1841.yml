@@ -1,0 +1,1055 @@
+app:
+  description: "更新されたIF_ELSEルールの3つの設計パターンを検証するアプリケーション"
+  icon: "🔍"
+  icon_background: "#FFE5E5"
+  mode: advanced-chat
+  name: "IF_ELSE設計パターン検証アプリ"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      IF_ELSEコンポーネントの更新されたルールに基づく3つの設計パターンを検証します。
+      
+      テストしたいパターンと値を入力してください：
+      例1: パターン1 スコア85
+      例2: パターン2 レベル低
+      例3: パターン3 優先度高
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "パターン1 スコア95"
+      - "パターン2 レベル中"
+      - "パターン3 優先度低"
+      - "全パターンテスト"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: code
+        id: start-parser-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: input_parser_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: code
+          targetType: if-else
+        id: parser-pattern-edge
+        selected: false
+        source: input_parser_node
+        sourceHandle: source
+        target: pattern_selector_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: pattern-pattern1-edge
+        selected: false
+        source: pattern_selector_node
+        sourceHandle: pattern1_case
+        target: pattern1_score_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: pattern1-high-answer-edge
+        selected: false
+        source: pattern1_score_check_node
+        sourceHandle: high_score_case
+        target: pattern1_high_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: pattern1-medium-answer-edge
+        selected: false
+        source: pattern1_score_check_node
+        sourceHandle: medium_score_case
+        target: pattern1_medium_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: pattern1-low-answer-edge
+        selected: false
+        source: pattern1_score_check_node
+        sourceHandle: false
+        target: pattern1_low_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: pattern-pattern2-edge
+        selected: false
+        source: pattern_selector_node
+        sourceHandle: pattern2_case
+        target: pattern2_level_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: pattern2-high-process-edge
+        selected: false
+        source: pattern2_level_check_node
+        sourceHandle: high_level_case
+        target: pattern2_high_process_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: pattern2-medium-process-edge
+        selected: false
+        source: pattern2_level_check_node
+        sourceHandle: medium_level_case
+        target: pattern2_medium_process_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: pattern2-low-process-edge
+        selected: false
+        source: pattern2_level_check_node
+        sourceHandle: false
+        target: pattern2_low_process_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: llm
+        id: pattern2-high-aggregate-edge
+        selected: false
+        source: pattern2_high_process_node
+        sourceHandle: source
+        target: pattern2_aggregate_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: llm
+        id: pattern2-medium-aggregate-edge
+        selected: false
+        source: pattern2_medium_process_node
+        sourceHandle: source
+        target: pattern2_aggregate_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: llm
+        id: pattern2-low-aggregate-edge
+        selected: false
+        source: pattern2_low_process_node
+        sourceHandle: source
+        target: pattern2_aggregate_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: pattern2-aggregate-answer-edge
+        selected: false
+        source: pattern2_aggregate_node
+        sourceHandle: source
+        target: pattern2_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: pattern-pattern3-edge
+        selected: false
+        source: pattern_selector_node
+        sourceHandle: pattern3_case
+        target: pattern3_priority_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: pattern3-high-priority-edge
+        selected: false
+        source: pattern3_priority_check_node
+        sourceHandle: high_priority_case
+        target: pattern3_high_priority_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: pattern3-medium-priority-edge
+        selected: false
+        source: pattern3_priority_check_node
+        sourceHandle: medium_priority_case
+        target: pattern3_medium_priority_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: pattern3-default-edge
+        selected: false
+        source: pattern3_priority_check_node
+        sourceHandle: false
+        target: pattern3_default_handler_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: pattern3-high-answer-edge
+        selected: false
+        source: pattern3_high_priority_node
+        sourceHandle: source
+        target: pattern3_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: pattern3-medium-answer-edge
+        selected: false
+        source: pattern3_medium_priority_node
+        sourceHandle: source
+        target: pattern3_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: pattern3-default-answer-edge
+        selected: false
+        source: pattern3_default_handler_node
+        sourceHandle: source
+        target: pattern3_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: pattern-all-test-edge
+        selected: false
+        source: pattern_selector_node
+        sourceHandle: false
+        target: all_pattern_test_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "ユーザー入力の開始点"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 500
+        positionAbsolute:
+          x: 50
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          code: |
+            def main():
+                user_input = sys.query.lower()
+                
+                pattern = ""
+                test_value = ""
+                numeric_value = 0
+                
+                if "パターン1" in user_input or "pattern1" in user_input:
+                    pattern = "pattern1"
+                    import re
+                    numbers = re.findall(r'\d+', user_input)
+                    if numbers:
+                        numeric_value = int(numbers[0])
+                    test_value = f"スコア{numeric_value}"
+                elif "パターン2" in user_input or "pattern2" in user_input:
+                    pattern = "pattern2"
+                    if "高" in user_input or "high" in user_input:
+                        test_value = "レベル高"
+                    elif "中" in user_input or "medium" in user_input:
+                        test_value = "レベル中"
+                    else:
+                        test_value = "レベル低"
+                elif "パターン3" in user_input or "pattern3" in user_input:
+                    pattern = "pattern3"
+                    if "高" in user_input or "high" in user_input:
+                        test_value = "優先度高"
+                    elif "中" in user_input or "medium" in user_input:
+                        test_value = "優先度中"
+                    else:
+                        test_value = "優先度低"
+                else:
+                    pattern = "all"
+                    test_value = "全パターンテスト"
+                
+                return {
+                    "pattern": pattern,
+                    "test_value": test_value,
+                    "numeric_value": numeric_value
+                }
+          code_language: python3
+          desc: "ユーザー入力を解析してパターンと値を抽出"
+          outputs:
+            pattern:
+              type: string
+            test_value:
+              type: string
+            numeric_value:
+              type: number
+          selected: false
+          title: "入力解析"
+          type: code
+          variables: []
+        height: 82
+        id: input_parser_node
+        position:
+          x: 350
+          y: 500
+        positionAbsolute:
+          x: 350
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: pattern1_case
+              case_id: pattern1_case
+              conditions:
+                - variable_selector:
+                    - input_parser_node
+                    - pattern
+                  comparison_operator: is
+                  value: "pattern1"
+              logical_operator: and
+            - id: pattern2_case
+              case_id: pattern2_case
+              conditions:
+                - variable_selector:
+                    - input_parser_node
+                    - pattern
+                  comparison_operator: is
+                  value: "pattern2"
+              logical_operator: and
+            - id: pattern3_case
+              case_id: pattern3_case
+              conditions:
+                - variable_selector:
+                    - input_parser_node
+                    - pattern
+                  comparison_operator: is
+                  value: "pattern3"
+              logical_operator: and
+          desc: "テストするパターンを選択"
+          selected: false
+          title: "パターン選択"
+        height: 198
+        id: pattern_selector_node
+        position:
+          x: 650
+          y: 500
+        positionAbsolute:
+          x: 650
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: high_score_case
+              case_id: high_score_case
+              conditions:
+                - variable_selector:
+                    - input_parser_node
+                    - numeric_value
+                  comparison_operator: "≥"
+                  value: 80
+              logical_operator: and
+            - id: medium_score_case
+              case_id: medium_score_case
+              conditions:
+                - variable_selector:
+                    - input_parser_node
+                    - numeric_value
+                  comparison_operator: "≥"
+                  value: 50
+              logical_operator: and
+          desc: "パターン1：独立answer型（各分岐から直接answerへ）"
+          selected: false
+          title: "パターン1：スコア判定"
+        height: 198
+        id: pattern1_score_check_node
+        position:
+          x: 950
+          y: 50
+        positionAbsolute:
+          x: 950
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            🎯 パターン1：独立answer型テスト結果
+            
+            ✅ 高スコア（80以上）を検出しました！
+            入力値：{{#input_parser_node.numeric_value#}}
+            
+            【設計パターンの特徴】
+            - 各条件分岐から直接answerノードへ接続
+            - 他の分岐のノード出力を参照しない
+            - Variable not foundエラーが発生しない安全な設計
+            
+            このパターンは最もシンプルで安全です。
+          desc: "高スコアの回答"
+          selected: false
+          title: "パターン1：高スコア回答"
+          type: answer
+          variables: []
+        height: 200
+        id: pattern1_high_answer_node
+        position:
+          x: 1250
+          y: 0
+        positionAbsolute:
+          x: 1250
+          y: 0
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            🎯 パターン1：独立answer型テスト結果
+            
+            📊 中スコア（50-79）を検出しました
+            入力値：{{#input_parser_node.numeric_value#}}
+            
+            【設計パターンの特徴】
+            - 各条件分岐から直接answerノードへ接続
+            - 他の分岐のノード出力を参照しない
+            - Variable not foundエラーが発生しない安全な設計
+            
+            このパターンは最もシンプルで安全です。
+          desc: "中スコアの回答"
+          selected: false
+          title: "パターン1：中スコア回答"
+          type: answer
+          variables: []
+        height: 200
+        id: pattern1_medium_answer_node
+        position:
+          x: 1250
+          y: 100
+        positionAbsolute:
+          x: 1250
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            🎯 パターン1：独立answer型テスト結果
+            
+            📉 低スコア（50未満）を検出しました
+            入力値：{{#input_parser_node.numeric_value#}}
+            
+            【設計パターンの特徴】
+            - 各条件分岐から直接answerノードへ接続
+            - 他の分岐のノード出力を参照しない
+            - Variable not foundエラーが発生しない安全な設計
+            
+            このパターンは最もシンプルで安全です。
+          desc: "低スコアの回答（デフォルト）"
+          selected: false
+          title: "パターン1：低スコア回答"
+          type: answer
+          variables: []
+        height: 200
+        id: pattern1_low_answer_node
+        position:
+          x: 1250
+          y: 200
+        positionAbsolute:
+          x: 1250
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: high_level_case
+              case_id: high_level_case
+              conditions:
+                - variable_selector:
+                    - input_parser_node
+                    - test_value
+                  comparison_operator: contains
+                  value: "高"
+              logical_operator: and
+            - id: medium_level_case
+              case_id: medium_level_case
+              conditions:
+                - variable_selector:
+                    - input_parser_node
+                    - test_value
+                  comparison_operator: contains
+                  value: "中"
+              logical_operator: and
+          desc: "パターン2：集約型（すべての分岐が1つのノードに集約）"
+          selected: false
+          title: "パターン2：レベル判定"
+        height: 198
+        id: pattern2_level_check_node
+        position:
+          x: 950
+          y: 350
+        positionAbsolute:
+          x: 950
+          y: 350
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-high-1
+              role: system
+              text: "高レベルの処理を実行します。"
+            - id: user-high-1
+              role: user
+              text: |
+                入力値：{{#input_parser_node.test_value#}}
+                
+                高レベル用の処理結果を生成してください。
+                処理ID: HIGH_LEVEL_PROCESS
+          completion_params:
+            temperature: 0.3
+            max_tokens: 200
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "高レベルの処理ノード"
+          selected: false
+          title: "高レベル処理"
+          type: llm
+        height: 98
+        id: pattern2_high_process_node
+        position:
+          x: 1250
+          y: 300
+        positionAbsolute:
+          x: 1250
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-medium-1
+              role: system
+              text: "中レベルの処理を実行します。"
+            - id: user-medium-1
+              role: user
+              text: |
+                入力値：{{#input_parser_node.test_value#}}
+                
+                中レベル用の処理結果を生成してください。
+                処理ID: MEDIUM_LEVEL_PROCESS
+          completion_params:
+            temperature: 0.3
+            max_tokens: 200
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "中レベルの処理ノード"
+          selected: false
+          title: "中レベル処理"
+          type: llm
+        height: 98
+        id: pattern2_medium_process_node
+        position:
+          x: 1250
+          y: 400
+        positionAbsolute:
+          x: 1250
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-low-1
+              role: system
+              text: "低レベルの処理を実行します。"
+            - id: user-low-1
+              role: user
+              text: |
+                入力値：{{#input_parser_node.test_value#}}
+                
+                低レベル用の処理結果を生成してください。
+                処理ID: LOW_LEVEL_PROCESS
+          completion_params:
+            temperature: 0.3
+            max_tokens: 200
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "低レベルの処理ノード（デフォルト）"
+          selected: false
+          title: "低レベル処理"
+          type: llm
+        height: 98
+        id: pattern2_low_process_node
+        position:
+          x: 1250
+          y: 500
+        positionAbsolute:
+          x: 1250
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-aggregate-1
+              role: system
+              text: |
+                処理結果を集約して最終出力を生成します。
+                実行されたパスからの入力のみを使用してください。
+            - id: user-aggregate-1
+              role: user
+              text: |
+                パターン2：集約型の結果を生成してください。
+                
+                元の入力：{{#input_parser_node.test_value#}}
+                
+                以下の処理結果を統合してください：
+                {{#pattern2_high_process_node.text#}}{{#pattern2_medium_process_node.text#}}{{#pattern2_low_process_node.text#}}
+                
+                注：上記のうち、実際に実行されたノードの結果のみが表示されます。
+          completion_params:
+            temperature: 0.5
+            max_tokens: 300
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "すべての分岐が集約される中心ノード"
+          selected: false
+          title: "集約ノード"
+          type: llm
+        height: 98
+        id: pattern2_aggregate_node
+        position:
+          x: 1550
+          y: 400
+        positionAbsolute:
+          x: 1550
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            🔄 パターン2：集約型テスト結果
+            
+            {{#pattern2_aggregate_node.text#}}
+            
+            【設計パターンの特徴】
+            - すべての分岐が1つの集約ノードに接続
+            - 集約ノードで結果を統合
+            - 実行されたパスの結果のみを処理
+            
+            このパターンは複数の処理結果を統合する場合に有効です。
+          desc: "パターン2の最終回答"
+          selected: false
+          title: "パターン2：回答"
+          type: answer
+          variables: []
+        height: 200
+        id: pattern2_answer_node
+        position:
+          x: 1850
+          y: 400
+        positionAbsolute:
+          x: 1850
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: high_priority_case
+              case_id: high_priority_case
+              conditions:
+                - variable_selector:
+                    - input_parser_node
+                    - test_value
+                  comparison_operator: is
+                  value: "優先度高"
+              logical_operator: and
+            - id: medium_priority_case
+              case_id: medium_priority_case
+              conditions:
+                - variable_selector:
+                    - input_parser_node
+                    - test_value
+                  comparison_operator: is
+                  value: "優先度中"
+              logical_operator: and
+          desc: "パターン3：デフォルト保証型（falseケースで必ず実行）"
+          selected: false
+          title: "パターン3：優先度判定"
+        height: 198
+        id: pattern3_priority_check_node
+        position:
+          x: 950
+          y: 700
+        positionAbsolute:
+          x: 950
+          y: 700
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-high-priority-1
+              role: system
+              text: "高優先度の処理を実行します。"
+            - id: user-high-priority-1
+              role: user
+              text: |
+                {{#input_parser_node.test_value#}}が検出されました。
+                
+                高優先度タスクの処理を開始します。
+                即座の対応が必要です。
+          completion_params:
+            temperature: 0.2
+            max_tokens: 200
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "高優先度処理"
+          selected: false
+          title: "高優先度処理"
+          type: llm
+        height: 98
+        id: pattern3_high_priority_node
+        position:
+          x: 1250
+          y: 650
+        positionAbsolute:
+          x: 1250
+          y: 650
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-medium-priority-1
+              role: system
+              text: "中優先度の処理を実行します。"
+            - id: user-medium-priority-1
+              role: user
+              text: |
+                {{#input_parser_node.test_value#}}が検出されました。
+                
+                中優先度タスクの処理を開始します。
+                計画的な対応を行います。
+          completion_params:
+            temperature: 0.3
+            max_tokens: 200
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "中優先度処理"
+          selected: false
+          title: "中優先度処理"
+          type: llm
+        height: 98
+        id: pattern3_medium_priority_node
+        position:
+          x: 1250
+          y: 750
+        positionAbsolute:
+          x: 1250
+          y: 750
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-default-1
+              role: system
+              text: "デフォルト処理を実行します（低優先度含む）。"
+            - id: user-default-1
+              role: user
+              text: |
+                入力値：{{#input_parser_node.test_value#}}
+                
+                デフォルト処理を実行します。
+                このノードは必ず実行されるため、安全に参照できます。
+                処理ID: DEFAULT_HANDLER
+          completion_params:
+            temperature: 0.5
+            max_tokens: 200
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "デフォルト処理（必ず実行される）"
+          selected: false
+          title: "デフォルト処理"
+          type: llm
+        height: 98
+        id: pattern3_default_handler_node
+        position:
+          x: 1250
+          y: 850
+        positionAbsolute:
+          x: 1250
+          y: 850
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            🛡️ パターン3：デフォルト保証型テスト結果
+            
+            入力：{{#input_parser_node.test_value#}}
+            
+            処理結果：
+            {{#pattern3_high_priority_node.text#}}{{#pattern3_medium_priority_node.text#}}{{#pattern3_default_handler_node.text#}}
+            
+            【設計パターンの特徴】
+            - falseケースで必ず実行されるデフォルト処理
+            - デフォルトハンドラーは常に安全に参照可能
+            - 予期しない入力にも対応できる堅牢な設計
+            
+            このパターンは想定外の入力に対する安全性を提供します。
+          desc: "パターン3の統合回答"
+          selected: false
+          title: "パターン3：回答"
+          type: answer
+          variables: []
+        height: 250
+        id: pattern3_answer_node
+        position:
+          x: 1550
+          y: 750
+        positionAbsolute:
+          x: 1550
+          y: 750
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            📊 全パターンテスト概要
+            
+            このアプリケーションは、更新されたIF_ELSEルールに基づく3つの設計パターンを実装しています：
+            
+            **パターン1：独立answer型**
+            - 各条件分岐から直接answerノードへ接続
+            - 最もシンプルで安全
+            - Variable not foundエラーが発生しない
+            
+            **パターン2：集約型**
+            - すべての分岐が1つのノードに集約
+            - 複数の処理結果を統合可能
+            - 実行されたパスの結果のみを処理
+            
+            **パターン3：デフォルト保証型**
+            - falseケースで必ず実行されるデフォルト処理
+            - 想定外の入力にも対応
+            - 堅牢性が高い
+            
+            各パターンを個別にテストしてください。
+          desc: "全パターンの説明"
+          selected: false
+          title: "全パターン説明"
+          type: answer
+          variables: []
+        height: 374
+        id: all_pattern_test_answer_node
+        position:
+          x: 950
+          y: 950
+        positionAbsolute:
+          x: 950
+          y: 950
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.5

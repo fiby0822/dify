@@ -1,0 +1,73 @@
+# Dify YMLファイル作成依頼プロンプト
+
+## 要件
+技術サポートFAQシステムの開発をお願いします。
+
+### 機能要件：
+- ユーザーから技術的な質問を受け付ける
+- 質問の内容を分析して、以下の3つのカテゴリーに分類：
+  - ハードウェア関連（PCの故障、周辺機器のトラブル等）
+  - ソフトウェア関連（アプリケーションのエラー、設定問題等）
+  - その他（一般的な使い方、購入相談等）
+- 各カテゴリーに応じた知識ベースから関連情報を検索
+- 検索結果を基に適切な回答を生成して返す
+
+### 技術要件：
+- Codeノードは使用しない（ルール検証のため）
+- IF/ELSEノードで質問カテゴリーを判定
+- knowledge-retrievalノードで知識検索を実行
+- version: 0.3.0 を必ず使用
+- advanced-chatモードで実装
+
+### ワークフロー設計：
+1. startノード：ユーザー入力を受け取る
+2. LLMノード（質問分析）：質問内容を分析してカテゴリーと検索キーワードを抽出
+3. IF/ELSEノード：質問カテゴリーに基づいて3方向に分岐
+4. knowledge-retrievalノード×3：各カテゴリー用の知識検索
+5. LLMノード×3：検索結果を基に回答を生成
+6. answerノード×3：各分岐の結果を出力
+
+### 知識検索の設定：
+- ハードウェア用：dataset_ids: ["7ccfkMYSp7EbvPLfz84xM+MGWesznlJf6laOpWdSR4vOjJa6XZ3W7JdALMg/4IRY"]
+- ソフトウェア用：dataset_ids: ["8ddglNZTq8FcwQMgz95yN+NHXftzomlKg7mbPqXeTR5wPkJb7YZ4X8KeALNh/5JSZ"]
+- その他用：dataset_ids: ["9eehMOaUr9GdxRNha06zO+OIYguaplMLh8ncQrYfUS6xQlKc8Za5Y9LfBMOi/6KTa"]
+- retrieval_mode: "multiple"を使用
+- reranking有効化、top_k: 4
+
+## アウトプットフォルダパス
+/Users/tatsuya/Documents/01_fiby/09_ゼット/Dev/知識検索
+
+## 参考資料フォルダパス（あれば）
+/Users/tatsuya/Documents/01_fiby/09_ゼット/ymlサンプル
+
+## コーディングルール
+Dify YMLファイルの作成にあたっては、以下のコーディングルールに従ってください：
+
+### 1. 全体コーディングルール
+/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/全体コーディングルール/全体コーディングルール.md を参照してください。
+
+### 2. コンポーネント別コーディングルール
+各コンポーネントを使用する際は、/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/コンポーネント別コーディングルール フォルダ内の該当するtxtファイルを参照してください。
+
+特に重要なルール：
+- knowledge-retrievalノード：コンポーネント記述ルール_知識検索.txtを必ず確認
+  - dataset_idsフィールドを使用（datasetsではない）
+  - query_variable_selectorを使用（queryではない）
+  - data内にselected: falseとdesc: ''が必須
+  - multiple使用時はmultiple_retrieval_configが必須
+- IF_ELSEノード：コンポーネント記述ルール_IF_ELSE.txtを必ず確認
+  - logical_operatorフィールドを必ず設定
+  - sourceHandleはcase_idまたは"false"を正確に設定
+
+### 3. 品質チェック
+YMLファイル作成後は
+/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/品質チェック/品質チェックリスト.md
+/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/品質チェック/クラッシュ事項チェックリスト.md
+を参照し、必ずセルフレビューを実施してください。チェックに引っかかった場合は、ymlファイルを改修すること。
+
+### 追加の注意事項：
+- toolノード、templateノードは使用禁止
+- エッジのpriorityフィールドは使用しない
+- YAMLコメントは一切記載しない
+- isInLoopフィールドを必ず使用（isInIterationではない）
+- positionAbsoluteはpositionと同値で設定

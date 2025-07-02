@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(mkdir:*)",
+      "Bash(python3:*)",
+      "Bash(cp:*)",
+      "Bash(touch:*)",
+      "Bash(grep:*)",
+      "Bash(grep:*)",
+      "Bash(awk:*)",
+      "Bash(rg:*)",
+      "Bash(claude-code config get max-output-tokens)",
+      "Bash(echo $SHELL)",
+      "Bash(export:*)",
+      "Bash(mv:*)",
+      "Bash(chmod:*)",
+      "Bash(pip3 install:*)",
+      "Bash(python:*)",
+      "Bash(git init:*)",
+      "Bash(git remote add:*)",
+      "Bash(git add:*)",
+      "Bash(git push:*)"
+    ],
+    "deny": []
+  }
+}

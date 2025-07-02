@@ -1,0 +1,708 @@
+app:
+  description: レシート画像から日付・金額・勘定科目を自動抽出し、経費管理CSV形式で出力するOCRボット
+  icon: 🧾
+  icon_background: '#8B5CF6'
+  mode: advanced-chat
+  name: 領収書OCR集計ボット
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/openai:0.0.26@c1e643ac6a7732f6333a783320b4d3026fa5e31d8e7026375b98d44418d33f26
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .WEBP
+      - .HEIC
+      - .PDF
+      allowed_file_types:
+      - image
+      - document
+      allowed_file_upload_methods:
+      - local_file
+      enabled: true
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        image_file_size_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 10
+    opening_statement: 'こんにちは！領収書OCR集計ボットです。
+
+      レシート・領収書の画像をアップロードするだけで、経費データを自動抽出します。
+
+      📸 画像から自動OCR読み取り 💰 金額・日付・店舗名を抽出 📊 勘定科目を自動分類 📋 経費管理CSV形式で出力 🔄 複数枚の一括処理対応
+
+      レシート画像をドラッグ&ドロップしてください！'
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+    - 飲食代のレシートを処理してください
+    - 交通費の領収書を集計お願いします
+    - 事務用品購入のレシートを読み取ってください
+    suggested_questions_after_answer:
+      enabled: true
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: start
+        targetType: if-else
+      id: start-filecheck-edge
+      selected: false
+      source: start_node
+      sourceHandle: source
+      target: file_check_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: answer
+      id: filecheck-nofile-edge
+      selected: false
+      source: file_check_node
+      sourceHandle: 'true'
+      target: no_file_answer
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: filecheck-ocr-edge
+      selected: false
+      source: file_check_node
+      sourceHandle: 'false'
+      target: ocr_analysis_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: parameter-extractor
+      id: ocr-extract-edge
+      selected: false
+      source: ocr_analysis_node
+      sourceHandle: source
+      target: data_extraction_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: parameter-extractor
+        targetType: code
+      id: extract-category-edge
+      selected: false
+      source: data_extraction_node
+      sourceHandle: source
+      target: category_classification_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: code
+        targetType: code
+      id: category-csv-edge
+      selected: false
+      source: category_classification_node
+      sourceHandle: source
+      target: csv_generation_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: code
+        targetType: llm
+      id: csv-summary-edge
+      selected: false
+      source: csv_generation_node
+      sourceHandle: source
+      target: expense_summary_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: summary-answer-edge
+      selected: false
+      source: expense_summary_node
+      sourceHandle: source
+      target: final_answer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: 'レシート・領収書の画像をアップロードしてください。
+
+          自動でOCR読み取りを行い、経費データを抽出します。'
+        selected: false
+        title: 開始
+        type: start
+        variables:
+        - allowed_file_extensions:
+          - .JPG
+          - .JPEG
+          - .PNG
+          - .WEBP
+          - .HEIC
+          - .PDF
+          allowed_file_types:
+          - image
+          - document
+          allowed_file_upload_methods:
+          - local_file
+          label: レシート・領収書画像
+          max_length: 10
+          options: []
+          required: true
+          type: file
+          variable: receipt_images
+        - label: 申請者名
+          max_length: 50
+          options: []
+          required: false
+          type: text-input
+          variable: applicant_name
+        - label: 部署名
+          max_length: 50
+          options: []
+          required: false
+          type: text-input
+          variable: department
+      height: 218
+      id: start_node
+      position:
+        x: 50
+        y: 100
+      positionAbsolute:
+        x: 50
+        y: 100
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        cases:
+        - case_id: 'true'
+          conditions:
+          - comparison_operator: not exists
+            id: file_check_condition
+            value: ''
+            varType: file
+            variable_selector:
+            - start_node
+            - receipt_images
+          id: 'true'
+          logical_operator: and
+        desc: レシート画像ファイルの存在確認
+        selected: false
+        title: ファイル存在チェック
+        type: if-else
+      height: 154
+      id: file_check_node
+      position:
+        x: 350
+        y: 100
+      positionAbsolute:
+        x: 350
+        y: 100
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '❌ レシート・領収書の画像がアップロードされていません。
+
+          📷 以下の形式の画像をアップロードしてください： • JPEG・JPG (.jpg, .jpeg) • PNG (.png) • WebP (.webp)
+          • HEIC (.heic) • PDF (.pdf)
+
+          💡 OCR読み取りのコツ： • 画像は鮮明で文字がはっきり見えるもの • レシート全体が写っているもの • 影や反射がない明るい場所で撮影 •
+          一度に最大10枚まで処理可能
+
+          画像をアップロード後、再度実行してください。'
+        desc: ''
+        selected: false
+        title: ファイル未アップロード
+        type: answer
+        variables: []
+      height: 278
+      id: no_file_answer
+      position:
+        x: 650
+        y: 50
+      positionAbsolute:
+        x: 650
+        y: 50
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 画像からOCRでテキスト情報を抽出
+        model:
+          completion_params:
+            temperature: 0.1
+          mode: chat
+          name: gpt-4o
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: 'あなたはレシート・領収書のOCR分析専門家です。
+
+            アップロードされた画像から以下の情報を正確に読み取ってください：
+
+            ## 抽出対象情報 1. **店舗名・事業者名**: レシートの一番上に記載 2. **日付**: 購入日・発行日 3. **時刻**: 購入時刻（あれば）
+            4. **金額**: 合計金額（税込み） 5. **商品・サービス内容**: 購入した商品やサービス 6. **支払方法**: 現金・カード・電子マネー等
+            7. **住所**: 店舗住所（あれば）
+
+            ## OCR読み取りルール - 文字が不鮮明な場合は「読み取り困難」と記載 - 数字は正確に抽出（カンマ区切りも含む） - 日付は YYYY/MM/DD
+            形式で統一 - 金額は数字のみ抽出（¥マークは除く）
+
+            ## 出力形式 **店舗名**: [店舗名] **日付**: [YYYY/MM/DD] **時刻**: [HH:MM] **合計金額**:
+            [金額（数字のみ）] **商品内容**: [商品・サービス一覧] **支払方法**: [支払い方法] **住所**: [店舗住所]
+
+            複数の画像がある場合は、それぞれ分けて情報を抽出してください。'
+        - id: user-prompt
+          role: user
+          text: 'アップロードされたレシート・領収書画像から情報を抽出してください。
+
+            申請者: {{#start_node.applicant_name#}} 部署: {{#start_node.department#}}
+
+            正確なOCR読み取りをお願いします。'
+        selected: false
+        structured_output_enabled: false
+        title: OCR画像解析
+        type: llm
+        variables: []
+        vision:
+          configs:
+            detail: high
+            variable_selector:
+            - start_node
+            - receipt_images
+          enabled: true
+      height: 118
+      id: ocr_analysis_node
+      position:
+        x: 650
+        y: 180
+      positionAbsolute:
+        x: 650
+        y: 180
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: OCR結果から構造化データを抽出
+        instruction: 'OCRで読み取ったレシート情報から、経費精算に必要な構造化データを抽出してください。
+
+          複数のレシートがある場合は、最初のレシートの情報を抽出してください。
+
+          日付や金額が読み取れない場合は「不明」と記録してください。'
+        model:
+          completion_params:
+            temperature: 0.1
+          mode: chat
+          name: gpt-4
+          provider: langgenius/openai/openai
+        parameters:
+        - description: 店舗名・事業者名
+          name: store_name
+          required: false
+          type: string
+        - description: 購入日（YYYY-MM-DD形式）
+          name: purchase_date
+          required: false
+          type: string
+        - description: 購入時刻（HH:MM形式）
+          name: purchase_time
+          required: false
+          type: string
+        - description: 合計金額（数字のみ）
+          name: total_amount
+          required: false
+          type: number
+        - description: 商品・サービス内容
+          name: items_description
+          required: false
+          type: string
+        - description: 支払方法
+          name: payment_method
+          required: false
+          type: string
+        - description: 店舗住所
+          name: store_address
+          required: false
+          type: string
+        - description: レシート枚数
+          name: receipt_count
+          required: false
+          type: number
+        query:
+        - ocr_analysis_node
+        - text
+        reasoning_mode: prompt
+        selected: false
+        title: データ抽出処理
+        type: parameter-extractor
+        variables: []
+        vision:
+          enabled: false
+      height: 118
+      id: data_extraction_node
+      position:
+        x: 950
+        y: 180
+      positionAbsolute:
+        x: 950
+        y: 180
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        code: "def main(store_name: str, items_description: str, total_amount: float)\
+          \ -> dict:\n    \"\"\"\n    店舗名と商品内容から勘定科目を自動分類\n    \"\"\"\n    import\
+          \ re\n    \n    # デフォルト値の設定\n    if not store_name:\n        store_name\
+          \ = \"不明\"\n    if not items_description:\n        items_description = \"\
+          不明\"\n    if not total_amount or total_amount <= 0:\n        total_amount\
+          \ = 0\n    \n    # 勘定科目分類ルール\n    category_rules = {\n        \"交通費\": [\n\
+          \            \"JR\", \"私鉄\", \"地下鉄\", \"バス\", \"タクシー\", \"電車\", \"新幹線\"\
+          ,\n            \"駅\", \"交通\", \"運賃\", \"乗車券\", \"定期\", \"回数券\", \"IC\",\n\
+          \            \"スイカ\", \"パスモ\", \"イコカ\", \"高速\", \"ETC\", \"ガソリン\"\n    \
+          \    ],\n        \"会議費\": [\n            \"会議\", \"打ち合わせ\", \"ミーティング\",\
+          \ \"商談\", \"相談\", \"面談\",\n            \"喫茶\", \"カフェ\", \"コーヒー\", \"tea\"\
+          , \"coffee\", \"スタバ\", \"ドトール\"\n        ],\n        \"接待交際費\": [\n    \
+          \        \"レストラン\", \"居酒屋\", \"焼肉\", \"寿司\", \"料亭\", \"宴会\", \"パーティ\",\n\
+          \            \"接待\", \"懇親\", \"歓送迎\", \"忘年会\", \"新年会\", \"食事\", \"飲食\",\n\
+          \            \"ホテル\", \"宿泊\", \"旅館\", \"inn\"\n        ],\n        \"消耗品費\"\
+          : [\n            \"文具\", \"ペン\", \"ノート\", \"紙\", \"コピー\", \"印刷\", \"トナー\"\
+          , \"インク\",\n            \"ファイル\", \"封筒\", \"はさみ\", \"ホチキス\", \"電池\", \"\
+          USB\",\n            \"事務用品\", \"オフィス\", \"100円\", \"コンビニ\"\n        ],\n\
+          \        \"通信費\": [\n            \"携帯\", \"スマホ\", \"電話\", \"インターネット\", \"\
+          wifi\", \"プロバイダ\",\n            \"docomo\", \"au\", \"softbank\", \"楽天\"\
+          , \"通信\", \"データ\"\n        ],\n        \"水道光熱費\": [\n            \"電気\"\
+          , \"ガス\", \"水道\", \"光熱\", \"東京電力\", \"東京ガス\", \"関西電力\"\n        ],\n   \
+          \     \"研修費\": [\n            \"研修\", \"セミナー\", \"講習\", \"勉強会\", \"スクール\"\
+          , \"講座\", \"資格\",\n            \"検定\", \"試験\", \"教育\", \"学習\", \"書籍\", \"\
+          本\"\n        ],\n        \"広告宣伝費\": [\n            \"広告\", \"宣伝\", \"PR\"\
+          , \"マーケティング\", \"チラシ\", \"パンフレット\",\n            \"名刺\", \"看板\", \"ポスター\"\
+          , \"WEB\", \"SNS\"\n        ]\n    }\n    \n    # 分類実行\n    detected_category\
+          \ = \"その他\"\n    confidence_score = 0\n    \n    search_text = f\"{store_name}\
+          \ {items_description}\".lower()\n    \n    for category, keywords in category_rules.items():\n\
+          \        matches = 0\n        for keyword in keywords:\n            if keyword.lower()\
+          \ in search_text:\n                matches += 1\n        \n        # マッチ度の計算\n\
+          \        match_score = (matches / len(keywords)) * 100\n        if match_score\
+          \ > confidence_score:\n            confidence_score = match_score\n    \
+          \        detected_category = category\n    \n    # 金額による追加判定\n    if total_amount\
+          \ > 0:\n        if total_amount >= 10000 and \"レストラン\" in search_text:\n\
+          \            detected_category = \"接待交際費\"\n            confidence_score\
+          \ = max(confidence_score, 80)\n        elif total_amount <= 500 and any(word\
+          \ in search_text for word in [\"コンビニ\", \"100円\"]):\n            detected_category\
+          \ = \"消耗品費\"\n            confidence_score = max(confidence_score, 75)\n\
+          \    \n    # 信頼度が低い場合は「その他」に設定\n    if confidence_score < 20:\n        detected_category\
+          \ = \"その他\"\n        confidence_score = 0\n    \n    # 税区分の判定\n    tax_category\
+          \ = \"課税\" if total_amount > 0 else \"不明\"\n    if any(word in search_text\
+          \ for word in [\"交通\", \"電車\", \"バス\"]):\n        tax_category = \"非課税\"\
+          \n    \n    return {\n        \"account_category\": detected_category,\n\
+          \        \"confidence_score\": round(confidence_score, 1),\n        \"tax_category\"\
+          : tax_category,\n        \"processed_amount\": total_amount,\n        \"\
+          classification_keywords\": [kw for kw in category_rules.get(detected_category,\
+          \ []) if kw.lower() in search_text][:3]\n    }\n"
+        code_language: python3
+        desc: 勘定科目の自動分類処理
+        error_strategy: fail-branch
+        outputs:
+          account_category:
+            children: null
+            type: string
+          classification_keywords:
+            children: null
+            type: array[string]
+          confidence_score:
+            children: null
+            type: number
+          processed_amount:
+            children: null
+            type: number
+          tax_category:
+            children: null
+            type: string
+        selected: false
+        title: 勘定科目分類
+        type: code
+        variables:
+        - value_selector:
+          - data_extraction_node
+          - store_name
+          variable: store_name
+        - value_selector:
+          - data_extraction_node
+          - items_description
+          variable: items_description
+        - value_selector:
+          - data_extraction_node
+          - total_amount
+          variable: total_amount
+      height: 118
+      id: category_classification_node
+      position:
+        x: 1250
+        y: 180
+      positionAbsolute:
+        x: 1250
+        y: 180
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        code: "def main(store_name: str, purchase_date: str, total_amount: float,\
+          \ \n         account_category: str, tax_category: str, items_description:\
+          \ str,\n         applicant_name: str, department: str, payment_method: str)\
+          \ -> dict:\n    \"\"\"\n    経費管理CSV形式のデータを生成\n    \"\"\"\n    from datetime\
+          \ import datetime\n    import csv\n    import io\n    \n    # デフォルト値の設定\n\
+          \    if not applicant_name:\n        applicant_name = \"未入力\"\n    if not\
+          \ department:\n        department = \"未入力\"\n    if not purchase_date:\n\
+          \        purchase_date = datetime.now().strftime(\"%Y-%m-%d\")\n    if not\
+          \ store_name:\n        store_name = \"不明\"\n    if not payment_method:\n\
+          \        payment_method = \"不明\"\n    if not items_description:\n      \
+          \  items_description = \"不明\"\n    \n    # CSVヘッダー定義\n    csv_headers =\
+          \ [\n        \"申請日\",\n        \"申請者\", \n        \"部署\",\n        \"使用日\"\
+          ,\n        \"店舗名\",\n        \"金額\",\n        \"勘定科目\",\n        \"税区分\"\
+          ,\n        \"摘要\",\n        \"支払方法\",\n        \"承認状況\"\n    ]\n    \n \
+          \   # 申請日（今日の日付）\n    application_date = datetime.now().strftime(\"%Y-%m-%d\"\
+          )\n    \n    # CSV行データ作成\n    csv_row = [\n        application_date,\n \
+          \       applicant_name,\n        department,\n        purchase_date,\n \
+          \       store_name,\n        int(total_amount) if total_amount and total_amount\
+          \ > 0 else 0,\n        account_category,\n        tax_category,\n      \
+          \  items_description[:50] + (\"...\" if len(items_description) > 50 else\
+          \ \"\"),  # 摘要は50文字制限\n        payment_method,\n        \"申請中\"\n    ]\n\
+          \    \n    # CSV文字列生成\n    output = io.StringIO()\n    writer = csv.writer(output)\n\
+          \    writer.writerow(csv_headers)\n    writer.writerow(csv_row)\n    csv_content\
+          \ = output.getvalue()\n    output.close()\n    \n    # 統計情報の計算\n    expense_summary\
+          \ = {\n        \"total_count\": 1,\n        \"total_amount\": total_amount\
+          \ if total_amount else 0,\n        \"categories\": [account_category],\n\
+          \        \"average_amount\": total_amount if total_amount else 0\n    }\n\
+          \    \n    return {\n        \"csv_content\": csv_content,\n        \"csv_filename\"\
+          : f\"経費精算_{applicant_name}_{application_date}.csv\",\n        \"expense_summary\"\
+          : expense_summary,\n        \"processing_date\": application_date,\n   \
+          \     \"record_count\": 1\n    }\n"
+        code_language: python3
+        desc: 経費管理CSV形式でデータ出力
+        error_strategy: fail-branch
+        outputs:
+          csv_content:
+            children: null
+            type: string
+          csv_filename:
+            children: null
+            type: string
+          expense_summary:
+            children: null
+            type: object
+          processing_date:
+            children: null
+            type: string
+          record_count:
+            children: null
+            type: number
+        selected: false
+        title: CSV生成処理
+        type: code
+        variables:
+        - value_selector:
+          - data_extraction_node
+          - store_name
+          variable: store_name
+        - value_selector:
+          - data_extraction_node
+          - purchase_date
+          variable: purchase_date
+        - value_selector:
+          - data_extraction_node
+          - total_amount
+          variable: total_amount
+        - value_selector:
+          - category_classification_node
+          - account_category
+          variable: account_category
+        - value_selector:
+          - category_classification_node
+          - tax_category
+          variable: tax_category
+        - value_selector:
+          - data_extraction_node
+          - items_description
+          variable: items_description
+        - value_selector:
+          - start_node
+          - applicant_name
+          variable: applicant_name
+        - value_selector:
+          - start_node
+          - department
+          variable: department
+        - value_selector:
+          - data_extraction_node
+          - payment_method
+          variable: payment_method
+      height: 118
+      id: csv_generation_node
+      position:
+        x: 1550
+        y: 180
+      positionAbsolute:
+        x: 1550
+        y: 180
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 経費処理結果のサマリー生成
+        model:
+          completion_params:
+            temperature: 0.3
+          mode: chat
+          name: gpt-4
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: '経費精算処理の結果をわかりやすくまとめてください。
+
+            ## 出力フォーマット **📋 処理結果サマリー** - 申請者: [申請者名] - 処理日: [処理日] - 総金額: ¥[金額]
+
+            **📊 勘定科目分析** - 分類: [勘定科目] - 信頼度: [信頼度]% - 税区分: [税区分]
+
+            **💡 確認ポイント** - [確認すべき点や注意事項]
+
+            **✅ 次のステップ** - [経費申請の次の手順]'
+        - id: user-prompt
+          role: user
+          text: '【抽出データ】 店舗名: {{#data_extraction_node.store_name#}} 日付: {{#data_extraction_node.purchase_date#}}
+            金額: {{#data_extraction_node.total_amount#}}円 商品内容: {{#data_extraction_node.items_description#}}
+
+            【分類結果】 勘定科目: {{#category_classification_node.account_category#}} 信頼度:
+            {{#category_classification_node.confidence_score#}}% 税区分: {{#category_classification_node.tax_category#}}
+
+            【CSV出力】 ファイル名: {{#csv_generation_node.csv_filename#}} 処理日: {{#csv_generation_node.processing_date#}}
+
+            上記の結果を基に、処理サマリーを作成してください。'
+        selected: false
+        structured_output_enabled: false
+        title: 経費サマリー生成
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 118
+      id: expense_summary_node
+      position:
+        x: 1850
+        y: 180
+      positionAbsolute:
+        x: 1850
+        y: 180
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '## 🧾 領収書OCR処理完了！
+
+          {{#expense_summary_node.text#}}
+
+          ---
+
+          ### 📄 生成されたCSVデータ **ファイル名**: {{#csv_generation_node.csv_filename#}}
+
+          ```csv {{#csv_generation_node.csv_content#}} ```
+
+          ---
+
+          ### 🔍 OCR読み取り詳細 **店舗名**: {{#data_extraction_node.store_name#}} **日時**: {{#data_extraction_node.purchase_date#}}
+          {{#data_extraction_node.purchase_time#}} **支払方法**: {{#data_extraction_node.payment_method#}}
+          **商品内容**: {{#data_extraction_node.items_description#}}
+
+          ### 🎯 自動分類結果 **勘定科目**: {{#category_classification_node.account_category#}}
+          **分類信頼度**: {{#category_classification_node.confidence_score#}}% **税区分**:
+          {{#category_classification_node.tax_category#}} **判定キーワード**: {{#category_classification_node.classification_keywords#}}
+
+          ---
+
+          💡 **このCSVデータを経費精算システムにインポートできます！** 📝 **内容に間違いがある場合は手動で修正してください。**'
+        desc: ''
+        selected: false
+        title: OCR処理結果
+        type: answer
+        variables: []
+      height: 538
+      id: final_answer_node
+      position:
+        x: 2150
+        y: 180
+      positionAbsolute:
+        x: 2150
+        y: 180
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: 146.1105548191207
+      y: 52.29224231949348
+      zoom: 1.1250584846888103

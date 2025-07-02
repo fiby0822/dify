@@ -1,0 +1,553 @@
+app:
+  description: "商品在庫管理と自動発注提案を行うAIアシスタント。在庫レベル、商品重要度、販売傾向を総合的に分析し、適切な発注提案を行います。"
+  icon: "📦"
+  icon_background: "#E3F2FD"
+  mode: advanced-chat
+  name: "在庫管理発注提案システム"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      在庫管理発注提案システムへようこそ！
+      
+      商品の在庫情報を入力していただければ、適切な発注提案をいたします。
+      
+      以下の形式で入力してください：
+      商品名：〇〇
+      現在庫数：〇〇
+      重要度：高/中/低
+      前月販売数：〇〇
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "商品名：ノートPC　現在庫数：8　重要度：高　前月販売数：25"
+      - "商品名：マウス　現在庫数：150　重要度：低　前月販売数：30"
+      - "商品名：キーボード　現在庫数：35　重要度：中　前月販売数：40"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: code
+        id: start-parse-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: parse_input_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: code
+          targetType: if-else
+        id: parse-null-edge
+        selected: false
+        source: parse_input_node
+        sourceHandle: source
+        target: null_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: null-error-edge
+        selected: false
+        source: null_check_node
+        sourceHandle: empty_product_case
+        target: error_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: null-stock-edge
+        selected: false
+        source: null_check_node
+        sourceHandle: false
+        target: stock_level_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: stock-urgent-edge
+        selected: false
+        source: stock_level_check_node
+        sourceHandle: urgent_case
+        target: importance_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: stock-warning-edge
+        selected: false
+        source: stock_level_check_node
+        sourceHandle: warning_case
+        target: importance_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: stock-normal-edge
+        selected: false
+        source: stock_level_check_node
+        sourceHandle: normal_case
+        target: importance_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: stock-excess-edge
+        selected: false
+        source: stock_level_check_node
+        sourceHandle: excess_case
+        target: importance_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: importance-sales-edge
+        selected: false
+        source: importance_check_node
+        sourceHandle: false
+        target: sales_trend_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: sales-report-edge
+        selected: false
+        source: sales_trend_check_node
+        sourceHandle: false
+        target: generate_report_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: report-answer-edge
+        selected: false
+        source: generate_report_node
+        sourceHandle: source
+        target: final_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "ユーザー入力の受け取り"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 400
+        positionAbsolute:
+          x: 50
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          code: |
+            import re
+            
+            user_input = sys.query
+            
+            product_name = ""
+            stock_count = 0
+            importance = ""
+            last_month_sales = 0
+            
+            product_match = re.search(r'商品名[：:]\s*(.+?)(?:\s|　|$)', user_input)
+            if product_match:
+                product_name = product_match.group(1).strip()
+            
+            stock_match = re.search(r'現在庫数[：:]\s*(\d+)', user_input)
+            if stock_match:
+                stock_count = int(stock_match.group(1))
+            
+            importance_match = re.search(r'重要度[：:]\s*(高|中|低)', user_input)
+            if importance_match:
+                importance = importance_match.group(1)
+            
+            sales_match = re.search(r'前月販売数[：:]\s*(\d+)', user_input)
+            if sales_match:
+                last_month_sales = int(sales_match.group(1))
+            
+            sales_ratio = 0
+            if last_month_sales > 0:
+                sales_ratio = (stock_count / last_month_sales) * 100
+            
+            result = {
+                "product_name": product_name,
+                "stock_count": stock_count,
+                "importance": importance,
+                "last_month_sales": last_month_sales,
+                "sales_ratio": sales_ratio,
+                "original_input": user_input
+            }
+          code_language: python3
+          desc: "入力データの解析と変数抽出"
+          outputs:
+            product_name:
+              type: string
+            stock_count:
+              type: number
+            importance:
+              type: string
+            last_month_sales:
+              type: number
+            sales_ratio:
+              type: number
+            original_input:
+              type: string
+          selected: false
+          title: "入力解析"
+          type: code
+          variables:
+            - value_selector:
+                - sys
+                - query
+              variable: sys.query
+        height: 54
+        id: parse_input_node
+        position:
+          x: 350
+          y: 400
+        positionAbsolute:
+          x: 350
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: empty_product_case
+              case_id: empty_product_case
+              conditions:
+                - variable_selector:
+                    - parse_input_node
+                    - product_name
+                  comparison_operator: empty
+                  value: ""
+              logical_operator: and
+          desc: "必須項目の存在確認"
+          selected: false
+          title: "NULL/存在チェック"
+        height: 154
+        id: null_check_node
+        position:
+          x: 650
+          y: 400
+        positionAbsolute:
+          x: 650
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            エラー：商品名が入力されていません。
+            
+            以下の形式で入力してください：
+            商品名：〇〇
+            現在庫数：〇〇
+            重要度：高/中/低
+            前月販売数：〇〇
+          desc: "エラーメッセージ"
+          selected: false
+          title: "エラー出力"
+          type: answer
+          variables: []
+        height: 107
+        id: error_answer_node
+        position:
+          x: 950
+          y: 250
+        positionAbsolute:
+          x: 950
+          y: 250
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: urgent_case
+              case_id: urgent_case
+              conditions:
+                - variable_selector:
+                    - parse_input_node
+                    - stock_count
+                  comparison_operator: "≤"
+                  value: 10
+              logical_operator: and
+            - id: warning_case
+              case_id: warning_case
+              conditions:
+                - variable_selector:
+                    - parse_input_node
+                    - stock_count
+                  comparison_operator: "≤"
+                  value: 50
+              logical_operator: and
+            - id: normal_case
+              case_id: normal_case
+              conditions:
+                - variable_selector:
+                    - parse_input_node
+                    - stock_count
+                  comparison_operator: "≤"
+                  value: 100
+              logical_operator: and
+            - id: excess_case
+              case_id: excess_case
+              conditions:
+                - variable_selector:
+                    - parse_input_node
+                    - stock_count
+                  comparison_operator: ">"
+                  value: 100
+              logical_operator: and
+          desc: "在庫数による分類"
+          selected: false
+          title: "在庫レベル判定"
+        height: 198
+        id: stock_level_check_node
+        position:
+          x: 950
+          y: 400
+        positionAbsolute:
+          x: 950
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: high_urgent_case
+              case_id: high_urgent_case
+              conditions:
+                - variable_selector:
+                    - parse_input_node
+                    - importance
+                  comparison_operator: is
+                  value: "高"
+                - variable_selector:
+                    - parse_input_node
+                    - stock_count
+                  comparison_operator: "≤"
+                  value: 10
+              logical_operator: and
+            - id: high_warning_case
+              case_id: high_warning_case
+              conditions:
+                - variable_selector:
+                    - parse_input_node
+                    - importance
+                  comparison_operator: is
+                  value: "高"
+                - variable_selector:
+                    - parse_input_node
+                    - stock_count
+                  comparison_operator: "≤"
+                  value: 50
+              logical_operator: and
+          desc: "重要度と在庫レベルの複合判定"
+          selected: false
+          title: "複合条件判定"
+        height: 154
+        id: importance_check_node
+        position:
+          x: 1250
+          y: 400
+        positionAbsolute:
+          x: 1250
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: shortage_trend_case
+              case_id: shortage_trend_case
+              conditions:
+                - variable_selector:
+                    - parse_input_node
+                    - sales_ratio
+                  comparison_operator: "<"
+                  value: 50
+              logical_operator: and
+            - id: excess_trend_case
+              case_id: excess_trend_case
+              conditions:
+                - variable_selector:
+                    - parse_input_node
+                    - sales_ratio
+                  comparison_operator: "≥"
+                  value: 200
+              logical_operator: and
+          desc: "販売傾向の分析"
+          selected: false
+          title: "販売傾向チェック"
+        height: 154
+        id: sales_trend_check_node
+        position:
+          x: 1550
+          y: 400
+        positionAbsolute:
+          x: 1550
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+            completion_params:
+              temperature: 0.7
+              max_tokens: 1000
+          prompt_template:
+            - id: system-prompt
+              role: system
+              text: |
+                あなたは在庫管理の専門家です。
+                商品の在庫状況、重要度、販売傾向を総合的に分析し、適切な発注提案を行ってください。
+                
+                提案には以下を含めてください：
+                1. 現状分析（在庫レベル、販売傾向）
+                2. 推奨発注数量（具体的な数値）
+                3. 発注優先度（最優先/優先/通常/不要）
+                4. 理由説明
+                5. 追加のアドバイス
+            - id: user-prompt
+              role: user
+              text: |
+                商品情報：
+                - 商品名：{{#parse_input_node.product_name#}}
+                - 現在庫数：{{#parse_input_node.stock_count#}}個
+                - 重要度：{{#parse_input_node.importance#}}
+                - 前月販売数：{{#parse_input_node.last_month_sales#}}個
+                - 在庫/販売比率：{{#parse_input_node.sales_ratio#}}%
+                
+                この商品の発注提案をしてください。
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          context:
+            enabled: false
+            variable_selector: []
+          memory:
+            enabled: false
+          selected: false
+          title: "発注提案生成"
+          type: llm
+        height: 98
+        id: generate_report_node
+        position:
+          x: 1850
+          y: 400
+        positionAbsolute:
+          x: 1850
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            {{#generate_report_node.text#}}
+            
+            ---
+            ご利用ありがとうございました。他の商品の在庫分析もお気軽にご依頼ください。
+          desc: "最終結果の出力"
+          selected: false
+          title: "結果出力"
+          type: answer
+          variables: []
+        height: 107
+        id: final_answer_node
+        position:
+          x: 2150
+          y: 400
+        positionAbsolute:
+          x: 2150
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.5

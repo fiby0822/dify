@@ -1,0 +1,549 @@
+app:
+  description: ''
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  mode: advanced-chat
+  name: 検索テスト
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/tavily:0.0.5@caf7214ca1a237845e991615fd12e04c8db8b703d59773538fe243f3de4044e9
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        image_file_size_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: tool
+      id: 1751420830721-source-1751420849661-target
+      source: '1751420830721'
+      sourceHandle: source
+      target: '1751420849661'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: answer
+      id: 1751420849661-source-answer-target
+      source: '1751420849661'
+      sourceHandle: source
+      target: answer
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: ''
+        selected: false
+        title: 開始
+        type: start
+        variables: []
+      height: 54
+      id: '1751420830721'
+      position:
+        x: 80
+        y: 282
+      positionAbsolute:
+        x: 80
+        y: 282
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '{{#1751420849661.text#}}'
+        desc: ''
+        selected: false
+        title: 回答
+        type: answer
+        variables: []
+      height: 105
+      id: answer
+      position:
+        x: 706
+        y: 282
+      positionAbsolute:
+        x: 706
+        y: 282
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: ''
+        is_team_authorization: true
+        output_schema: null
+        paramSchemas:
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: The search query you want to execute with Tavily.
+            ja_JP: The search query you want to execute with Tavily.
+            pt_BR: The search query you want to execute with Tavily.
+            zh_Hans: 您想用 Tavily 执行的搜索查询。
+          label:
+            en_US: Query
+            ja_JP: Query
+            pt_BR: Query
+            zh_Hans: 查询
+          llm_description: The search query.
+          max: null
+          min: null
+          name: query
+          options: []
+          placeholder: null
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: basic
+          form: llm
+          human_description:
+            en_US: The depth of the search.
+            ja_JP: The depth of the search.
+            pt_BR: The depth of the search.
+            zh_Hans: 搜索的深度。
+          label:
+            en_US: Search Depth
+            ja_JP: Search Depth
+            pt_BR: Search Depth
+            zh_Hans: 搜索深度
+          llm_description: The depth of the search. 'basic' for standard search, 'advanced'
+            for more comprehensive results.
+          max: null
+          min: null
+          name: search_depth
+          options:
+          - label:
+              en_US: Basic
+              ja_JP: Basic
+              pt_BR: Basic
+              zh_Hans: 基本
+            value: basic
+          - label:
+              en_US: Advanced
+              ja_JP: Advanced
+              pt_BR: Advanced
+              zh_Hans: 高级
+            value: advanced
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: select
+        - auto_generate: null
+          default: general
+          form: llm
+          human_description:
+            en_US: The category of the search.
+            ja_JP: The category of the search.
+            pt_BR: The category of the search.
+            zh_Hans: 搜索的类别。
+          label:
+            en_US: Topic
+            ja_JP: Topic
+            pt_BR: Topic
+            zh_Hans: 主题
+          llm_description: The category of the search. Options include 'general',
+            'news', or 'finance'.
+          max: null
+          min: null
+          name: topic
+          options:
+          - label:
+              en_US: General
+              ja_JP: General
+              pt_BR: General
+              zh_Hans: 一般
+            value: general
+          - label:
+              en_US: News
+              ja_JP: News
+              pt_BR: News
+              zh_Hans: 新闻
+            value: news
+          - label:
+              en_US: Finance
+              ja_JP: Finance
+              pt_BR: Finance
+              zh_Hans: 金融
+            value: finance
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: select
+        - auto_generate: null
+          default: 3
+          form: llm
+          human_description:
+            en_US: The number of days back from the current date to include in the
+              search results (only applicable when "topic" is "news").
+            ja_JP: The number of days back from the current date to include in the
+              search results (only applicable when "topic" is "news").
+            pt_BR: The number of days back from the current date to include in the
+              search results (only applicable when "topic" is "news").
+            zh_Hans: 从当前日期起向前追溯的天数，以包含在搜索结果中（仅当"topic"为"news"时适用）。
+          label:
+            en_US: Days
+            ja_JP: Days
+            pt_BR: Days
+            zh_Hans: 天数
+          llm_description: The number of days back from the current date to include
+            in the search results. Only applicable when "topic" is "news".
+          max: null
+          min: 1
+          name: days
+          options: []
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: number
+        - auto_generate: null
+          default: not_specified
+          form: llm
+          human_description:
+            en_US: The time range back from the current date to filter results.
+            ja_JP: The time range back from the current date to filter results.
+            pt_BR: The time range back from the current date to filter results.
+            zh_Hans: 从当前日期起向后筛选结果的时间范围。
+          label:
+            en_US: Time Range
+            ja_JP: Time Range
+            pt_BR: Time Range
+            zh_Hans: 时间范围
+          llm_description: The time range back from the current date to filter results.
+            Options include 'not_specified', 'day', 'week', 'month', or 'year'.
+          max: null
+          min: null
+          name: time_range
+          options:
+          - label:
+              en_US: Not Specified
+              ja_JP: Not Specified
+              pt_BR: Not Specified
+              zh_Hans: 不指定
+            value: not_specified
+          - label:
+              en_US: Day
+              ja_JP: Day
+              pt_BR: Day
+              zh_Hans: 天
+            value: day
+          - label:
+              en_US: Week
+              ja_JP: Week
+              pt_BR: Week
+              zh_Hans: 周
+            value: week
+          - label:
+              en_US: Month
+              ja_JP: Month
+              pt_BR: Month
+              zh_Hans: 月
+            value: month
+          - label:
+              en_US: Year
+              ja_JP: Year
+              pt_BR: Year
+              zh_Hans: 年
+            value: year
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: select
+        - auto_generate: null
+          default: 5
+          form: form
+          human_description:
+            en_US: The maximum number of search results to return.
+            ja_JP: The maximum number of search results to return.
+            pt_BR: The maximum number of search results to return.
+            zh_Hans: 要返回的最大搜索结果数。
+          label:
+            en_US: Max Results
+            ja_JP: Max Results
+            pt_BR: Max Results
+            zh_Hans: 最大结果数
+          llm_description: The maximum number of search results to return. Range is
+            1-20.
+          max: 20
+          min: 1
+          name: max_results
+          options: []
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: number
+        - auto_generate: null
+          default: 0
+          form: form
+          human_description:
+            en_US: Include a list of query-related images in the response.
+            ja_JP: Include a list of query-related images in the response.
+            pt_BR: Include a list of query-related images in the response.
+            zh_Hans: 在响应中包含与查询相关的图片列表。
+          label:
+            en_US: Include Images
+            ja_JP: Include Images
+            pt_BR: Include Images
+            zh_Hans: 包含图片
+          llm_description: When set to true, includes a list of query-related images
+            in the response.
+          max: null
+          min: null
+          name: include_images
+          options: []
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: boolean
+        - auto_generate: null
+          default: 0
+          form: form
+          human_description:
+            en_US: When include_images is True, adds descriptive text for each image.
+            ja_JP: When include_images is True, adds descriptive text for each image.
+            pt_BR: When include_images is True, adds descriptive text for each image.
+            zh_Hans: 当 include_images 为 True 时，为每个图像添加描述文本。
+          label:
+            en_US: Include Image Descriptions
+            ja_JP: Include Image Descriptions
+            pt_BR: Include Image Descriptions
+            zh_Hans: 包含图片描述
+          llm_description: When include_images is True and this is set to true, adds
+            descriptive text for each image.
+          max: null
+          min: null
+          name: include_image_descriptions
+          options: []
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: boolean
+        - auto_generate: null
+          default: 0
+          form: form
+          human_description:
+            en_US: Include a short answer to the original query in the response.
+            ja_JP: Include a short answer to the original query in the response.
+            pt_BR: Include a short answer to the original query in the response.
+            zh_Hans: 在响应中包含对原始查询的简短回答。
+          label:
+            en_US: Include Answer
+            ja_JP: Include Answer
+            pt_BR: Include Answer
+            zh_Hans: 包含答案
+          llm_description: When set to true, includes a short answer to the original
+            query in the response.
+          max: null
+          min: null
+          name: include_answer
+          options: []
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: boolean
+        - auto_generate: null
+          default: 0
+          form: form
+          human_description:
+            en_US: Include the cleaned and parsed HTML content of each search result.
+            ja_JP: Include the cleaned and parsed HTML content of each search result.
+            pt_BR: Include the cleaned and parsed HTML content of each search result.
+            zh_Hans: 包含每个搜索结果的已清理和解析的HTML内容。
+          label:
+            en_US: Include Raw Content
+            ja_JP: Include Raw Content
+            pt_BR: Include Raw Content
+            zh_Hans: 包含原始内容
+          llm_description: When set to true, includes the cleaned and parsed HTML
+            content of each search result.
+          max: null
+          min: null
+          name: include_raw_content
+          options: []
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: boolean
+        - auto_generate: null
+          default: null
+          form: form
+          human_description:
+            en_US: A comma-separated list of domains to specifically include in the
+              search results.
+            ja_JP: A comma-separated list of domains to specifically include in the
+              search results.
+            pt_BR: A comma-separated list of domains to specifically include in the
+              search results.
+            zh_Hans: 要在搜索结果中特别包含的域的逗号分隔列表。
+          label:
+            en_US: Include Domains
+            ja_JP: Include Domains
+            pt_BR: Include Domains
+            zh_Hans: 包含域
+          llm_description: A comma-separated list of domains to specifically include
+            in the search results.
+          max: null
+          min: null
+          name: include_domains
+          options: []
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: null
+          form: form
+          human_description:
+            en_US: A comma-separated list of domains to specifically exclude from
+              the search results.
+            ja_JP: A comma-separated list of domains to specifically exclude from
+              the search results.
+            pt_BR: A comma-separated list of domains to specifically exclude from
+              the search results.
+            zh_Hans: 要从搜索结果中特别排除的域的逗号分隔列表。
+          label:
+            en_US: Exclude Domains
+            ja_JP: Exclude Domains
+            pt_BR: Exclude Domains
+            zh_Hans: 排除域
+          llm_description: A comma-separated list of domains to specifically exclude
+            from the search results.
+          max: null
+          min: null
+          name: exclude_domains
+          options: []
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: string
+        params:
+          days: ''
+          exclude_domains: ''
+          include_answer: ''
+          include_domains: ''
+          include_image_descriptions: ''
+          include_images: ''
+          include_raw_content: ''
+          max_results: ''
+          query: ''
+          search_depth: ''
+          time_range: ''
+          topic: ''
+        provider_id: langgenius/tavily/tavily
+        provider_name: langgenius/tavily/tavily
+        provider_type: builtin
+        selected: false
+        title: Tavily Search
+        tool_configurations:
+          exclude_domains: null
+          include_answer: 0
+          include_domains: null
+          include_image_descriptions: 0
+          include_images: 0
+          include_raw_content: 0
+          max_results: 5
+        tool_description: A search engine tool built specifically for AI agents (LLMs),
+          delivering real-time, accurate, and factual results at speed.
+        tool_label: Tavily Search
+        tool_name: tavily_search
+        tool_parameters:
+          query:
+            type: mixed
+            value: '{{#sys.query#}}'
+        type: tool
+      height: 246
+      id: '1751420849661'
+      position:
+        x: 380
+        y: 282
+      positionAbsolute:
+        x: 380
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: 60.549545636964126
+      y: 242.3635239617784
+      zoom: 0.8132038349422436

@@ -1,0 +1,529 @@
+app:
+  description: "IF/ELSEコンポーネントの動作検証用YMLファイル"
+  icon: "🧪"
+  icon_background: "#E0F7FA"
+  mode: advanced-chat
+  name: "IF_ELSE検証テスト"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      IF/ELSEコンポーネントの検証を開始します。
+      
+      テスト内容：
+      1. 数値を入力すると、0-30（低）、31-70（中）、71-100（高）で分類します
+      2. 「緊急」という文字が含まれているかチェックします
+      3. 数値と文字列の両方の条件を組み合わせて判定します
+      
+      例えば「85 緊急」と入力してみてください。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "25"
+      - "50 緊急"
+      - "85"
+      - "緊急対応が必要です"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: code
+        id: start-parse-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: parse_input_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: code
+          targetType: if-else
+        id: parse-numeric-edge
+        selected: false
+        source: parse_input_node
+        sourceHandle: source
+        target: numeric_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: low-answer-edge
+        selected: false
+        source: numeric_check_node
+        sourceHandle: low_score_case
+        target: low_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: medium-answer-edge
+        selected: false
+        source: numeric_check_node
+        sourceHandle: medium_score_case
+        target: medium_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: high-answer-edge
+        selected: false
+        source: numeric_check_node
+        sourceHandle: high_score_case
+        target: high_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: numeric-string-edge
+        selected: false
+        source: numeric_check_node
+        sourceHandle: false
+        target: string_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: urgent-answer-edge
+        selected: false
+        source: string_check_node
+        sourceHandle: contains_urgent_case
+        target: urgent_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: string-combined-edge
+        selected: false
+        source: string_check_node
+        sourceHandle: false
+        target: combined_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: combined-answer-edge
+        selected: false
+        source: combined_check_node
+        sourceHandle: high_urgent_case
+        target: combined_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: default-answer-edge
+        selected: false
+        source: combined_check_node
+        sourceHandle: false
+        target: default_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "開始ノード"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 400
+        positionAbsolute:
+          x: 50
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          code: |
+            import re
+            
+            user_input = str(sys.query)
+            
+            numeric_value = 0
+            contains_urgent = False
+            text_part = ""
+            
+            numbers = re.findall(r'\d+', user_input)
+            if numbers:
+                numeric_value = int(numbers[0])
+            
+            if '緊急' in user_input:
+                contains_urgent = True
+            
+            text_part = re.sub(r'\d+', '', user_input).strip()
+            
+            result = {
+                "numeric_value": numeric_value,
+                "contains_urgent": contains_urgent,
+                "text_part": text_part,
+                "original_input": user_input
+            }
+          desc: "入力を解析して数値と文字列を抽出"
+          outputs:
+            numeric_value:
+              type: number
+            contains_urgent:
+              type: string
+            text_part:
+              type: string
+            original_input:
+              type: string
+          selected: false
+          title: "入力解析"
+          type: code
+          variables:
+            - value_selector:
+                - sys
+                - query
+              variable: sys.query
+        height: 54
+        id: parse_input_node
+        position:
+          x: 350
+          y: 400
+        positionAbsolute:
+          x: 350
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: low_score_case
+              case_id: low_score_case
+              conditions:
+                - variable_selector:
+                    - parse_input_node
+                    - numeric_value
+                  comparison_operator: "≤"
+                  value: 30
+                - variable_selector:
+                    - parse_input_node
+                    - numeric_value
+                  comparison_operator: ">"
+                  value: 0
+              logical_operator: and
+            - id: medium_score_case
+              case_id: medium_score_case
+              conditions:
+                - variable_selector:
+                    - parse_input_node
+                    - numeric_value
+                  comparison_operator: "≤"
+                  value: 70
+                - variable_selector:
+                    - parse_input_node
+                    - numeric_value
+                  comparison_operator: ">"
+                  value: 30
+              logical_operator: and
+            - id: high_score_case
+              case_id: high_score_case
+              conditions:
+                - variable_selector:
+                    - parse_input_node
+                    - numeric_value
+                  comparison_operator: "≥"
+                  value: 71
+                - variable_selector:
+                    - parse_input_node
+                    - numeric_value
+                  comparison_operator: "≤"
+                  value: 100
+              logical_operator: and
+          desc: "数値による分岐（低・中・高）"
+          selected: false
+          title: "数値判定"
+        height: 220
+        id: numeric_check_node
+        position:
+          x: 650
+          y: 300
+        positionAbsolute:
+          x: 650
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            【数値判定結果：低】
+            入力値：{{#parse_input_node.numeric_value#}}
+            
+            評価：0-30の範囲（低レベル）
+            
+            ✅ IF/ELSEの数値比較（Unicode演算子）が正常に動作しています。
+          desc: "低レベルの回答"
+          selected: false
+          title: "低レベル回答"
+          type: answer
+          variables: []
+        height: 107
+        id: low_answer_node
+        position:
+          x: 950
+          y: 100
+        positionAbsolute:
+          x: 950
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            【数値判定結果：中】
+            入力値：{{#parse_input_node.numeric_value#}}
+            
+            評価：31-70の範囲（中レベル）
+            
+            ✅ IF/ELSEの数値比較（Unicode演算子）が正常に動作しています。
+          desc: "中レベルの回答"
+          selected: false
+          title: "中レベル回答"
+          type: answer
+          variables: []
+        height: 107
+        id: medium_answer_node
+        position:
+          x: 950
+          y: 250
+        positionAbsolute:
+          x: 950
+          y: 250
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            【数値判定結果：高】
+            入力値：{{#parse_input_node.numeric_value#}}
+            
+            評価：71-100の範囲（高レベル）
+            
+            ✅ IF/ELSEの数値比較（Unicode演算子）が正常に動作しています。
+          desc: "高レベルの回答"
+          selected: false
+          title: "高レベル回答"
+          type: answer
+          variables: []
+        height: 107
+        id: high_answer_node
+        position:
+          x: 950
+          y: 400
+        positionAbsolute:
+          x: 950
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: contains_urgent_case
+              case_id: contains_urgent_case
+              conditions:
+                - variable_selector:
+                    - parse_input_node
+                    - text_part
+                  comparison_operator: contains
+                  value: "緊急"
+              logical_operator: and
+          desc: "文字列による分岐（緊急を含む）"
+          selected: false
+          title: "文字列判定"
+        height: 154
+        id: string_check_node
+        position:
+          x: 950
+          y: 550
+        positionAbsolute:
+          x: 950
+          y: 550
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            【文字列判定結果：緊急】
+            入力：{{#parse_input_node.original_input#}}
+            
+            「緊急」という文字が含まれています。
+            
+            ✅ IF/ELSEの文字列部分一致（contains）が正常に動作しています。
+          desc: "緊急を含む回答"
+          selected: false
+          title: "緊急回答"
+          type: answer
+          variables: []
+        height: 107
+        id: urgent_answer_node
+        position:
+          x: 1250
+          y: 550
+        positionAbsolute:
+          x: 1250
+          y: 550
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: high_urgent_case
+              case_id: high_urgent_case
+              conditions:
+                - variable_selector:
+                    - parse_input_node
+                    - numeric_value
+                  comparison_operator: "≥"
+                  value: 71
+                - variable_selector:
+                    - parse_input_node
+                    - text_part
+                  comparison_operator: contains
+                  value: "緊急"
+              logical_operator: and
+          desc: "複数条件の組み合わせ（高レベルかつ緊急）"
+          selected: false
+          title: "複合条件判定"
+        height: 154
+        id: combined_check_node
+        position:
+          x: 1250
+          y: 700
+        positionAbsolute:
+          x: 1250
+          y: 700
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            【複合条件判定結果：高レベル＋緊急】
+            入力：{{#parse_input_node.original_input#}}
+            数値：{{#parse_input_node.numeric_value#}}
+            
+            高レベル（71以上）かつ「緊急」を含む条件に合致しました。
+            
+            ✅ IF/ELSEの複数条件（AND）が正常に動作しています。
+            ✅ case_idフィールドが正しく設定されています。
+          desc: "複合条件の回答"
+          selected: false
+          title: "複合条件回答"
+          type: answer
+          variables: []
+        height: 107
+        id: combined_answer_node
+        position:
+          x: 1550
+          y: 700
+        positionAbsolute:
+          x: 1550
+          y: 700
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            【デフォルト判定】
+            入力：{{#parse_input_node.original_input#}}
+            
+            数値による分類、緊急判定、複合条件のいずれにも該当しませんでした。
+            
+            ✅ IF/ELSEのfalseケース（デフォルト）が正常に動作しています。
+            ✅ エラー防止パターン（独立answer型）が正しく実装されています。
+          desc: "デフォルトの回答"
+          selected: false
+          title: "デフォルト回答"
+          type: answer
+          variables: []
+        height: 107
+        id: default_answer_node
+        position:
+          x: 1550
+          y: 850
+        positionAbsolute:
+          x: 1550
+          y: 850
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

@@ -1,0 +1,243 @@
+app:
+  description: ''
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  mode: advanced-chat
+  name: 電話/メール問い合わせ~在庫確認
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/openai:0.0.26@c1e643ac6a7732f6333a783320b4d3026fa5e31d8e7026375b98d44418d33f26
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        image_file_size_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: 在庫照会支援用のチャットボットです。問い合わせメール文もしくはXXXXシステムの通話ログを貼り付けてください。
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        sourceType: start
+        targetType: llm
+      id: 1746863857114-llm
+      source: '1746863857114'
+      sourceHandle: source
+      target: llm
+      targetHandle: target
+      type: custom
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: 1746864847647-source-1746864969879-target
+      source: '1746864847647'
+      sourceHandle: source
+      target: '1746864969879'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: llm
+      id: llm-source-1746864847647-target
+      source: llm
+      sourceHandle: source
+      target: '1746864847647'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: ''
+        selected: false
+        title: 開始
+        type: start
+        variables: []
+      height: 54
+      id: '1746863857114'
+      position:
+        x: 80
+        y: 282
+      positionAbsolute:
+        x: 80
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: ''
+        memory:
+          query_prompt_template: '{{#sys.query#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: false
+            size: 10
+        model:
+          completion_params: {}
+          mode: chat
+          name: gpt-4o
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: f58a2844-f8de-4499-9164-0f3d5737c838
+          role: system
+          text: "あなたは「注文情報抽出アシスタント」です。\nユーザーから渡される入力テキスト（電話問い合わせの文字起こし、またはメール本文）には、商品に関する質問や注文内容が含まれています。\n\
+            あなたのタスクは 商品名 と 個数 を抽出し、わかりやすく構造化して返すことです。\n出力フォーマット\n必ず JSON 形式で返すこと。\n\
+            ルートは items 配列とし、各要素は下記のキーを持つオブジェクト。\njson\nコピーする編集する{\n  \"items\": [\n\
+            \    {\n      \"商品名\": \"string\",\n      \"個数\": integer\n    },\n  \
+            \  ...\n  ]\n}\n\n抽出できなかった場合は、空の配列 [] を返す。\nJSON 以外の文字（解説・挨拶・改行など）を一切含めない。\n\
+            抽出ルール\n商品名\nユーザーが購入・在庫確認・見積もり等を希望している対象を指す語句を取得。\n型番やサイズ、色などが付随していてもそのまま含める。\n\
+            個数\n数字は半角・全角・漢数字を問わず整数へ正規化。\n明示されていない場合は 1 とみなす。\n同一商品が複数行・複数表現で言及されていても、合算せず個別に列挙する。\n\
+            不要な語（接続詞、助詞、敬語など）は無視し、対象の語句だけを抜き出す。\n抽出対象が日本語以外（英語の商品名など）の場合もそのまま記載。\n\
+            例\n入力\n「えっと、先日紹介いただいた“ハイブリッド加湿空気清浄機 UA-P50”を2台と、あと交換用フィルターを3つお願いします。」\n\
+            出力\njson\nコピーする編集する{\n  \"items\": [\n    { \"商品名\": \"ハイブリッド加湿空気清浄機 UA-P50\"\
+            , \"個数\": 2 },\n    { \"商品名\": \"交換用フィルター\", \"個数\": 3 }\n  ]\n}\n\nこの指示に厳密に従い、常に上記フォーマットだけを返してください。"
+        selected: false
+        title: LLM
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 90
+      id: llm
+      position:
+        x: 562
+        y: 304
+      positionAbsolute:
+        x: 562
+        y: 304
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: ''
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: gpt-4
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: c817f5e2-a095-41a2-a1b8-d974b05f29ba
+          role: system
+          text: "あなたは「受注センター AI 在庫確認アシスタント」です。\n\n# \U0001F3AF 目的\n{{#llm.text#}}\
+            \ を解析し、社内基幹 API 《get_inventory》で在庫・納期を取得。  \n最終出力は **人が読む文書** として下記 2\
+            \ ブロックのみを返してください。  \n1. **在庫照会結果** … Markdown のテーブル  \n2. **顧客向けメール草案**\
+            \ … 件名＋本文（プレーンテキスト）\n\n# ✅ 入力仕様\n```json\n{\n  \"items\":[\n    { \"商品名\"\
+            : \"string\", \"個数\": integer },\n    ...\n  ]\n}\n\U0001F6E0 利用ツール\n\
+            get_inventory\n\ninputs : { \"product_name\": string }\n\nreturns : {\
+            \ \"stock\": integer, \"lead_time\": \"YYYY-MM-DD | 即日出荷\" }\n\n※デモ環境のダミーデータ\n\
+            \n商品名\tstock\tlead_time\n硬式グラブ プロステイタスSE BPROG560S ブラック\t10\t即日出荷\nバッティンググラブ\
+            \ プロステイタス BG13011 ホワイト×シルバー Mサイズ\t0\t2025-05-18\nウイニングロードシリーズ 軟式グラブ BRGB33510R\
+            \ 源田タイプ\t5\t即日出荷\n\n\U0001F504 手順\n受信 JSON の items をパース。\n\n各商品について get_inventory\
+            \ を呼び出し、在庫 (stock) と リードタイム (lead_time) を取得。\n\nshortage = max(0, 個数 -\
+            \ stock) を算出し、取り寄せが必要な場合は不足数を示す。\nSAPヘルプポータル\n\n結果を Markdown テーブル で整形。列は\n\
+            | 商品名 | 注文数 | 在庫 | 欠品 | 納期/出荷目安 |\n\n欠品列は不足数が 0 のとき - を表示。\n\n納期列は 即日出荷\
+            \ または YYYY-MM-DD。\n\n顧客向けメール草案を作成（日本語、敬語）。構成:\n\n件名: 「ご注文商品の在庫および納期のご案内（ZETT）」\n\
+            \n本文:\n\n挨拶・感謝\n\n在庫結果を箇条書きで再掲 （在庫切れ品は納期案内）\n\n注意書き: 在庫変動・分納可否・質問窓口\n\n\
+            署名: 部署、担当、連絡先\nビジネスメールの確定表現・丁寧語を遵守\nPipedrive\nWasabi\n。在庫不足時は前向きかつ具体的なリードタイム提示が顧客満足を高める\n\
+            Getsitecontrol\nblog.convergentis.com\n。\n\n出力は以下のフォーマットのみ。不要な JSON、余計な解説、コードブロック、囲み枠は出力しない。\n\
+            \nshell\nコピーする\n編集する\n## 在庫照会結果\n| 商品名 | 注文数 | 在庫 | 欠品 | 納期/出荷目安 |\n|\
+            \ --- | ---: | ---: | ---: | --- |\n\n## 顧客向けメール草案\n件名：<ここに件名>\n<本文>\n\
+            \U0001F6AB 禁則\nJSON を一切出力しない。\n\n項目名・列順序を変更しない。\n\n在庫 API 失敗時は該当行の在庫・納期を空欄にし、メール本文でお詫びする。\n\
+            \nシステムログや開発者向けコメントは含めない。\n\n"
+        selected: false
+        title: LLM 2
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 90
+      id: '1746864847647'
+      position:
+        x: 988
+        y: 282
+      positionAbsolute:
+        x: 988
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '{{#1746864847647.text#}}'
+        desc: ''
+        selected: false
+        title: 回答 2
+        type: answer
+        variables: []
+      height: 105
+      id: '1746864969879'
+      position:
+        x: 1292
+        y: 282
+      positionAbsolute:
+        x: 1292
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: -12.568742722703632
+      y: 149.56048868771654
+      zoom: 0.8023733512877131

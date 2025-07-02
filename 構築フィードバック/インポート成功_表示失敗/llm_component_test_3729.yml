@@ -1,0 +1,246 @@
+app:
+  description: "LLMコンポーネントの動作検証を行うアプリケーション。同じ質問に対して異なる温度設定（0.0と0.9）のLLMノードで回答を生成し、出力の違いを比較します。"
+  icon: "🔬"
+  icon_background: "#E5F7FF"
+  mode: advanced-chat
+  name: "LLMコンポーネント動作検証"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      LLMコンポーネントの動作検証アプリケーションです。
+      質問を入力すると、事実ベース（温度0.0）と創造的（温度0.9）の2つの回答を生成します。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "日本の首都について教えてください"
+      - "宇宙旅行の未来について想像してください"
+      - "AIの発展がもたらす社会への影響は？"
+      - "量子コンピューターの基本原理を説明してください"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-factual_llm-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: factual_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-creative_llm-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: creative_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: factual_llm-answer-edge
+        selected: false
+        source: factual_llm_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: creative_llm-answer-edge
+        selected: false
+        source: creative_llm_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "ユーザーからの質問を受け取る開始ノード"
+          selected: false
+          title: "質問入力"
+          type: start
+          variables:
+            - label: "質問内容"
+              variable: "user_query"
+              type: "paragraph"
+              required: true
+              max_length: 2000
+        height: 116
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: start
+        width: 244
+      - data:
+          desc: "事実ベースの回答を生成（温度0.0）"
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+            completion_params:
+              temperature: 0.0
+              max_tokens: 1000
+              top_p: 0.9
+          prompt_template:
+            - id: factual-system-prompt
+              role: system
+              text: |
+                あなたは正確で事実に基づいた情報を提供する専門家です。
+                以下のルールに従って回答してください：
+                1. 事実のみを述べ、推測や想像は避ける
+                2. 信頼性の高い情報源に基づいた内容のみを提供
+                3. 不確実な情報については明確にその旨を示す
+                4. 簡潔で分かりやすい説明を心がける
+            - id: factual-user-prompt
+              role: user
+              text: |
+                質問: {{#start_node.user_query#}}
+                
+                上記の質問に対して、事実に基づいた正確な回答をお願いします。
+          structured_output_enabled: false
+          selected: false
+          title: "事実ベース回答（温度0.0）"
+          type: llm
+          vision:
+            enabled: false
+          variables: []
+        height: 98
+        id: factual_llm_node
+        position:
+          x: 350
+          y: 100
+        positionAbsolute:
+          x: 350
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: llm
+        width: 244
+      - data:
+          desc: "創造的な回答を生成（温度0.9）"
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+            completion_params:
+              temperature: 0.9
+              max_tokens: 1000
+              top_p: 0.95
+          prompt_template:
+            - id: creative-system-prompt
+              role: system
+              text: |
+                あなたは創造的で想像力豊かな回答を提供する専門家です。
+                以下のルールに従って回答してください：
+                1. 創造的で興味深い視点から回答する
+                2. 比喩や例えを使って分かりやすく説明する
+                3. 将来の可能性や想像的なシナリオも含める
+                4. 読者の興味を引く魅力的な内容にする
+            - id: creative-user-prompt
+              role: user
+              text: |
+                質問: {{#start_node.user_query#}}
+                
+                上記の質問に対して、創造的で想像力豊かな回答をお願いします。
+          structured_output_enabled: false
+          selected: false
+          title: "創造的回答（温度0.9）"
+          type: llm
+          vision:
+            enabled: false
+          variables: []
+        height: 98
+        id: creative_llm_node
+        position:
+          x: 350
+          y: 300
+        positionAbsolute:
+          x: 350
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: llm
+        width: 244
+      - data:
+          answer: |
+            ## 質問
+            {{#start_node.user_query#}}
+            
+            ---
+            
+            ## 事実ベースの回答（温度: 0.0）
+            {{#factual_llm_node.text#}}
+            
+            ---
+            
+            ## 創造的な回答（温度: 0.9）
+            {{#creative_llm_node.text#}}
+            
+            ---
+            
+            **検証結果**: 温度パラメータの違いにより、同じ質問に対して異なるスタイルの回答が生成されました。温度0.0では事実に基づいた一貫性のある回答、温度0.9ではより創造的で多様な回答が得られています。
+          desc: "両方の回答を比較表示"
+          selected: false
+          title: "結果比較"
+          type: answer
+          variables: []
+        height: 461
+        id: answer_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: answer
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

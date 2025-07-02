@@ -1,0 +1,875 @@
+app:
+  description: 履歴書ファイルを自動解析し、条件分岐により詳細評価を行う高度なAIシステム
+  icon: 🔍
+  icon_background: '#7C3AED'
+  mode: advanced-chat
+  name: 高度な履歴書分析AI
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/openai:0.0.26@c1e643ac6a7732f6333a783320b4d3026fa5e31d8e7026375b98d44418d33f26
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .PDF
+      - .DOC
+      - .DOCX
+      - .TXT
+      allowed_file_types:
+      - document
+      allowed_file_upload_methods:
+      - local_file
+      enabled: true
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        image_file_size_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: 'こんにちは！高度な履歴書分析AIです。
+
+
+      📄 履歴書ファイルをアップロードしてください
+
+      🎯 求人ポジション名をお教えください
+
+
+      以下の高度な分析を実行します：
+
+      ✅ ファイル形式の自動判定
+
+      📊 内容の詳細抽出・構造化
+
+      🔄 条件分岐による評価ルート選択
+
+      📈 多段階評価・スコアリング
+
+      📋 総合レポートの生成
+
+      '
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+    - ITエンジニア職の履歴書を総合評価してください
+    - 営業管理職候補の詳細分析をお願いします
+    - マーケティング職の適合度を詳しく教えてください
+    suggested_questions_after_answer:
+      enabled: true
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: start
+        targetType: if-else
+      id: start-filecheck-edge
+      selected: false
+      source: start_node
+      sourceHandle: source
+      target: file_check_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: answer
+      id: filecheck-nofile-edge
+      selected: false
+      source: file_check_node
+      sourceHandle: 'true'
+      target: no_file_answer
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: document-extractor
+      id: filecheck-extract-edge
+      selected: false
+      source: file_check_node
+      sourceHandle: 'false'
+      target: document_extract_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: document-extractor
+        targetType: parameter-extractor
+      id: extract-param-edge
+      selected: false
+      source: document_extract_node
+      sourceHandle: source
+      target: param_extract_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: parameter-extractor
+        targetType: if-else
+      id: param-category-edge
+      selected: false
+      source: param_extract_node
+      sourceHandle: source
+      target: category_check_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: category-it-edge
+      selected: false
+      source: category_check_node
+      sourceHandle: it_engineer
+      target: it_analysis_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: category-sales-edge
+      selected: false
+      source: category_check_node
+      sourceHandle: sales
+      target: sales_analysis_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: category-general-edge
+      selected: false
+      source: category_check_node
+      sourceHandle: 'false'
+      target: general_analysis_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: it-scoring-edge
+      selected: false
+      source: it_analysis_node
+      sourceHandle: source
+      target: scoring_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: sales-scoring-edge
+      selected: false
+      source: sales_analysis_node
+      sourceHandle: source
+      target: scoring_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: general-scoring-edge
+      selected: false
+      source: general_analysis_node
+      sourceHandle: source
+      target: scoring_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: code
+        targetType: llm
+      id: scoring-final-edge
+      selected: false
+      source: scoring_node
+      sourceHandle: source
+      target: final_report_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: final-answer-edge
+      selected: false
+      source: final_report_node
+      sourceHandle: source
+      target: final_answer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: '履歴書ファイルと評価したい職種をお教えください。
+
+          高度なワークフローで詳細分析を実行します。
+
+          '
+        selected: false
+        title: 開始
+        type: start
+        variables:
+        - allowed_file_extensions:
+          - .PDF
+          - .DOC
+          - .DOCX
+          - .TXT
+          allowed_file_types:
+          - document
+          allowed_file_upload_methods:
+          - local_file
+          label: 履歴書ファイル
+          max_length: 5
+          options: []
+          required: true
+          type: file
+          variable: resume_file
+        - label: 評価対象職種
+          max_length: 100
+          options: []
+          required: true
+          type: text-input
+          variable: target_position
+      height: 192
+      id: start_node
+      position:
+        x: 50
+        y: 100
+      positionAbsolute:
+        x: 50
+        y: 100
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        cases:
+        - case_id: 'true'
+          conditions:
+          - comparison_operator: not exists
+            id: file_check_condition
+            value: ''
+            varType: file
+            variable_selector:
+            - start_node
+            - resume_file
+          id: 'true'
+          logical_operator: and
+        desc: ファイルアップロードの確認
+        selected: false
+        title: ファイル存在チェック
+        type: if-else
+      height: 154
+      id: file_check_node
+      position:
+        x: 350
+        y: 100
+      positionAbsolute:
+        x: 350
+        y: 100
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: "❌ 履歴書ファイルがアップロードされていません。\n\n\U0001F4C4 以下の形式のファイルをアップロードしてください：\n\
+          • PDF (.pdf)\n• Word文書 (.doc, .docx)  \n• テキストファイル (.txt)\n\nファイルをアップロード後、再度実行してください。\n"
+        desc: ''
+        selected: false
+        title: ファイル未アップロード
+        type: answer
+        variables: []
+      height: 198
+      id: no_file_answer
+      position:
+        x: 650
+        y: 50
+      positionAbsolute:
+        x: 650
+        y: 50
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: 履歴書ファイルからテキストを抽出
+        is_array_file: false
+        selected: false
+        title: 文書テキスト抽出
+        type: document-extractor
+        variable_selector:
+        - start_node
+        - resume_file
+      height: 120
+      id: document_extract_node
+      position:
+        x: 650
+        y: 200
+      positionAbsolute:
+        x: 650
+        y: 200
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: 履歴書から構造化データを抽出
+        instruction: '履歴書の内容を分析し、以下の情報を抽出してください。
+
+
+          1. 基本情報の抽出
+
+          2. 職歴・経験の構造化
+
+          3. スキル・資格の特定
+
+          4. 学歴の確認
+
+
+          情報が不明な場合は「不明」と出力してください。
+
+          '
+        model:
+          completion_params:
+            temperature: 0.1
+          mode: chat
+          name: gpt-4
+          provider: langgenius/openai/openai
+        parameters:
+        - description: 氏名
+          name: candidate_name
+          required: false
+          type: string
+        - description: 年齢（数値のみ）
+          name: age
+          required: false
+          type: number
+        - description: 総職歴年数（数値のみ）
+          name: total_experience_years
+          required: false
+          type: number
+        - description: 最終学歴
+          name: education
+          required: false
+          type: string
+        - description: 主要スキル（カンマ区切り）
+          name: main_skills
+          required: false
+          type: string
+        - description: 保有資格（カンマ区切り）
+          name: certifications
+          required: false
+          type: string
+        - description: 希望職種カテゴリ（IT/営業/その他）
+          name: job_category
+          required: false
+          type: string
+        query:
+        - document_extract_node
+        - text
+        reasoning_mode: prompt
+        selected: false
+        title: 履歴書情報抽出
+        type: parameter-extractor
+        variables: []
+        vision:
+          enabled: false
+      height: 118
+      id: param_extract_node
+      position:
+        x: 950
+        y: 200
+      positionAbsolute:
+        x: 950
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        cases:
+        - case_id: it_engineer
+          conditions:
+          - comparison_operator: contains
+            id: it_condition
+            value: IT
+            varType: string
+            variable_selector:
+            - param_extract_node
+            - job_category
+          id: it_engineer
+          logical_operator: and
+        - case_id: sales
+          conditions:
+          - comparison_operator: contains
+            id: sales_condition
+            value: 営業
+            varType: string
+            variable_selector:
+            - param_extract_node
+            - job_category
+          id: sales
+          logical_operator: and
+        desc: 職種カテゴリによる分析ルート分岐
+        selected: false
+        title: 職種カテゴリ判定
+        type: if-else
+      height: 202
+      id: category_check_node
+      position:
+        x: 1250
+        y: 150
+      positionAbsolute:
+        x: 1250
+        y: 150
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: ITエンジニア特化分析
+        model:
+          completion_params:
+            temperature: 0.3
+          mode: chat
+          name: gpt-4
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: 'あなたはITエンジニア採用の専門家です。
+
+            履歴書情報を基に、ITエンジニアとしての適性を詳細評価してください。
+
+
+            評価項目：
+
+            1. 技術スキルの深さ・幅
+
+            2. 開発経験の豊富さ
+
+            3. 最新技術への対応力
+
+            4. チーム開発経験
+
+            5. 問題解決能力
+
+
+            各項目を10点満点で評価し、具体的な根拠も示してください。
+
+            '
+        - id: user-prompt
+          role: user
+          text: '対象職種: {{#start_node.target_position#}}
+
+            候補者名: {{#param_extract_node.candidate_name#}}
+
+            年齢: {{#param_extract_node.age#}}歳
+
+            総職歴: {{#param_extract_node.total_experience_years#}}年
+
+            学歴: {{#param_extract_node.education#}}
+
+            スキル: {{#param_extract_node.main_skills#}}
+
+            資格: {{#param_extract_node.certifications#}}
+
+
+            履歴書全文:
+
+            {{#document_extract_node.text#}}
+
+            '
+        selected: false
+        structured_output_enabled: false
+        title: ITエンジニア分析
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 118
+      id: it_analysis_node
+      position:
+        x: 1550
+        y: 50
+      positionAbsolute:
+        x: 1550
+        y: 50
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 営業職特化分析
+        model:
+          completion_params:
+            temperature: 0.3
+          mode: chat
+          name: gpt-4
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: 'あなたは営業職採用の専門家です。
+
+            履歴書情報を基に、営業職としての適性を詳細評価してください。
+
+
+            評価項目：
+
+            1. 営業実績・数字達成力
+
+            2. 顧客開拓・関係構築力
+
+            3. 商品・サービス理解力
+
+            4. チーム連携・協調性
+
+            5. 目標達成への執着心
+
+
+            各項目を10点満点で評価し、具体的な根拠も示してください。
+
+            '
+        - id: user-prompt
+          role: user
+          text: '対象職種: {{#start_node.target_position#}}
+
+            候補者名: {{#param_extract_node.candidate_name#}}
+
+            年齢: {{#param_extract_node.age#}}歳
+
+            総職歴: {{#param_extract_node.total_experience_years#}}年
+
+            学歴: {{#param_extract_node.education#}}
+
+            スキル: {{#param_extract_node.main_skills#}}
+
+            資格: {{#param_extract_node.certifications#}}
+
+
+            履歴書全文:
+
+            {{#document_extract_node.text#}}
+
+            '
+        selected: false
+        structured_output_enabled: false
+        title: 営業職分析
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 118
+      id: sales_analysis_node
+      position:
+        x: 1550
+        y: 200
+      positionAbsolute:
+        x: 1550
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 汎用職種分析
+        model:
+          completion_params:
+            temperature: 0.3
+          mode: chat
+          name: gpt-4
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: 'あなたは人材評価の専門家です。
+
+            履歴書情報を基に、汎用的な職業適性を詳細評価してください。
+
+
+            評価項目：
+
+            1. 専門スキル・知識
+
+            2. 職歴の一貫性・成長性
+
+            3. 学習能力・適応力
+
+            4. コミュニケーション能力
+
+            5. 責任感・信頼性
+
+
+            各項目を10点満点で評価し、具体的な根拠も示してください。
+
+            '
+        - id: user-prompt
+          role: user
+          text: '対象職種: {{#start_node.target_position#}}
+
+            候補者名: {{#param_extract_node.candidate_name#}}
+
+            年齢: {{#param_extract_node.age#}}歳
+
+            総職歴: {{#param_extract_node.total_experience_years#}}年
+
+            学歴: {{#param_extract_node.education#}}
+
+            スキル: {{#param_extract_node.main_skills#}}
+
+            資格: {{#param_extract_node.certifications#}}
+
+
+            履歴書全文:
+
+            {{#document_extract_node.text#}}
+
+            '
+        selected: false
+        structured_output_enabled: false
+        title: 汎用職種分析
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 118
+      id: general_analysis_node
+      position:
+        x: 1550
+        y: 350
+      positionAbsolute:
+        x: 1550
+        y: 350
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        code: "def main(analysis_text: str) -> dict:\n    \"\"\"\n    分析結果からスコアを抽出し、総合評価を算出\n\
+          \    \"\"\"\n    import re\n    \n    # 各項目のスコアを抽出（正規表現で「X点」や「X/10点」を検索）\n\
+          \    scores = []\n    score_patterns = [\n        r'(\\d+)点',\n        r'(\\\
+          d+)/10点',\n        r'(\\d+)\\/10',\n        r'評価[：:]\\s*(\\d+)',\n     \
+          \   r'スコア[：:]\\s*(\\d+)'\n    ]\n    \n    for pattern in score_patterns:\n\
+          \        matches = re.findall(pattern, analysis_text)\n        if matches:\n\
+          \            scores.extend([int(score) for score in matches if int(score)\
+          \ <= 10])\n    \n    # スコアが取得できた場合の処理\n    if scores:\n        avg_score\
+          \ = sum(scores) / len(scores)\n        total_score = min(sum(scores), 50)\
+          \  # 最大50点\n    else:\n        # スコアが取得できない場合はデフォルト値\n        avg_score\
+          \ = 6.0\n        total_score = 30\n    \n    # グレード判定\n    if avg_score\
+          \ >= 9.0:\n        grade = \"S\"\n        recommendation = \"強く推薦\"\n  \
+          \  elif avg_score >= 8.0:\n        grade = \"A\"\n        recommendation\
+          \ = \"推薦\"\n    elif avg_score >= 7.0:\n        grade = \"B\"\n        recommendation\
+          \ = \"条件付き推薦\"\n    elif avg_score >= 6.0:\n        grade = \"C\"\n    \
+          \    recommendation = \"要検討\"\n    else:\n        grade = \"D\"\n      \
+          \  recommendation = \"非推薦\"\n    \n    return {\n        \"total_score\"\
+          : int(total_score),\n        \"average_score\": round(avg_score, 1),\n \
+          \       \"grade\": grade,\n        \"recommendation\": recommendation,\n\
+          \        \"extracted_scores\": scores\n    }\n"
+        code_language: python3
+        desc: 分析結果からスコアを算出
+        error_strategy: fail-branch
+        outputs:
+          average_score:
+            children: null
+            type: number
+          extracted_scores:
+            children: null
+            type: array[number]
+          grade:
+            children: null
+            type: string
+          recommendation:
+            children: null
+            type: string
+          total_score:
+            children: null
+            type: number
+        selected: false
+        title: スコア算出処理
+        type: code
+        variables:
+        - value_selector:
+          - it_analysis_node
+          - text
+          variable: analysis_text
+        - value_selector:
+          - sales_analysis_node
+          - text
+          variable: analysis_text
+        - value_selector:
+          - general_analysis_node
+          - text
+          variable: analysis_text
+      height: 118
+      id: scoring_node
+      position:
+        x: 1850
+        y: 200
+      positionAbsolute:
+        x: 1850
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 最終総合レポート生成
+        model:
+          completion_params:
+            temperature: 0.4
+          mode: chat
+          name: gpt-4
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: '履歴書分析の最終レポートを作成してください。
+
+            専門的で読みやすく、採用判断に役立つ形式で出力してください。
+
+            '
+        - id: user-prompt
+          role: user
+          text: '【候補者基本情報】
+
+            氏名: {{#param_extract_node.candidate_name#}}
+
+            年齢: {{#param_extract_node.age#}}歳
+
+            対象職種: {{#start_node.target_position#}}
+
+            総職歴: {{#param_extract_node.total_experience_years#}}年
+
+            学歴: {{#param_extract_node.education#}}
+
+
+            【算出されたスコア】
+
+            総合スコア: {{#scoring_node.total_score#}}点
+
+            平均スコア: {{#scoring_node.average_score#}}点
+
+            総合グレード: {{#scoring_node.grade#}}
+
+            推薦度: {{#scoring_node.recommendation#}}
+
+
+            【詳細分析結果】
+
+            以下の専門分析を基に、総合的な評価レポートを作成してください：
+
+
+            専門分析内容をここに統合表示
+
+
+            最終的な採用推薦可否と理由を明確に示してください。
+
+            '
+        selected: false
+        structured_output_enabled: false
+        title: 最終レポート生成
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 118
+      id: final_report_node
+      position:
+        x: 2150
+        y: 200
+      positionAbsolute:
+        x: 2150
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: "## \U0001F4CA 履歴書分析完了レポート\n\n**\U0001F3AF 総合評価: {{#scoring_node.grade#}}グレード（{{#scoring_node.total_score#}}点/50点満点）**\n\
+          **\U0001F4CB 推薦度: {{#scoring_node.recommendation#}}**\n\n---\n\n{{#final_report_node.text#}}\n\
+          \n---\n\n### \U0001F4C8 分析実行フロー\n✅ ファイルアップロード確認  \n✅ 文書テキスト抽出  \n✅ 構造化データ抽出\
+          \  \n✅ 職種別専門分析実行  \n✅ スコア算出・グレード判定  \n✅ 最終レポート生成完了  \n\n*本分析は高度なワークフローにより自動実行されました*\n"
+        desc: ''
+        selected: false
+        title: 分析結果レポート
+        type: answer
+        variables: []
+      height: 320
+      id: final_answer_node
+      position:
+        x: 2450
+        y: 200
+      positionAbsolute:
+        x: 2450
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: -84.79107821379466
+      y: 267.38257203788
+      zoom: 1.029821223392099

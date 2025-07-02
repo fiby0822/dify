@@ -1,0 +1,544 @@
+app:
+  description: "顧客の購買履歴を分析し、適切なマーケティング施策を提案するチャットボット。累計購入金額、購入回数、最終購入日を基に顧客をセグメント化し、最適な施策を提示します。"
+  icon: "🛍️"
+  icon_background: "#E1F5FE"
+  mode: advanced-chat
+  name: "顧客購買履歴分析マーケティングAI"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      顧客購買履歴分析システムへようこそ！
+      
+      このシステムは、顧客の購買データを分析し、最適なマーケティング施策を提案します。
+      
+      以下の形式で顧客情報を入力してください：
+      - 顧客ID: （例：C12345）
+      - 累計購入金額: （例：750000）
+      - 購入回数: （例：15）
+      - 最終購入日からの経過日数: （例：30）
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "顧客ID: C10001, 累計購入金額: 1200000, 購入回数: 25, 最終購入日からの経過日数: 15"
+      - "顧客ID: C10002, 累計購入金額: 600000, 購入回数: 12, 最終購入日からの経過日数: 45"
+      - "顧客ID: C10003, 累計購入金額: 300000, 購入回数: 5, 最終購入日からの経過日数: 200"
+      - "顧客ID: C10004, 累計購入金額: 150000, 購入回数: 3, 最終購入日からの経過日数: 90"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: code
+        id: start-parse-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: parse_input_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      
+      - data:
+          isInLoop: false
+          sourceType: code
+          targetType: if-else
+        id: parse-vip-edge
+        selected: false
+        source: parse_input_node
+        sourceHandle: source
+        target: vip_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: vip-answer-edge
+        selected: false
+        source: vip_check_node
+        sourceHandle: vip_customer_case
+        target: vip_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: vip-premium-edge
+        selected: false
+        source: vip_check_node
+        sourceHandle: false
+        target: premium_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: premium-answer-edge
+        selected: false
+        source: premium_check_node
+        sourceHandle: premium_customer_case
+        target: premium_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: premium-dormant-edge
+        selected: false
+        source: premium_check_node
+        sourceHandle: false
+        target: dormant_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: dormant-answer-edge
+        selected: false
+        source: dormant_check_node
+        sourceHandle: dormant_customer_case
+        target: dormant_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: dormant-regular-edge
+        selected: false
+        source: dormant_check_node
+        sourceHandle: false
+        target: regular_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    
+    nodes:
+      - data:
+          desc: "開始ノード"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 400
+        positionAbsolute:
+          x: 50
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      
+      - data:
+          code: |
+            def main():
+                import re
+                
+                user_input = sys.query
+                
+                customer_id = ""
+                total_amount = 0
+                purchase_count = 0
+                days_since_last = 0
+                
+                id_match = re.search(r'顧客ID[：:]\s*(\w+)', user_input)
+                if id_match:
+                    customer_id = id_match.group(1)
+                
+                amount_match = re.search(r'累計購入金額[：:]\s*(\d+)', user_input)
+                if amount_match:
+                    total_amount = int(amount_match.group(1))
+                
+                count_match = re.search(r'購入回数[：:]\s*(\d+)', user_input)
+                if count_match:
+                    purchase_count = int(count_match.group(1))
+                
+                days_match = re.search(r'最終購入日からの経過日数[：:]\s*(\d+)', user_input)
+                if days_match:
+                    days_since_last = int(days_match.group(1))
+                
+                return {
+                    "customer_id": customer_id,
+                    "total_amount": total_amount,
+                    "purchase_count": purchase_count,
+                    "days_since_last": days_since_last,
+                    "original_input": user_input
+                }
+          code_language: python3
+          desc: "ユーザー入力を解析して顧客データを抽出"
+          outputs:
+            customer_id:
+              type: string
+            total_amount:
+              type: number
+            purchase_count:
+              type: number
+            days_since_last:
+              type: number
+            original_input:
+              type: string
+          selected: false
+          title: "入力データ解析"
+          type: code
+          variables:
+            - value_selector:
+                - sys
+                - query
+              variable: sys.query
+        height: 122
+        id: parse_input_node
+        position:
+          x: 350
+          y: 400
+        positionAbsolute:
+          x: 350
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      
+      - data:
+          type: if-else
+          cases:
+            - id: vip_customer_case
+              case_id: vip_customer_case
+              conditions:
+                - variable_selector:
+                    - parse_input_node
+                    - total_amount
+                  comparison_operator: "≥"
+                  value: 1000000
+                - variable_selector:
+                    - parse_input_node
+                    - purchase_count
+                  comparison_operator: "≥"
+                  value: 20
+              logical_operator: and
+          desc: "VIP顧客判定（累計購入金額≥100万円 AND 購入回数≥20回）"
+          selected: false
+          title: "VIP顧客チェック"
+        height: 154
+        id: vip_check_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      
+      - data:
+          type: if-else
+          cases:
+            - id: premium_customer_case
+              case_id: premium_customer_case
+              conditions:
+                - variable_selector:
+                    - parse_input_node
+                    - total_amount
+                  comparison_operator: "≥"
+                  value: 500000
+                - variable_selector:
+                    - parse_input_node
+                    - purchase_count
+                  comparison_operator: "≥"
+                  value: 10
+              logical_operator: or
+          desc: "優良顧客判定（累計購入金額≥50万円 OR 購入回数≥10回）"
+          selected: false
+          title: "優良顧客チェック"
+        height: 154
+        id: premium_check_node
+        position:
+          x: 650
+          y: 400
+        positionAbsolute:
+          x: 650
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      
+      - data:
+          type: if-else
+          cases:
+            - id: dormant_customer_case
+              case_id: dormant_customer_case
+              conditions:
+                - variable_selector:
+                    - parse_input_node
+                    - days_since_last
+                  comparison_operator: ">"
+                  value: 180
+              logical_operator: and
+          desc: "休眠顧客判定（最終購入日>180日）"
+          selected: false
+          title: "休眠顧客チェック"
+        height: 154
+        id: dormant_check_node
+        position:
+          x: 650
+          y: 600
+        positionAbsolute:
+          x: 650
+          y: 600
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      
+      - data:
+          answer: |
+            【VIP顧客セグメント】
+            
+            顧客ID: {{#parse_input_node.customer_id#}}
+            累計購入金額: ¥{{#parse_input_node.total_amount#}}
+            購入回数: {{#parse_input_node.purchase_count#}}回
+            
+            ✨ **VIP顧客として認定されました！**
+            
+            ## 推奨マーケティング施策
+            
+            ### 1. 特別優遇プログラム
+            - VIP専用カスタマーサポート窓口の提供
+            - 年間購入金額の5%キャッシュバック
+            - 新商品の先行購入権
+            
+            ### 2. パーソナライズド体験
+            - 専任のパーソナルショッパー配置
+            - カスタマイズ商品の提案
+            - VIP限定イベントへの招待
+            
+            ### 3. ロイヤリティ強化
+            - 誕生日特別ギフトの送付
+            - 年2回の感謝状送付
+            - CEOとの特別ディナー招待（年1回）
+            
+            ## 具体的アクション
+            1. 24時間以内にVIP担当者から直接連絡
+            2. 今月中にVIP特典カタログを送付
+            3. 来月のVIP限定セールへの事前案内
+          desc: "VIP顧客向け回答"
+          selected: false
+          title: "VIP顧客回答"
+          type: answer
+          variables: []
+        height: 461
+        id: vip_answer_node
+        position:
+          x: 950
+          y: 50
+        positionAbsolute:
+          x: 950
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      
+      - data:
+          answer: |
+            【優良顧客セグメント】
+            
+            顧客ID: {{#parse_input_node.customer_id#}}
+            累計購入金額: ¥{{#parse_input_node.total_amount#}}
+            購入回数: {{#parse_input_node.purchase_count#}}回
+            
+            🌟 **優良顧客として認定されました！**
+            
+            ## 推奨マーケティング施策
+            
+            ### 1. ロイヤリティプログラム
+            - 購入金額の3%ポイントバック
+            - 会員限定セールへの招待
+            - 送料無料サービス
+            
+            ### 2. アップセル施策
+            - 関連商品の優先案内
+            - バンドル商品の特別割引
+            - 季節商品の早期予約特典
+            
+            ### 3. エンゲージメント向上
+            - 月1回のニュースレター配信
+            - アンケート回答で特別クーポン
+            - 友達紹介プログラム
+            
+            ## 具体的アクション
+            1. 優良顧客限定クーポン（10%OFF）を即時発行
+            2. 今週末の会員限定セールの案内送付
+            3. ポイント2倍キャンペーンの適用
+          desc: "優良顧客向け回答"
+          selected: false
+          title: "優良顧客回答"
+          type: answer
+          variables: []
+        height: 407
+        id: premium_answer_node
+        position:
+          x: 950
+          y: 300
+        positionAbsolute:
+          x: 950
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      
+      - data:
+          answer: |
+            【休眠顧客セグメント】
+            
+            顧客ID: {{#parse_input_node.customer_id#}}
+            最終購入からの経過日数: {{#parse_input_node.days_since_last#}}日
+            
+            ⚠️ **休眠顧客として分類されました**
+            
+            ## 推奨マーケティング施策
+            
+            ### 1. リアクティベーション施策
+            - カムバックキャンペーン（30%OFF）
+            - 期間限定の特別オファー
+            - 過去の購入履歴に基づく商品提案
+            
+            ### 2. 再エンゲージメント
+            - パーソナライズドメールの送信
+            - アンケートによる離脱理由の調査
+            - 新商品・サービスの案内
+            
+            ### 3. インセンティブ提供
+            - 初回購入送料無料
+            - ボーナスポイントの付与
+            - 限定商品へのアクセス権
+            
+            ## 具体的アクション
+            1. 本日中にカムバッククーポン（30%OFF）をメール送信
+            2. 3日以内にフォローアップメール送信
+            3. 2週間後に電話でのフォローアップ
+          desc: "休眠顧客向け回答"
+          selected: false
+          title: "休眠顧客回答"
+          type: answer
+          variables: []
+        height: 407
+        id: dormant_answer_node
+        position:
+          x: 950
+          y: 550
+        positionAbsolute:
+          x: 950
+          y: 550
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      
+      - data:
+          answer: |
+            【通常顧客セグメント】
+            
+            顧客ID: {{#parse_input_node.customer_id#}}
+            累計購入金額: ¥{{#parse_input_node.total_amount#}}
+            購入回数: {{#parse_input_node.purchase_count#}}回
+            
+            📊 **通常顧客として分類されました**
+            
+            ## 推奨マーケティング施策
+            
+            ### 1. 購買促進施策
+            - 初回購入者向け10%OFFクーポン
+            - まとめ買い割引の案内
+            - 人気商品ランキングの紹介
+            
+            ### 2. 顧客育成
+            - メルマガ登録促進
+            - レビュー投稿でポイント付与
+            - 会員ランクアップの案内
+            
+            ### 3. 認知度向上
+            - SNSフォローキャンペーン
+            - 新商品のサンプル提供
+            - 期間限定セールの告知
+            
+            ## 具体的アクション
+            1. ウェルカムクーポン（10%OFF）の発行
+            2. おすすめ商品カタログの送付
+            3. 次回購入で使える500円クーポンの提供
+          desc: "通常顧客向け回答"
+          selected: false
+          title: "通常顧客回答"
+          type: answer
+          variables: []
+        height: 407
+        id: regular_answer_node
+        position:
+          x: 950
+          y: 800
+        positionAbsolute:
+          x: 950
+          y: 800
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

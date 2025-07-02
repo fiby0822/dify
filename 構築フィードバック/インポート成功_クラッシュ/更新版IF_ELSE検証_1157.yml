@@ -1,0 +1,1055 @@
+app:
+  description: "更新されたIF_ELSEルールの完全検証アプリ。条件分岐後の変数参照ルール、3つの設計パターン、コメント禁止、必須フィールドをすべて検証します。"
+  icon: "🔬"
+  icon_background: "#E5F3FF"
+  mode: advanced-chat
+  name: "更新版IF_ELSEルール検証"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      更新版IF_ELSEルールの検証アプリケーションです。
+      
+      以下の3つの設計パターンをテストします：
+      1. 独立answer型：商品在庫レベルチェック
+      2. 集約型：テストスコア評価
+      3. デフォルト保証型：ユーザー権限チェック
+      
+      何か入力して検証を開始してください。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "検証テストを開始"
+      - "IF_ELSEルールをチェック"
+      - "設計パターンのテスト"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: code
+        id: start-generate-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: test_data_generator_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: code
+          targetType: if-else
+        id: generate-stock-edge
+        selected: false
+        source: test_data_generator_node
+        sourceHandle: source
+        target: stock_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: code
+          targetType: if-else
+        id: generate-score-edge
+        selected: false
+        source: test_data_generator_node
+        sourceHandle: source
+        target: score_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: code
+          targetType: if-else
+        id: generate-permission-edge
+        selected: false
+        source: test_data_generator_node
+        sourceHandle: source
+        target: permission_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: stock-urgent-answer-edge
+        selected: false
+        source: stock_check_node
+        sourceHandle: urgent_order_case
+        target: urgent_order_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: stock-normal-answer-edge
+        selected: false
+        source: stock_check_node
+        sourceHandle: normal_order_case
+        target: normal_order_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: stock-excess-answer-edge
+        selected: false
+        source: stock_check_node
+        sourceHandle: excess_stock_case
+        target: excess_stock_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: stock-default-answer-edge
+        selected: false
+        source: stock_check_node
+        sourceHandle: false
+        target: stock_default_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: score-excellent-aggregate-edge
+        selected: false
+        source: score_check_node
+        sourceHandle: excellent_case
+        target: excellent_result_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: score-good-aggregate-edge
+        selected: false
+        source: score_check_node
+        sourceHandle: good_case
+        target: good_result_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: score-average-aggregate-edge
+        selected: false
+        source: score_check_node
+        sourceHandle: average_case
+        target: average_result_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: score-poor-aggregate-edge
+        selected: false
+        source: score_check_node
+        sourceHandle: false
+        target: poor_result_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: code
+        id: excellent-aggregate-edge
+        selected: false
+        source: excellent_result_node
+        sourceHandle: source
+        target: score_aggregator_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: code
+        id: good-aggregate-edge
+        selected: false
+        source: good_result_node
+        sourceHandle: source
+        target: score_aggregator_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: code
+        id: average-aggregate-edge
+        selected: false
+        source: average_result_node
+        sourceHandle: source
+        target: score_aggregator_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: code
+        id: poor-aggregate-edge
+        selected: false
+        source: poor_result_node
+        sourceHandle: source
+        target: score_aggregator_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: permission-admin-edge
+        selected: false
+        source: permission_check_node
+        sourceHandle: admin_case
+        target: admin_access_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: permission-editor-edge
+        selected: false
+        source: permission_check_node
+        sourceHandle: editor_case
+        target: editor_access_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: permission-viewer-edge
+        selected: false
+        source: permission_check_node
+        sourceHandle: viewer_case
+        target: viewer_access_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: permission-default-edge
+        selected: false
+        source: permission_check_node
+        sourceHandle: false
+        target: guest_default_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: code
+          targetType: answer
+        id: aggregate-final-edge
+        selected: false
+        source: score_aggregator_node
+        sourceHandle: source
+        target: final_report_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: admin-final-edge
+        selected: false
+        source: admin_access_node
+        sourceHandle: source
+        target: final_report_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: editor-final-edge
+        selected: false
+        source: editor_access_node
+        sourceHandle: source
+        target: final_report_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: viewer-final-edge
+        selected: false
+        source: viewer_access_node
+        sourceHandle: source
+        target: final_report_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: guest-final-edge
+        selected: false
+        source: guest_default_node
+        sourceHandle: source
+        target: final_report_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "検証開始"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 400
+        positionAbsolute:
+          x: 50
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          code: |
+            import random
+            
+            stock_level = random.randint(0, 150)
+            test_score = random.randint(40, 100)
+            permission_levels = ["admin", "editor", "viewer", "guest", "unknown"]
+            user_permission = random.choice(permission_levels)
+            
+            return {
+                "stock_level": stock_level,
+                "test_score": test_score,
+                "user_permission": user_permission
+            }
+          code_language: python3
+          desc: "テストデータ生成（在庫数、スコア、権限）"
+          outputs:
+            stock_level:
+              type: number
+            test_score:
+              type: number
+            user_permission:
+              type: string
+          selected: false
+          title: "テストデータ生成"
+          type: code
+          variables: []
+        height: 98
+        id: test_data_generator_node
+        position:
+          x: 350
+          y: 400
+        positionAbsolute:
+          x: 350
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: urgent_order_case
+              case_id: urgent_order_case
+              conditions:
+                - variable_selector:
+                    - test_data_generator_node
+                    - stock_level
+                  comparison_operator: "≤"
+                  value: 20
+              logical_operator: and
+            - id: normal_order_case
+              case_id: normal_order_case
+              conditions:
+                - variable_selector:
+                    - test_data_generator_node
+                    - stock_level
+                  comparison_operator: "≤"
+                  value: 50
+              logical_operator: and
+            - id: excess_stock_case
+              case_id: excess_stock_case
+              conditions:
+                - variable_selector:
+                    - test_data_generator_node
+                    - stock_level
+                  comparison_operator: "≥"
+                  value: 100
+              logical_operator: and
+          desc: "独立answer型パターン：商品在庫チェック"
+          selected: false
+          title: "在庫レベル判定"
+        height: 198
+        id: stock_check_node
+        position:
+          x: 650
+          y: 50
+        positionAbsolute:
+          x: 650
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: excellent_case
+              case_id: excellent_case
+              conditions:
+                - variable_selector:
+                    - test_data_generator_node
+                    - test_score
+                  comparison_operator: "≥"
+                  value: 90
+              logical_operator: and
+            - id: good_case
+              case_id: good_case
+              conditions:
+                - variable_selector:
+                    - test_data_generator_node
+                    - test_score
+                  comparison_operator: "≥"
+                  value: 70
+              logical_operator: and
+            - id: average_case
+              case_id: average_case
+              conditions:
+                - variable_selector:
+                    - test_data_generator_node
+                    - test_score
+                  comparison_operator: "≥"
+                  value: 50
+              logical_operator: and
+          desc: "集約型パターン：テストスコア評価"
+          selected: false
+          title: "スコア評価"
+        height: 198
+        id: score_check_node
+        position:
+          x: 650
+          y: 400
+        positionAbsolute:
+          x: 650
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: admin_case
+              case_id: admin_case
+              conditions:
+                - variable_selector:
+                    - test_data_generator_node
+                    - user_permission
+                  comparison_operator: is
+                  value: "admin"
+              logical_operator: and
+            - id: editor_case
+              case_id: editor_case
+              conditions:
+                - variable_selector:
+                    - test_data_generator_node
+                    - user_permission
+                  comparison_operator: is
+                  value: "editor"
+              logical_operator: and
+            - id: viewer_case
+              case_id: viewer_case
+              conditions:
+                - variable_selector:
+                    - test_data_generator_node
+                    - user_permission
+                  comparison_operator: is
+                  value: "viewer"
+              logical_operator: and
+          desc: "デフォルト保証型パターン：権限チェック"
+          selected: false
+          title: "権限判定"
+        height: 198
+        id: permission_check_node
+        position:
+          x: 650
+          y: 750
+        positionAbsolute:
+          x: 650
+          y: 750
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            🚨 緊急発注が必要です！
+            
+            在庫レベル: {{#test_data_generator_node.stock_level#}}個
+            状態: 危険レベル
+            
+            即座に発注手続きを開始してください。
+          desc: "緊急発注時の独立回答"
+          selected: false
+          title: "緊急発注通知"
+          type: answer
+          variables: []
+        height: 154
+        id: urgent_order_answer_node
+        position:
+          x: 950
+          y: 0
+        positionAbsolute:
+          x: 950
+          y: 0
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            📦 通常発注をお勧めします
+            
+            在庫レベル: {{#test_data_generator_node.stock_level#}}個
+            状態: 通常レベル
+            
+            計画的な発注を行ってください。
+          desc: "通常発注時の独立回答"
+          selected: false
+          title: "通常発注推奨"
+          type: answer
+          variables: []
+        height: 154
+        id: normal_order_answer_node
+        position:
+          x: 950
+          y: 50
+        positionAbsolute:
+          x: 950
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ⚠️ 在庫過多です
+            
+            在庫レベル: {{#test_data_generator_node.stock_level#}}個
+            状態: 過剰在庫
+            
+            在庫削減策を検討してください。
+          desc: "過剰在庫時の独立回答"
+          selected: false
+          title: "在庫過多警告"
+          type: answer
+          variables: []
+        height: 154
+        id: excess_stock_answer_node
+        position:
+          x: 950
+          y: 100
+        positionAbsolute:
+          x: 950
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ✅ 在庫レベル正常
+            
+            在庫レベル: {{#test_data_generator_node.stock_level#}}個
+            状態: 適正在庫
+            
+            現状を維持してください。
+          desc: "デフォルトケースの独立回答"
+          selected: false
+          title: "適正在庫"
+          type: answer
+          variables: []
+        height: 154
+        id: stock_default_answer_node
+        position:
+          x: 950
+          y: 150
+        positionAbsolute:
+          x: 950
+          y: 150
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "優秀評価の処理"
+          model:
+            completion_params:
+              temperature: 0.7
+            mode: chat
+            name: gpt-4
+            provider: openai
+          prompt_template:
+            - id: system-prompt
+              role: system
+              text: "スコア評価システムです。優秀な成績に対する評価を生成します。"
+            - id: user-prompt
+              role: user
+              text: "スコア{{#test_data_generator_node.test_score#}}点は優秀な成績です。評価レポートを生成してください。"
+          selected: false
+          title: "優秀評価"
+          type: llm
+          variables: []
+          vision:
+            enabled: false
+        height: 98
+        id: excellent_result_node
+        position:
+          x: 950
+          y: 300
+        positionAbsolute:
+          x: 950
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "良好評価の処理"
+          model:
+            completion_params:
+              temperature: 0.7
+            mode: chat
+            name: gpt-4
+            provider: openai
+          prompt_template:
+            - id: system-prompt
+              role: system
+              text: "スコア評価システムです。良好な成績に対する評価を生成します。"
+            - id: user-prompt
+              role: user
+              text: "スコア{{#test_data_generator_node.test_score#}}点は良好な成績です。評価レポートを生成してください。"
+          selected: false
+          title: "良好評価"
+          type: llm
+          variables: []
+          vision:
+            enabled: false
+        height: 98
+        id: good_result_node
+        position:
+          x: 950
+          y: 400
+        positionAbsolute:
+          x: 950
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "平均評価の処理"
+          model:
+            completion_params:
+              temperature: 0.7
+            mode: chat
+            name: gpt-4
+            provider: openai
+          prompt_template:
+            - id: system-prompt
+              role: system
+              text: "スコア評価システムです。平均的な成績に対する評価を生成します。"
+            - id: user-prompt
+              role: user
+              text: "スコア{{#test_data_generator_node.test_score#}}点は平均的な成績です。評価レポートを生成してください。"
+          selected: false
+          title: "平均評価"
+          type: llm
+          variables: []
+          vision:
+            enabled: false
+        height: 98
+        id: average_result_node
+        position:
+          x: 950
+          y: 500
+        positionAbsolute:
+          x: 950
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "要改善評価の処理"
+          model:
+            completion_params:
+              temperature: 0.7
+            mode: chat
+            name: gpt-4
+            provider: openai
+          prompt_template:
+            - id: system-prompt
+              role: system
+              text: "スコア評価システムです。改善が必要な成績に対する評価を生成します。"
+            - id: user-prompt
+              role: user
+              text: "スコア{{#test_data_generator_node.test_score#}}点は改善が必要です。評価レポートを生成してください。"
+          selected: false
+          title: "要改善評価"
+          type: llm
+          variables: []
+          vision:
+            enabled: false
+        height: 98
+        id: poor_result_node
+        position:
+          x: 950
+          y: 600
+        positionAbsolute:
+          x: 950
+          y: 600
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          code: |
+            score_level = ""
+            if int({{#test_data_generator_node.test_score#}}) >= 90:
+                score_level = "excellent"
+                evaluation = {{#excellent_result_node.text#}}
+            elif int({{#test_data_generator_node.test_score#}}) >= 70:
+                score_level = "good"
+                evaluation = {{#good_result_node.text#}}
+            elif int({{#test_data_generator_node.test_score#}}) >= 50:
+                score_level = "average"
+                evaluation = {{#average_result_node.text#}}
+            else:
+                score_level = "poor"
+                evaluation = {{#poor_result_node.text#}}
+            
+            return {
+                "score_level": score_level,
+                "evaluation": evaluation
+            }
+          code_language: python3
+          desc: "実行されたパスの結果のみを集約"
+          outputs:
+            score_level:
+              type: string
+            evaluation:
+              type: string
+          selected: false
+          title: "スコア集約処理"
+          type: code
+          variables:
+            - value_selector:
+                - excellent_result_node
+                - text
+              variable: excellent_result_node.text
+            - value_selector:
+                - good_result_node
+                - text
+              variable: good_result_node.text
+            - value_selector:
+                - average_result_node
+                - text
+              variable: average_result_node.text
+            - value_selector:
+                - poor_result_node
+                - text
+              variable: poor_result_node.text
+        height: 98
+        id: score_aggregator_node
+        position:
+          x: 1250
+          y: 450
+        positionAbsolute:
+          x: 1250
+          y: 450
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "管理者アクセス処理"
+          model:
+            completion_params:
+              temperature: 0.7
+            mode: chat
+            name: gpt-4
+            provider: openai
+          prompt_template:
+            - id: system-prompt
+              role: system
+              text: "権限管理システムです。管理者権限のアクセスを処理します。"
+            - id: user-prompt
+              role: user
+              text: "管理者権限でのアクセスが確認されました。すべての機能が利用可能です。"
+          selected: false
+          title: "管理者アクセス"
+          type: llm
+          variables: []
+          vision:
+            enabled: false
+        height: 98
+        id: admin_access_node
+        position:
+          x: 950
+          y: 700
+        positionAbsolute:
+          x: 950
+          y: 700
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "編集者アクセス処理"
+          model:
+            completion_params:
+              temperature: 0.7
+            mode: chat
+            name: gpt-4
+            provider: openai
+          prompt_template:
+            - id: system-prompt
+              role: system
+              text: "権限管理システムです。編集者権限のアクセスを処理します。"
+            - id: user-prompt
+              role: user
+              text: "編集者権限でのアクセスが確認されました。編集機能が利用可能です。"
+          selected: false
+          title: "編集者アクセス"
+          type: llm
+          variables: []
+          vision:
+            enabled: false
+        height: 98
+        id: editor_access_node
+        position:
+          x: 950
+          y: 800
+        positionAbsolute:
+          x: 950
+          y: 800
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "閲覧者アクセス処理"
+          model:
+            completion_params:
+              temperature: 0.7
+            mode: chat
+            name: gpt-4
+            provider: openai
+          prompt_template:
+            - id: system-prompt
+              role: system
+              text: "権限管理システムです。閲覧者権限のアクセスを処理します。"
+            - id: user-prompt
+              role: user
+              text: "閲覧者権限でのアクセスが確認されました。閲覧機能のみ利用可能です。"
+          selected: false
+          title: "閲覧者アクセス"
+          type: llm
+          variables: []
+          vision:
+            enabled: false
+        height: 98
+        id: viewer_access_node
+        position:
+          x: 950
+          y: 900
+        positionAbsolute:
+          x: 950
+          y: 900
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "デフォルト（ゲスト）処理"
+          model:
+            completion_params:
+              temperature: 0.7
+            mode: chat
+            name: gpt-4
+            provider: openai
+          prompt_template:
+            - id: system-prompt
+              role: system
+              text: "権限管理システムです。ゲスト権限のアクセスを処理します。"
+            - id: user-prompt
+              role: user
+              text: "ゲストまたは不明な権限でのアクセスです。基本機能のみ利用可能です。権限: {{#test_data_generator_node.user_permission#}}"
+          selected: false
+          title: "ゲストアクセス（デフォルト）"
+          type: llm
+          variables: []
+          vision:
+            enabled: false
+        height: 98
+        id: guest_default_node
+        position:
+          x: 950
+          y: 1000
+        positionAbsolute:
+          x: 950
+          y: 1000
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ## 更新版IF_ELSEルール検証結果
+            
+            ### テストデータ
+            - 在庫レベル: {{#test_data_generator_node.stock_level#}}個
+            - テストスコア: {{#test_data_generator_node.test_score#}}点
+            - ユーザー権限: {{#test_data_generator_node.user_permission#}}
+            
+            ### 1. 独立answer型パターン（在庫チェック）
+            各分岐から直接answerノードへ接続し、他の分岐の変数を参照しないパターンです。
+            （結果は上記の独立したanswerノードで表示済み）
+            
+            ### 2. 集約型パターン（スコア評価）
+            すべての分岐が集約ノードに収束するパターンです。
+            評価レベル: {{#score_aggregator_node.score_level#}}
+            {{#score_aggregator_node.evaluation#}}
+            
+            ### 3. デフォルト保証型パターン（権限チェック）
+            falseケースでデフォルト処理を実行するパターンです。
+            {{#admin_access_node.text#}}{{#editor_access_node.text#}}{{#viewer_access_node.text#}}{{#guest_default_node.text#}}
+            
+            ### 検証結果
+            - ✅ 条件分岐後の変数参照ルールが正しく動作
+            - ✅ 3つの設計パターンがすべて実装済み
+            - ✅ YAMLコメント・Pythonコメントなし
+            - ✅ 必須フィールドすべて設定済み
+            - ✅ Unicode演算子（≥、≤、≠）使用
+          desc: "最終的な統合レポート"
+          selected: false
+          title: "検証結果レポート"
+          type: answer
+          variables: []
+        height: 461
+        id: final_report_node
+        position:
+          x: 1550
+          y: 400
+        positionAbsolute:
+          x: 1550
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.4

@@ -1,0 +1,391 @@
+app:
+  description: "会議室の種類と利用時間を入力すると、適切な利用案内を返すシステムです。"
+  icon: "🏢"
+  icon_background: "#FFEAD5"
+  mode: advanced-chat
+  name: "会議室予約案内システム"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      会議室予約案内システムへようこそ！
+      
+      利用人数と利用時間を入力していただければ、最適な会議室と利用案内をご提供いたします。
+      
+      例：「50人で午前10時から12時まで利用したい」
+          「15人で午後2時から4時まで会議をしたい」
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "100人で午前9時から正午まで利用したい"
+      - "30人で午後1時から3時まで会議をしたい"
+      - "10人で午後3時から5時まで打ち合わせをしたい"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: code
+        id: start-code-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: parse_input_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: code
+          targetType: if-else
+        id: code-ifelse-edge
+        selected: false
+        source: parse_input_node
+        sourceHandle: source
+        target: room_type_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: ifelse-large-edge
+        selected: false
+        source: room_type_check_node
+        sourceHandle: large_room
+        target: large_room_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: ifelse-medium-edge
+        selected: false
+        source: room_type_check_node
+        sourceHandle: medium_room
+        target: medium_room_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: ifelse-small-edge
+        selected: false
+        source: room_type_check_node
+        sourceHandle: "false"
+        target: small_room_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "開始ノード"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          code: |
+            import re
+            
+            user_input = {{#sys.query#}}
+            
+            number_pattern = r'(\d+)\s*人'
+            match = re.search(number_pattern, user_input)
+            
+            if match:
+                number_of_people = int(match.group(1))
+            else:
+                number_of_people = 0
+            
+            time_info = ""
+            if "午前" in user_input:
+                time_info = "午前"
+            elif "午後" in user_input:
+                time_info = "午後"
+            else:
+                time_info = "終日"
+            
+            time_pattern = r'(\d+)\s*時.*?(\d+)\s*時'
+            time_match = re.search(time_pattern, user_input)
+            if time_match:
+                start_time = time_match.group(1)
+                end_time = time_match.group(2)
+                time_range = f"{start_time}時～{end_time}時"
+            else:
+                time_range = "時間未指定"
+            
+            return {
+                "number_of_people": number_of_people,
+                "time_info": time_info,
+                "time_range": time_range,
+                "original_input": user_input
+            }
+          desc: "入力を解析して人数と時間を抽出"
+          outputs:
+            - value_selector:
+                - number_of_people
+              variable: number_of_people
+            - value_selector:
+                - time_info
+              variable: time_info
+            - value_selector:
+                - time_range
+              variable: time_range
+            - value_selector:
+                - original_input
+              variable: original_input
+          selected: false
+          title: "入力解析"
+          type: code
+          variables: []
+        height: 98
+        id: parse_input_node
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - case_id: large_room
+              conditions:
+                - comparison_operator: ">="
+                  variable_selector:
+                    - parse_input_node
+                    - number_of_people
+                  value: 50
+              id: large_room
+              logical_operator: and
+            - case_id: medium_room
+              conditions:
+                - comparison_operator: ">="
+                  variable_selector:
+                    - parse_input_node
+                    - number_of_people
+                  value: 20
+              id: medium_room
+              logical_operator: and
+          desc: "人数に応じた会議室の判定"
+          selected: false
+          title: "会議室タイプ判定"
+          type: if-else
+        height: 154
+        id: room_type_check_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ## 大会議室のご案内
+
+            ご利用人数：{{#parse_input_node.number_of_people#}}名
+            ご利用時間：{{#parse_input_node.time_range#}}（{{#parse_input_node.time_info#}}）
+
+            ### 🏢 大会議室（50名以上）
+
+            **利用可能な会議室：**
+            - 大ホール（最大200名）
+            - セミナールーム（最大100名）
+            - 多目的ホール（最大150名）
+
+            **設備・仕様：**
+            - プロジェクター（4K対応）×2台
+            - 音響設備（マイク10本まで使用可）
+            - 演台・司会台完備
+            - 同時通訳ブース対応可
+            - Wi-Fi完備（高速回線）
+            - 録画・配信設備あり
+
+            **利用規約：**
+            - 利用1ヶ月前からの予約必須
+            - 利用料金：1時間あたり15,000円〜
+            - キャンセルは1週間前まで無料
+            - 飲食物の持ち込みは事前申請が必要
+            - 設営・撤去時間も利用時間に含まれます
+
+            **ご予約・お問い合わせ：**
+            📞 予約センター：03-1234-5678
+            ✉️ メール：reservation@company.co.jp
+
+            ※大規模イベントの場合は、担当者が事前打ち合わせをさせていただきます。
+          desc: "大会議室の案内"
+          selected: false
+          title: "大会議室案内"
+          type: answer
+          variables: []
+        height: 374
+        id: large_room_answer_node
+        position:
+          x: 950
+          y: 50
+        positionAbsolute:
+          x: 950
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ## 中会議室のご案内
+
+            ご利用人数：{{#parse_input_node.number_of_people#}}名
+            ご利用時間：{{#parse_input_node.time_range#}}（{{#parse_input_node.time_info#}}）
+
+            ### 🏛️ 中会議室（20〜49名）
+
+            **利用可能な会議室：**
+            - 会議室A（最大30名）
+            - 会議室B（最大40名）
+            - ミーティングルーム1・2（各最大25名）
+
+            **設備・仕様：**
+            - 65インチ大型モニター
+            - ホワイトボード（電子黒板あり）
+            - Web会議システム完備
+            - 可動式テーブル・椅子
+            - Wi-Fi完備
+            - 個別空調
+
+            **利用規約：**
+            - 利用2週間前からの予約可能
+            - 利用料金：1時間あたり5,000円〜
+            - キャンセルは3日前まで無料
+            - 飲み物の持ち込み可（食事は要相談）
+            - 利用後は原状復帰をお願いします
+
+            **ご予約・お問い合わせ：**
+            📞 予約センター：03-1234-5678
+            ✉️ メール：reservation@company.co.jp
+
+            ※レイアウト変更のご要望も承ります。
+          desc: "中会議室の案内"
+          selected: false
+          title: "中会議室案内"
+          type: answer
+          variables: []
+        height: 374
+        id: medium_room_answer_node
+        position:
+          x: 950
+          y: 200
+        positionAbsolute:
+          x: 950
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ## 小会議室のご案内
+
+            ご利用人数：{{#parse_input_node.number_of_people#}}名
+            ご利用時間：{{#parse_input_node.time_range#}}（{{#parse_input_node.time_info#}}）
+
+            ### 🚪 小会議室（19名以下）
+
+            **利用可能な会議室：**
+            - ミニ会議室1〜6（各最大8名）
+            - 個室ブース（最大4名）
+            - 打ち合わせスペース（最大12名）
+
+            **設備・仕様：**
+            - 43インチモニター
+            - ホワイトボード
+            - Web会議用カメラ・マイク
+            - 電源・USB充電ポート完備
+            - Wi-Fi完備
+            - 個別空調
+
+            **利用規約：**
+            - 当日予約も可能（空室がある場合）
+            - 利用料金：1時間あたり1,500円〜
+            - キャンセルは前日まで無料
+            - 飲み物の持ち込み自由
+            - 最短30分から利用可能
+
+            **ご予約・お問い合わせ：**
+            📞 予約センター：03-1234-5678
+            ✉️ メール：reservation@company.co.jp
+            💻 オンライン予約：https://reservation.company.co.jp
+
+            ※少人数での集中作業にも最適です。
+          desc: "小会議室の案内"
+          selected: false
+          title: "小会議室案内"
+          type: answer
+          variables: []
+        height: 374
+        id: small_room_answer_node
+        position:
+          x: 950
+          y: 350
+        positionAbsolute:
+          x: 950
+          y: 350
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

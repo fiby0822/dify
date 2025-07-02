@@ -1,0 +1,958 @@
+app:
+  description: "IF_ELSEコンポーネントのルール検証用テストアプリケーション"
+  icon: "🔀"
+  icon_background: "#E0F2FE"
+  mode: advanced-chat
+  name: "IF_ELSE動作検証テスト"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: code
+        id: start-input_processor-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: input_processor_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: code
+          targetType: if-else
+        id: input_processor-string_check-edge
+        selected: false
+        source: input_processor_node
+        sourceHandle: source
+        target: string_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: template-transform
+        id: string_check-contains_result-edge
+        selected: false
+        source: string_check_node
+        sourceHandle: contains_case
+        target: contains_result_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: template-transform
+        id: string_check-exact_result-edge
+        selected: false
+        source: string_check_node
+        sourceHandle: exact_case
+        target: exact_result_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: template-transform
+        id: string_check-start_result-edge
+        selected: false
+        source: string_check_node
+        sourceHandle: start_case
+        target: start_result_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: template-transform
+        id: string_check-default_result-edge
+        selected: false
+        source: string_check_node
+        sourceHandle: false
+        target: default_string_result_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: if-else
+        id: contains_result-numeric_check-edge
+        selected: false
+        source: contains_result_node
+        sourceHandle: source
+        target: numeric_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: if-else
+        id: exact_result-numeric_check-edge
+        selected: false
+        source: exact_result_node
+        sourceHandle: source
+        target: numeric_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: if-else
+        id: start_result-numeric_check-edge
+        selected: false
+        source: start_result_node
+        sourceHandle: source
+        target: numeric_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: if-else
+        id: default_string_result-numeric_check-edge
+        selected: false
+        source: default_string_result_node
+        sourceHandle: source
+        target: numeric_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: template-transform
+        id: numeric_check-high_score-edge
+        selected: false
+        source: numeric_check_node
+        sourceHandle: high_score_case
+        target: high_score_result_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: template-transform
+        id: numeric_check-medium_score-edge
+        selected: false
+        source: numeric_check_node
+        sourceHandle: medium_score_case
+        target: medium_score_result_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: template-transform
+        id: numeric_check-low_score-edge
+        selected: false
+        source: numeric_check_node
+        sourceHandle: low_score_case
+        target: low_score_result_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: template-transform
+        id: numeric_check-default_numeric-edge
+        selected: false
+        source: numeric_check_node
+        sourceHandle: false
+        target: default_numeric_result_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: if-else
+        id: high_score_result-null_check-edge
+        selected: false
+        source: high_score_result_node
+        sourceHandle: source
+        target: null_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: if-else
+        id: medium_score_result-null_check-edge
+        selected: false
+        source: medium_score_result_node
+        sourceHandle: source
+        target: null_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: if-else
+        id: low_score_result-null_check-edge
+        selected: false
+        source: low_score_result_node
+        sourceHandle: source
+        target: null_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: if-else
+        id: default_numeric_result-null_check-edge
+        selected: false
+        source: default_numeric_result_node
+        sourceHandle: source
+        target: null_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: template-transform
+        id: null_check-empty_case-edge
+        selected: false
+        source: null_check_node
+        sourceHandle: empty_case
+        target: empty_result_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: template-transform
+        id: null_check-not_empty_case-edge
+        selected: false
+        source: null_check_node
+        sourceHandle: not_empty_case
+        target: not_empty_result_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: null_check-default_null-edge
+        selected: false
+        source: null_check_node
+        sourceHandle: false
+        target: multi_condition_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: if-else
+        id: empty_result-multi_condition-edge
+        selected: false
+        source: empty_result_node
+        sourceHandle: source
+        target: multi_condition_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: if-else
+        id: not_empty_result-multi_condition-edge
+        selected: false
+        source: not_empty_result_node
+        sourceHandle: source
+        target: multi_condition_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: template-transform
+        id: multi_condition-and_case-edge
+        selected: false
+        source: multi_condition_node
+        sourceHandle: and_case
+        target: and_result_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: template-transform
+        id: multi_condition-or_case-edge
+        selected: false
+        source: multi_condition_node
+        sourceHandle: or_case
+        target: or_result_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: template-transform
+        id: multi_condition-default_multi-edge
+        selected: false
+        source: multi_condition_node
+        sourceHandle: false
+        target: default_multi_result_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: template-transform
+        id: and_result-final_summary-edge
+        selected: false
+        source: and_result_node
+        sourceHandle: source
+        target: final_summary_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: template-transform
+        id: or_result-final_summary-edge
+        selected: false
+        source: or_result_node
+        sourceHandle: source
+        target: final_summary_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: template-transform
+        id: default_multi_result-final_summary-edge
+        selected: false
+        source: default_multi_result_node
+        sourceHandle: source
+        target: final_summary_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: answer
+        id: final_summary-answer-edge
+        selected: false
+        source: final_summary_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "開始ノード"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 400
+        positionAbsolute:
+          x: 50
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          code: |
+            def main(user_input):
+                test_text = user_input.get('test_text', 'test')
+                test_number = int(user_input.get('test_number', '50'))
+                test_empty = user_input.get('test_empty', '')
+                
+                return {
+                    'test_text': test_text,
+                    'test_number': test_number,
+                    'test_empty': test_empty,
+                    'status': 'approved'
+                }
+          code_language: python3
+          desc: "入力データを処理してテスト用データを生成"
+          outputs:
+            test_text:
+              type: string
+            test_number:
+              type: number
+            test_empty:
+              type: string
+            status:
+              type: string
+          selected: false
+          title: "入力処理"
+          type: code
+          variables:
+            - value_selector:
+                - sys
+                - query
+              variable: user_input
+        height: 122
+        id: input_processor_node
+        position:
+          x: 350
+          y: 400
+        positionAbsolute:
+          x: 350
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - id: contains_case
+              case_id: contains_case
+              conditions:
+                - variable_selector:
+                    - input_processor_node
+                    - test_text
+                  comparison_operator: contains
+                  value: "test"
+              logical_operator: and
+            - id: exact_case
+              case_id: exact_case
+              conditions:
+                - variable_selector:
+                    - input_processor_node
+                    - test_text
+                  comparison_operator: is
+                  value: "exact_match"
+              logical_operator: and
+            - id: start_case
+              case_id: start_case
+              conditions:
+                - variable_selector:
+                    - input_processor_node
+                    - test_text
+                  comparison_operator: start with
+                  value: "start"
+              logical_operator: and
+          desc: "文字列比較のテスト"
+          selected: false
+          title: "文字列比較検証"
+          type: if-else
+        height: 98
+        id: string_check_node
+        position:
+          x: 650
+          y: 400
+        positionAbsolute:
+          x: 650
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          template: "文字列比較: 部分一致(contains)が成功しました。テキスト={{#input_processor_node.test_text#}}"
+          desc: "contains条件の結果"
+          selected: false
+          title: "部分一致結果"
+          type: template-transform
+          variables: []
+        height: 82
+        id: contains_result_node
+        position:
+          x: 950
+          y: 200
+        positionAbsolute:
+          x: 950
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          template: "文字列比較: 完全一致(is)が成功しました。テキスト={{#input_processor_node.test_text#}}"
+          desc: "is条件の結果"
+          selected: false
+          title: "完全一致結果"
+          type: template-transform
+          variables: []
+        height: 82
+        id: exact_result_node
+        position:
+          x: 950
+          y: 350
+        positionAbsolute:
+          x: 950
+          y: 350
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          template: "文字列比較: 前方一致(start with)が成功しました。テキスト={{#input_processor_node.test_text#}}"
+          desc: "start with条件の結果"
+          selected: false
+          title: "前方一致結果"
+          type: template-transform
+          variables: []
+        height: 82
+        id: start_result_node
+        position:
+          x: 950
+          y: 500
+        positionAbsolute:
+          x: 950
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          template: "文字列比較: デフォルトケース。テキスト={{#input_processor_node.test_text#}}"
+          desc: "デフォルトケースの結果"
+          selected: false
+          title: "デフォルト文字列結果"
+          type: template-transform
+          variables: []
+        height: 82
+        id: default_string_result_node
+        position:
+          x: 950
+          y: 650
+        positionAbsolute:
+          x: 950
+          y: 650
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - id: high_score_case
+              case_id: high_score_case
+              conditions:
+                - variable_selector:
+                    - input_processor_node
+                    - test_number
+                  comparison_operator: "≥"
+                  value: 80
+              logical_operator: and
+            - id: medium_score_case
+              case_id: medium_score_case
+              conditions:
+                - variable_selector:
+                    - input_processor_node
+                    - test_number
+                  comparison_operator: "≥"
+                  value: 50
+              logical_operator: and
+            - id: low_score_case
+              case_id: low_score_case
+              conditions:
+                - variable_selector:
+                    - input_processor_node
+                    - test_number
+                  comparison_operator: ">"
+                  value: 0
+              logical_operator: and
+          desc: "数値比較のテスト（Unicode演算子使用）"
+          selected: false
+          title: "数値比較検証"
+          type: if-else
+        height: 98
+        id: numeric_check_node
+        position:
+          x: 1250
+          y: 400
+        positionAbsolute:
+          x: 1250
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          template: "数値比較: 高スコア(≥80)です。スコア={{#input_processor_node.test_number#}}"
+          desc: "高スコアの結果"
+          selected: false
+          title: "高スコア結果"
+          type: template-transform
+          variables: []
+        height: 82
+        id: high_score_result_node
+        position:
+          x: 1550
+          y: 200
+        positionAbsolute:
+          x: 1550
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          template: "数値比較: 中スコア(≥50)です。スコア={{#input_processor_node.test_number#}}"
+          desc: "中スコアの結果"
+          selected: false
+          title: "中スコア結果"
+          type: template-transform
+          variables: []
+        height: 82
+        id: medium_score_result_node
+        position:
+          x: 1550
+          y: 350
+        positionAbsolute:
+          x: 1550
+          y: 350
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          template: "数値比較: 低スコア(>0)です。スコア={{#input_processor_node.test_number#}}"
+          desc: "低スコアの結果"
+          selected: false
+          title: "低スコア結果"
+          type: template-transform
+          variables: []
+        height: 82
+        id: low_score_result_node
+        position:
+          x: 1550
+          y: 500
+        positionAbsolute:
+          x: 1550
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          template: "数値比較: スコアが0以下です。スコア={{#input_processor_node.test_number#}}"
+          desc: "デフォルト数値結果"
+          selected: false
+          title: "デフォルト数値結果"
+          type: template-transform
+          variables: []
+        height: 82
+        id: default_numeric_result_node
+        position:
+          x: 1550
+          y: 650
+        positionAbsolute:
+          x: 1550
+          y: 650
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - id: empty_case
+              case_id: empty_case
+              conditions:
+                - variable_selector:
+                    - input_processor_node
+                    - test_empty
+                  comparison_operator: empty
+                  value: ""
+              logical_operator: and
+            - id: not_empty_case
+              case_id: not_empty_case
+              conditions:
+                - variable_selector:
+                    - input_processor_node
+                    - test_empty
+                  comparison_operator: not empty
+                  value: ""
+              logical_operator: and
+          desc: "NULL/空チェックのテスト"
+          selected: false
+          title: "NULL/空チェック検証"
+          type: if-else
+        height: 98
+        id: null_check_node
+        position:
+          x: 1850
+          y: 400
+        positionAbsolute:
+          x: 1850
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          template: "NULL/空チェック: フィールドが空です"
+          desc: "空の結果"
+          selected: false
+          title: "空結果"
+          type: template-transform
+          variables: []
+        height: 82
+        id: empty_result_node
+        position:
+          x: 2150
+          y: 300
+        positionAbsolute:
+          x: 2150
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          template: "NULL/空チェック: フィールドが空ではありません。値={{#input_processor_node.test_empty#}}"
+          desc: "空でない結果"
+          selected: false
+          title: "空でない結果"
+          type: template-transform
+          variables: []
+        height: 82
+        id: not_empty_result_node
+        position:
+          x: 2150
+          y: 450
+        positionAbsolute:
+          x: 2150
+          y: 450
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - id: and_case
+              case_id: and_case
+              conditions:
+                - variable_selector:
+                    - input_processor_node
+                    - test_number
+                  comparison_operator: "≥"
+                  value: 50
+                - variable_selector:
+                    - input_processor_node
+                    - status
+                  comparison_operator: is
+                  value: "approved"
+              logical_operator: and
+            - id: or_case
+              case_id: or_case
+              conditions:
+                - variable_selector:
+                    - input_processor_node
+                    - test_number
+                  comparison_operator: "≤"
+                  value: 30
+                - variable_selector:
+                    - input_processor_node
+                    - test_text
+                  comparison_operator: contains
+                  value: "special"
+              logical_operator: or
+          desc: "複数条件のテスト（AND/OR）"
+          selected: false
+          title: "複数条件検証"
+          type: if-else
+        height: 98
+        id: multi_condition_node
+        position:
+          x: 2450
+          y: 400
+        positionAbsolute:
+          x: 2450
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          template: "複数条件: AND条件が成立しました（スコア≥50 かつ status=approved）"
+          desc: "AND条件の結果"
+          selected: false
+          title: "AND条件結果"
+          type: template-transform
+          variables: []
+        height: 82
+        id: and_result_node
+        position:
+          x: 2750
+          y: 250
+        positionAbsolute:
+          x: 2750
+          y: 250
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          template: "複数条件: OR条件が成立しました（スコア≤30 または text contains 'special'）"
+          desc: "OR条件の結果"
+          selected: false
+          title: "OR条件結果"
+          type: template-transform
+          variables: []
+        height: 82
+        id: or_result_node
+        position:
+          x: 2750
+          y: 400
+        positionAbsolute:
+          x: 2750
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          template: "複数条件: どの条件も成立しませんでした"
+          desc: "デフォルト複数条件結果"
+          selected: false
+          title: "デフォルト複数条件結果"
+          type: template-transform
+          variables: []
+        height: 82
+        id: default_multi_result_node
+        position:
+          x: 2750
+          y: 550
+        positionAbsolute:
+          x: 2750
+          y: 550
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          template: |
+            【IF_ELSE検証結果サマリー】
+            
+            ✅ 必須フィールド検証：
+            - case_idフィールド: 全てのケースで正しく設定
+            - data.selected: false で設定
+            - data.title: 全てのノードで設定
+            
+            ✅ 演算子検証：
+            - Unicode演算子（≥, ≤）: 正しく動作
+            - 文字列比較演算子: 正しく動作
+            - NULL/空チェック: 正しく動作
+            
+            ✅ 分岐検証：
+            - 各分岐で独立した処理を実行
+            - 実行されたパスのみから変数参照
+            
+            入力値:
+            - test_text: {{#input_processor_node.test_text#}}
+            - test_number: {{#input_processor_node.test_number#}}
+            - test_empty: {{#input_processor_node.test_empty#}}
+            - status: {{#input_processor_node.status#}}
+          desc: "最終的な検証結果のサマリー"
+          selected: false
+          title: "検証結果サマリー"
+          type: template-transform
+          variables: []
+        height: 82
+        id: final_summary_node
+        position:
+          x: 3050
+          y: 400
+        positionAbsolute:
+          x: 3050
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#final_summary_node.output#}}"
+          desc: "最終回答"
+          selected: false
+          title: "回答"
+          type: answer
+          variables: []
+        height: 107
+        id: answer_node
+        position:
+          x: 3350
+          y: 400
+        positionAbsolute:
+          x: 3350
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.5

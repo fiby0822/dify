@@ -1,0 +1,739 @@
+app:
+  description: "お客様の予算と旅行日数に基づいて、最適な旅行プランを提案するワークフロー"
+  icon: "✈️"
+  icon_background: "#E6F3FF"
+  mode: advanced-chat
+  name: "AI旅行プラン提案システム"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      旅行プランをご提案させていただきます。
+      
+      以下の情報を教えてください：
+      • ご予算（例：30万円）
+      • 旅行希望日数（例：5日間）
+      
+      お客様のご要望に合わせた最適なプランをご提案いたします。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "予算60万円で7日間の旅行プランを提案してください"
+      - "15万円で3日間の旅行はどこがおすすめですか？"
+      - "予算30万円で5日間のヨーロッパ旅行は可能ですか？"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-analyze-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: analyze_input_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: if-else
+        id: analyze-budget-edge
+        selected: false
+        source: analyze_input_node
+        sourceHandle: source
+        target: budget_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: budget-high-days-edge
+        selected: false
+        source: budget_check_node
+        sourceHandle: high_budget
+        target: high_budget_days_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: budget-medium-days-edge
+        selected: false
+        source: budget_check_node
+        sourceHandle: medium_budget
+        target: medium_budget_days_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: budget-low-days-edge
+        selected: false
+        source: budget_check_node
+        sourceHandle: false
+        target: low_budget_days_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: high-short-answer-edge
+        selected: false
+        source: high_budget_days_node
+        sourceHandle: short_term
+        target: high_short_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: high-medium-answer-edge
+        selected: false
+        source: high_budget_days_node
+        sourceHandle: medium_term
+        target: high_medium_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: high-long-answer-edge
+        selected: false
+        source: high_budget_days_node
+        sourceHandle: false
+        target: high_long_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: medium-short-answer-edge
+        selected: false
+        source: medium_budget_days_node
+        sourceHandle: short_term
+        target: medium_short_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: medium-medium-answer-edge
+        selected: false
+        source: medium_budget_days_node
+        sourceHandle: medium_term
+        target: medium_medium_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: medium-long-answer-edge
+        selected: false
+        source: medium_budget_days_node
+        sourceHandle: false
+        target: medium_long_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: low-short-answer-edge
+        selected: false
+        source: low_budget_days_node
+        sourceHandle: short_term
+        target: low_short_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: low-medium-answer-edge
+        selected: false
+        source: low_budget_days_node
+        sourceHandle: medium_term
+        target: low_medium_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: low-long-answer-edge
+        selected: false
+        source: low_budget_days_node
+        sourceHandle: false
+        target: low_long_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "開始ノード"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 400
+        positionAbsolute:
+          x: 50
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "ユーザー入力から予算と日数を抽出"
+          selected: false
+          title: "入力分析"
+          type: llm
+          model:
+            provider: openai
+            name: gpt-4
+            mode: chat
+            completion_params:
+              temperature: 0.3
+              max_tokens: 200
+          prompt_template:
+            - id: system-analyze
+              role: system
+              text: |
+                ユーザーの入力から予算（円）と旅行日数（日）を抽出し、分類してください。
+                必ず以下の形式で回答してください：
+                
+                予算：[数値]万円
+                予算分類：[高予算/中予算/低予算]
+                日数：[数値]日
+                日数分類：[短期/中期/長期]
+                
+                予算分類の基準：
+                - 高予算：50万円以上
+                - 中予算：20万円以上50万円未満
+                - 低予算：20万円未満
+                
+                日数分類の基準：
+                - 短期：3日以内
+                - 中期：4-7日
+                - 長期：8日以上
+            - id: user-analyze
+              role: user
+              text: |
+                {{#sys.query#}}
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+        height: 98
+        id: analyze_input_node
+        position:
+          x: 350
+          y: 400
+        positionAbsolute:
+          x: 350
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "予算レベルで分岐（第1段階）"
+          selected: false
+          title: "予算レベル判定"
+          type: if-else
+          cases:
+            - id: high_budget
+              case_id: high_budget
+              conditions:
+                - variable_selector:
+                    - analyze_input_node
+                    - text
+                  comparison_operator: contains
+                  value: "予算分類：高予算"
+              logical_operator: and
+            - id: medium_budget
+              case_id: medium_budget
+              conditions:
+                - variable_selector:
+                    - analyze_input_node
+                    - text
+                  comparison_operator: contains
+                  value: "予算分類：中予算"
+              logical_operator: and
+        height: 198
+        id: budget_check_node
+        position:
+          x: 650
+          y: 400
+        positionAbsolute:
+          x: 650
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "高予算の場合の日数判定"
+          selected: false
+          title: "高予算・日数判定"
+          type: if-else
+          cases:
+            - id: short_term
+              case_id: short_term
+              conditions:
+                - variable_selector:
+                    - analyze_input_node
+                    - text
+                  comparison_operator: contains
+                  value: "日数分類：短期"
+              logical_operator: and
+            - id: medium_term
+              case_id: medium_term
+              conditions:
+                - variable_selector:
+                    - analyze_input_node
+                    - text
+                  comparison_operator: contains
+                  value: "日数分類：中期"
+              logical_operator: and
+        height: 198
+        id: high_budget_days_node
+        position:
+          x: 950
+          y: 100
+        positionAbsolute:
+          x: 950
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "中予算の場合の日数判定"
+          selected: false
+          title: "中予算・日数判定"
+          type: if-else
+          cases:
+            - id: short_term
+              case_id: short_term
+              conditions:
+                - variable_selector:
+                    - analyze_input_node
+                    - text
+                  comparison_operator: contains
+                  value: "日数分類：短期"
+              logical_operator: and
+            - id: medium_term
+              case_id: medium_term
+              conditions:
+                - variable_selector:
+                    - analyze_input_node
+                    - text
+                  comparison_operator: contains
+                  value: "日数分類：中期"
+              logical_operator: and
+        height: 198
+        id: medium_budget_days_node
+        position:
+          x: 950
+          y: 400
+        positionAbsolute:
+          x: 950
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "低予算の場合の日数判定"
+          selected: false
+          title: "低予算・日数判定"
+          type: if-else
+          cases:
+            - id: short_term
+              case_id: short_term
+              conditions:
+                - variable_selector:
+                    - analyze_input_node
+                    - text
+                  comparison_operator: contains
+                  value: "日数分類：短期"
+              logical_operator: and
+            - id: medium_term
+              case_id: medium_term
+              conditions:
+                - variable_selector:
+                    - analyze_input_node
+                    - text
+                  comparison_operator: contains
+                  value: "日数分類：中期"
+              logical_operator: and
+        height: 198
+        id: low_budget_days_node
+        position:
+          x: 950
+          y: 700
+        positionAbsolute:
+          x: 950
+          y: 700
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            【高予算・短期旅行プラン】
+            
+            予算：{{#analyze_input_node.text#}}
+            
+            おすすめプラン：
+            • ドバイ豪華3日間の旅
+            • ブルジュ・ハリファ展望台
+            • 砂漠サファリツアー（プライベート）
+            • 7つ星ホテル「ブルジュ・アル・アラブ」宿泊
+            • ファーストクラス航空券利用
+            
+            このプランなら、短期間でも最高級の体験をお楽しみいただけます。
+          desc: "高予算・短期の回答"
+          selected: false
+          title: "高予算・短期プラン"
+          type: answer
+          variables: []
+        height: 374
+        id: high_short_answer_node
+        position:
+          x: 1250
+          y: 50
+        positionAbsolute:
+          x: 1250
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            【高予算・中期旅行プラン】
+            
+            予算：{{#analyze_input_node.text#}}
+            
+            おすすめプラン：
+            • ヨーロッパ周遊7日間
+            • パリ（2泊）- ローマ（2泊）- バルセロナ（2泊）
+            • 5つ星ホテル宿泊
+            • ミシュラン星付きレストランでのディナー
+            • プライベートガイド付き観光
+            • ビジネスクラス航空券
+            
+            複数都市を贅沢に巡る、充実した旅をお約束します。
+          desc: "高予算・中期の回答"
+          selected: false
+          title: "高予算・中期プラン"
+          type: answer
+          variables: []
+        height: 461
+        id: high_medium_answer_node
+        position:
+          x: 1250
+          y: 100
+        positionAbsolute:
+          x: 1250
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            【高予算・長期旅行プラン】
+            
+            予算：{{#analyze_input_node.text#}}
+            
+            おすすめプラン：
+            • 世界一周クルーズ10日間
+            • スイートルーム利用
+            • 寄港地：シンガポール、ドバイ、地中海各都市
+            • 船内スパ・エステ利用無制限
+            • プレミアムダイニング
+            • 専属バトラー付き
+            
+            一生の思い出に残る、究極のラグジュアリー体験をご提供します。
+          desc: "高予算・長期の回答"
+          selected: false
+          title: "高予算・長期プラン"
+          type: answer
+          variables: []
+        height: 461
+        id: high_long_answer_node
+        position:
+          x: 1250
+          y: 150
+        positionAbsolute:
+          x: 1250
+          y: 150
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            【中予算・短期旅行プラン】
+            
+            予算：{{#analyze_input_node.text#}}
+            
+            おすすめプラン：
+            • 韓国ソウル3日間
+            • 4つ星ホテル宿泊（明洞エリア）
+            • 景福宮・北村韓屋村観光
+            • 本場の韓国料理食べ歩き
+            • エステ・スパ体験
+            • エコノミークラス航空券
+            
+            コストパフォーマンスに優れた、充実の短期旅行です。
+          desc: "中予算・短期の回答"
+          selected: false
+          title: "中予算・短期プラン"
+          type: answer
+          variables: []
+        height: 461
+        id: medium_short_answer_node
+        position:
+          x: 1250
+          y: 350
+        positionAbsolute:
+          x: 1250
+          y: 350
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            【中予算・中期旅行プラン】
+            
+            予算：{{#analyze_input_node.text#}}
+            
+            おすすめプラン：
+            • タイ・ベトナム周遊6日間
+            • バンコク（3泊）- ホーチミン（2泊）
+            • 3-4つ星ホテル宿泊
+            • 寺院巡りとナイトマーケット
+            • メコン川クルーズ
+            • 現地ガイド付きツアー
+            
+            東南アジアの魅力を存分に味わえる、バランスの良いプランです。
+          desc: "中予算・中期の回答"
+          selected: false
+          title: "中予算・中期プラン"
+          type: answer
+          variables: []
+        height: 461
+        id: medium_medium_answer_node
+        position:
+          x: 1250
+          y: 400
+        positionAbsolute:
+          x: 1250
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            【中予算・長期旅行プラン】
+            
+            予算：{{#analyze_input_node.text#}}
+            
+            おすすめプラン：
+            • 台湾一周8日間の旅
+            • 台北（2泊）- 高雄（2泊）- 花蓮（2泊）- 台北（1泊）
+            • 3つ星ホテル中心
+            • 九份・太魯閣渓谷観光
+            • 夜市グルメツアー
+            • 台湾新幹線利用
+            
+            じっくりと台湾の魅力を堪能できる、お得な長期プランです。
+          desc: "中予算・長期の回答"
+          selected: false
+          title: "中予算・長期プラン"
+          type: answer
+          variables: []
+        height: 461
+        id: medium_long_answer_node
+        position:
+          x: 1250
+          y: 450
+        positionAbsolute:
+          x: 1250
+          y: 450
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            【低予算・短期旅行プラン】
+            
+            予算：{{#analyze_input_node.text#}}
+            
+            おすすめプラン：
+            • 国内温泉旅行2泊3日
+            • 箱根または草津温泉
+            • 旅館（スタンダードルーム）
+            • 温泉巡りと自然散策
+            • 地元グルメを楽しむ
+            • 電車・バス利用
+            
+            リーズナブルに癒しの時間をお過ごしいただけます。
+          desc: "低予算・短期の回答"
+          selected: false
+          title: "低予算・短期プラン"
+          type: answer
+          variables: []
+        height: 374
+        id: low_short_answer_node
+        position:
+          x: 1250
+          y: 650
+        positionAbsolute:
+          x: 1250
+          y: 650
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            【低予算・中期旅行プラン】
+            
+            予算：{{#analyze_input_node.text#}}
+            
+            おすすめプラン：
+            • 九州周遊5日間
+            • 福岡 - 熊本 - 鹿児島
+            • ビジネスホテル・ゲストハウス利用
+            • JR九州パス利用でお得に移動
+            • 地元の食堂で郷土料理
+            • 無料の観光スポット中心
+            
+            予算を抑えながら、九州の魅力を満喫できるプランです。
+          desc: "低予算・中期の回答"
+          selected: false
+          title: "低予算・中期プラン"
+          type: answer
+          variables: []
+        height: 461
+        id: low_medium_answer_node
+        position:
+          x: 1250
+          y: 700
+        positionAbsolute:
+          x: 1250
+          y: 700
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            【低予算・長期旅行プラン】
+            
+            予算：{{#analyze_input_node.text#}}
+            
+            おすすめプラン：
+            • 青春18きっぷで日本縦断10日間
+            • 各地のゲストハウス・カプセルホテル利用
+            • 東京 - 京都 - 広島 - 福岡
+            • 地元スーパーで食材調達
+            • 無料の公園・神社仏閣巡り
+            • 地元の人との交流重視
+            
+            少ない予算で最大限の体験ができる、バックパッカースタイルの旅です。
+          desc: "低予算・長期の回答"
+          selected: false
+          title: "低予算・長期プラン"
+          type: answer
+          variables: []
+        height: 461
+        id: low_long_answer_node
+        position:
+          x: 1250
+          y: 750
+        positionAbsolute:
+          x: 1250
+          y: 750
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.5

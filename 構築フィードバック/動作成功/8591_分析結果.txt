@@ -1,0 +1,33 @@
+YMLファイル: 8591.yml（スマートFAQシステム）
+分析日時: 2025-07-02
+
+【報告された問題】
+1. ナレッジが選択されていないものがあった
+2. IF_ELSEのELSEノードが接続されていなかった
+
+【詳細分析結果】
+
+1. ナレッジ選択に関する分析：
+   - tech_knowledge_node（行354-356）: dataset_idsが指定されているが、値が暗号化されたID形式
+   - product_knowledge_node（行378-381）: dataset_idsが2つ指定されているが、同様に暗号化されたID形式  
+   - general_knowledge_node（行414-416）: dataset_idsが指定されているが、同様に暗号化されたID形式
+
+   問題の可能性：
+   - YMLファイル上ではdataset_idsが指定されているが、実行環境でこれらのIDに対応する実際のナレッジデータセットが存在しない可能性
+   - 暗号化されたIDが実際のナレッジベースと正しく関連付けられていない可能性
+
+2. IF_ELSEのELSEノード接続に関する分析：
+   - category_branch_node（行319-352）:
+     - tech_case: tech_knowledge_nodeに接続（正常）
+     - product_case: product_knowledge_nodeに接続（正常）
+     - false（ELSEケース）: general_knowledge_nodeに接続（行99-104で確認、正常）
+   
+   - tech_result_check_node、product_result_check_node、general_result_check_node:
+     - すべてfound_caseとfalseケースが適切に接続されている
+
+   結論：YMLファイル上ではすべてのIF_ELSEのELSEノード（falseケース）は正しく接続されている
+
+【推測される問題の原因】
+1. 実行環境でのナレッジデータセットの欠如または不整合
+2. Difyプラットフォーム側でのYML読み込み時の解釈の違い
+3. ナレッジIDの有効期限切れまたは権限の問題

@@ -1,0 +1,336 @@
+app:
+  description: ユーザーの年齢に基づいて異なるメッセージを返すワークフローです。20歳未満、20-59歳、60歳以上の3つのケースに分岐します。
+  icon: 👤
+  icon_background: "#FFEAD5"
+  mode: advanced-chat
+  name: 年齢判定サービス
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      年齢判定サービスへようこそ！
+      あなたの年齢を数字で入力してください。（例：25）
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "18"
+      - "35"
+      - "65"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: code
+        id: start-parse-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: parse_age_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: code
+          targetType: if-else
+        id: parse-condition-edge
+        selected: false
+        source: parse_age_node
+        sourceHandle: source
+        target: age_condition_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: condition-minor-edge
+        selected: false
+        source: age_condition_node
+        sourceHandle: minor_case
+        target: minor_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: condition-adult-edge
+        selected: false
+        source: age_condition_node
+        sourceHandle: adult_case
+        target: adult_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: condition-senior-edge
+        selected: false
+        source: age_condition_node
+        sourceHandle: senior_case
+        target: senior_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: condition-default-edge
+        selected: false
+        source: age_condition_node
+        sourceHandle: false
+        target: error_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: 開始ノード
+          selected: false
+          title: 開始
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          code: |
+            import re
+            
+            user_input = sys.query
+            
+            age_pattern = r'\d+'
+            match = re.search(age_pattern, user_input)
+            
+            if match:
+                age = int(match.group())
+            else:
+                age = -1
+            
+            return {
+                "age": age
+            }
+          desc: ユーザー入力から年齢を数値として抽出
+          outputs:
+            - value_selector:
+              - parse_age_node
+              - age
+              variable: age
+          selected: false
+          title: 年齢解析
+          type: code
+          variables: []
+        height: 98
+        id: parse_age_node
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: minor_case
+              case_id: minor_case
+              conditions:
+                - id: minor_condition
+                  variable_selector:
+                    - parse_age_node
+                    - age
+                  comparison_operator: "<"
+                  value: 20
+              logical_operator: and
+            - id: adult_case
+              case_id: adult_case
+              conditions:
+                - id: adult_condition_1
+                  variable_selector:
+                    - parse_age_node
+                    - age
+                  comparison_operator: ">="
+                  value: 20
+                - id: adult_condition_2
+                  variable_selector:
+                    - parse_age_node
+                    - age
+                  comparison_operator: "<"
+                  value: 60
+              logical_operator: and
+            - id: senior_case
+              case_id: senior_case
+              conditions:
+                - id: senior_condition
+                  variable_selector:
+                    - parse_age_node
+                    - age
+                  comparison_operator: ">="
+                  value: 60
+              logical_operator: and
+          desc: 年齢に基づいて処理を分岐
+          selected: false
+          title: 年齢条件判定
+        height: 250
+        id: age_condition_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            未成年の方向けのサービスをご案内します。
+            
+            🎮 学生向け特別プラン
+            📚 教育サポートサービス
+            🎯 進路相談サービス
+            
+            保護者の方の同意が必要な場合があります。
+          desc: 未成年向けメッセージ
+          selected: false
+          title: 未成年向け回答
+          type: answer
+          variables: []
+        height: 107
+        id: minor_answer_node
+        position:
+          x: 950
+          y: 50
+        positionAbsolute:
+          x: 950
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            成人の方向けの標準サービスをご案内します。
+            
+            💼 ビジネスプラン
+            🏠 ファミリープラン
+            💪 健康管理サービス
+            
+            すべてのサービスをご利用いただけます。
+          desc: 成人向けメッセージ
+          selected: false
+          title: 成人向け回答
+          type: answer
+          variables: []
+        height: 107
+        id: adult_answer_node
+        position:
+          x: 950
+          y: 200
+        positionAbsolute:
+          x: 950
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            シニア世代向けの特別サービスをご案内します。
+            
+            🏥 健康サポートプラン
+            🎨 趣味・生きがいプラン
+            👥 コミュニティサービス
+            
+            シニア割引が適用されます。
+          desc: シニア向けメッセージ
+          selected: false
+          title: シニア向け回答
+          type: answer
+          variables: []
+        height: 107
+        id: senior_answer_node
+        position:
+          x: 950
+          y: 350
+        positionAbsolute:
+          x: 950
+          y: 350
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            申し訳ございません。年齢を正しく認識できませんでした。
+            
+            数字で年齢を入力してください。（例：25）
+          desc: エラーメッセージ
+          selected: false
+          title: エラー回答
+          type: answer
+          variables: []
+        height: 107
+        id: error_answer_node
+        position:
+          x: 950
+          y: 500
+        positionAbsolute:
+          x: 950
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

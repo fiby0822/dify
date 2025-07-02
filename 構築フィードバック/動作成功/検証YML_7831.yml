@@ -1,0 +1,305 @@
+app:
+  description: "更新されたLLMコンポーネントルールの検証用アプリケーション - memory設定の異なるパターンをテスト"
+  icon: "🔍"
+  icon_background: "#E0F2FE"
+  mode: advanced-chat
+  name: "LLMルール検証アプリ（memory設定テスト）"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      こんにちは！LLMルール検証アプリケーションです。
+      何か質問をしていただければ、3つの異なるLLMノードで処理して回答します。
+      
+      処理の流れ：
+      1. 質問の意図を分析
+      2. 詳細な回答を生成
+      3. 回答を要約
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "人工知能の未来について教えてください"
+      - "プログラミング学習のコツは？"
+      - "健康的な生活習慣について"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-analysis-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: intent_analysis_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: llm
+        id: analysis-detail-edge
+        selected: false
+        source: intent_analysis_node
+        sourceHandle: source
+        target: detailed_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: llm
+        id: detail-summary-edge
+        selected: false
+        source: detailed_answer_node
+        sourceHandle: source
+        target: summary_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: summary-answer-edge
+        selected: false
+        source: summary_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "ユーザー入力を受け取る開始ノード"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "質問の意図を分析（memory設定を完全に省略）"
+          model:
+            mode: chat
+            name: gpt-4o
+            provider: openai
+          prompt_template:
+            - id: analysis-system-1
+              role: system
+              text: |
+                あなたは質問分析の専門家です。
+                ユーザーの質問を分析し、以下の点を明確にしてください：
+                1. 質問の主題
+                2. 求められている情報の種類
+                3. 回答の難易度
+            - id: analysis-user-1
+              role: user
+              text: |
+                以下の質問を分析してください：
+                {{#sys.query#}}
+          completion_params:
+            temperature: 0.3
+            max_tokens: 500
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          selected: false
+          title: "意図分析"
+          type: llm
+        height: 98
+        id: intent_analysis_node
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "詳細な回答を生成（memory設定を完全な構造で記載、enabledはfalse）"
+          model:
+            mode: chat
+            name: gpt-4o
+            provider: openai
+          prompt_template:
+            - id: detail-system-1
+              role: system
+              text: |
+                あなたは優秀な知識提供者です。
+                質問に対して、詳細で分かりやすい回答を提供してください。
+                必要に応じて具体例や背景情報も含めてください。
+            - id: detail-user-1
+              role: user
+              text: |
+                質問分析結果：
+                {{#intent_analysis_node.text#}}
+                
+                元の質問：
+                {{#sys.query#}}
+                
+                上記の分析を踏まえて、詳細な回答を提供してください。
+          completion_params:
+            temperature: 0.7
+            max_tokens: 1500
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          memory:
+            enabled: false
+            window:
+              enabled: false
+              size: 10
+            role_prefix:
+              assistant: ''
+              user: ''
+          selected: false
+          title: "詳細回答生成"
+          type: llm
+        height: 98
+        id: detailed_answer_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "回答を要約（memory設定を完全な構造で記載、enabledはtrue）"
+          model:
+            mode: chat
+            name: gpt-4o
+            provider: openai
+          prompt_template:
+            - id: summary-system-1
+              role: system
+              text: |
+                あなたは要約の専門家です。
+                長い回答を、重要なポイントを押さえた簡潔な要約にまとめてください。
+                箇条書きや番号付きリストを活用してください。
+            - id: summary-user-1
+              role: user
+              text: |
+                以下の詳細回答を要約してください：
+                {{#detailed_answer_node.text#}}
+          completion_params:
+            temperature: 0.5
+            max_tokens: 800
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          memory:
+            enabled: true
+            window:
+              enabled: true
+              size: 10
+            role_prefix:
+              assistant: 'AI: '
+              user: 'ユーザー: '
+            query_prompt_template: '{{#sys.query#}}'
+          selected: false
+          title: "要約生成"
+          type: llm
+        height: 98
+        id: summary_node
+        position:
+          x: 950
+          y: 200
+        positionAbsolute:
+          x: 950
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            ## 質問の分析
+            {{#intent_analysis_node.text#}}
+            
+            ## 要約された回答
+            {{#summary_node.text#}}
+            
+            ---
+            *この回答は3つのLLMノードによって処理されました：*
+            *1. 意図分析（memory設定なし）*
+            *2. 詳細回答（memory設定あり、無効）*
+            *3. 要約（memory設定あり、有効）*
+          desc: "最終的な回答を表示"
+          selected: false
+          title: "回答"
+          type: answer
+          variables: []
+        height: 200
+        id: answer_node
+        position:
+          x: 1250
+          y: 200
+        positionAbsolute:
+          x: 1250
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

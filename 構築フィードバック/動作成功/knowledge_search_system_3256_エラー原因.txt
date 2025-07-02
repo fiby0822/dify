@@ -1,0 +1,77 @@
+# knowledge_search_system_3256.yml エラー原因分析
+
+## 1. ナレッジ未選択の問題
+
+### 該当箇所：
+4つの知識検索ノードすべてでナレッジが未選択：
+- tech_knowledge_search（行383）
+- operation_knowledge_search（行407）
+- trouble_knowledge_search（行431）
+- other_knowledge_search（行455）
+
+### エラー原因：
+すべてのknowledge-retrievalノードでdataset_idsがダミーIDを使用：
+```yaml
+dataset_ids:
+  - "mUJqT0QSpLmBBBGsAg6tP+rLJoOBsXRCgClBvqhk7NKJWFKdH7o5AOBH9nG0DiXe"
+  - "7ccfkMYSp7EbvPLfz84xM+MGWesznlJf6laOpWdSR4vOjJa6XZ3W7JdALMg/4IRY"
+  - "8ddglNZTq8FcwQMgz95yN+NHXftzomlKg7mbPqXeTR5wPkJb7YZ4X8KeALNh/5JSZ"
+  - "9eehMOaUr9GdxRNha06zO+OIYguaplMLh8ncQrYfUS6xQlKc8Za5Y9LfBMOi/6KTa"
+```
+
+### 詳細分析：
+
+1. **問題の深刻度**：
+   - 全ての知識検索ノードが機能しない
+   - ワークフロー全体の目的が達成できない
+
+2. **設計上の問題**：
+   - カテゴリ別に異なるナレッジベースを想定しているが、実際のIDマッピングがない
+   - 同じダミーIDが複数のノードで使用されている
+
+3. **実装時の問題**：
+   - ナレッジベースの事前準備が考慮されていない
+   - ダミーIDをそのまま使用してしまっている
+
+## 2. その他の潜在的問題
+
+### IF_ELSEノードの複雑な条件：
+category_condition（行261-363）で複数のOR条件を使用：
+- 各ケースで6つの文字列比較条件
+- 条件の重複や漏れの可能性
+
+### 問題点：
+1. 条件が多すぎて管理が困難
+2. デフォルトケース（false）の処理が最後の選択肢として使用されている
+3. 条件の優先順位が不明確
+
+## 3. 根本原因
+
+### システム設計の問題：
+1. **ナレッジベース管理の欠如**：
+   - 実際のナレッジベースIDの取得方法が不明
+   - ダミーIDと実IDの置き換えプロセスがない
+
+2. **複雑すぎる分岐構造**：
+   - 4つの異なるパスに分岐
+   - 各パスで独立した処理を実装
+
+3. **エラーハンドリングの不在**：
+   - ナレッジベースが見つからない場合の処理がない
+   - 検索結果が空の場合の対応が不明確
+
+## 4. 改善提案
+
+1. **ナレッジベース管理**：
+   - 実際のIDを設定ファイルで管理
+   - 環境変数での設定を可能に
+   - ダミーIDの使用を明確に禁止
+
+2. **条件分岐の簡素化**：
+   - 条件数を減らす
+   - より明確な分類基準を設定
+   - codeノードでの前処理を検討
+
+3. **エラーハンドリング**：
+   - 検索結果が空の場合の代替処理
+   - デフォルト回答の準備
