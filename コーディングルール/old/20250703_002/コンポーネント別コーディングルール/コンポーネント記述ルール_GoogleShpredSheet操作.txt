@@ -1,0 +1,209 @@
+コンポーネント記述ルール: GoogleSpreadSheet操作
+
+■ブロック概要
+Google Sheets APIを使用してスプレッドシートの読み書きを行うツールノード。マーケットプレイスプラグインを使用して、スプレッドシートのデータ取得（batch_get）とデータ更新（batch_update）を実行する。
+
+■必須パラメータ（詳細）
+- id: 意味のある名前（例: "get_sheet_data", "update_sheet_data"）
+- type: "custom"（外側のtype属性。固定値）
+- data.type: "tool"（データ内のtype属性。固定値）
+- position: x, y座標
+- positionAbsolute: positionと同じ値を設定
+- selected: false（固定値）
+- sourcePosition: "right"（推奨）
+- targetPosition: "left"（推奨）
+- height: 数値（通常142-168）
+- width: 数値（通常244）
+- data:
+  - is_team_authorization: true（チーム認証を使用）
+  - provider_id: "omluc/google_sheets/google_sheets"（固定値）
+  - provider_name: "omluc/google_sheets/google_sheets"（固定値）
+  - provider_type: "builtin"（固定値）
+  - tool_name: ツール名（"batch_get"または"batch_update"）
+  - tool_parameters: ツール固有のパラメータ
+  - title: ノードタイトル
+  - type: "tool"（固定値）
+
+■依存関係の設定（最重要）
+Google Sheetsプラグインを使用するには、dependencies設定が必須：
+```yaml
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+```
+
+■ツール別パラメータ
+
+### 1. batch_get（データ取得）
+- spreadsheet_id: スプレッドシートID（URLから取得）
+  - 暫定: `1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ`
+- ranges: 取得範囲の配列（例: ["INPUT!A1:C3", "INPUT!E1:G4"]）
+  - 暫定: データ取得元は`INPUT`シートを使用
+- date_time_render_option: 日時の表示形式
+  - SERIAL_NUMBER: シリアル番号形式
+  - FORMATTED_STRING: フォーマット済み文字列（推奨）
+- major_dimension: データの主要次元
+  - ROWS: 行優先（デフォルト）
+  - COLUMNS: 列優先
+- value_render_option: 値の表示形式
+  - FORMATTED_VALUE: フォーマット済み値（デフォルト）
+  - FORMULA: 数式
+
+### 2. batch_update（データ更新）
+- spreadsheet_id: スプレッドシートID（URLから取得）
+  - 暫定: `1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ`
+- data: 更新データのJSON配列
+  ```json
+  [
+    {
+      "range": "OUTPUT!A1:B2",
+      "values": [["Header1","Header2"],["Value1","Value2"]]
+    }
+  ]
+  ```
+  - 暫定: データ反映先は`OUTPUT`シートを使用
+- value_input_option: 入力値の解釈方法
+  - USER_ENTERED: ユーザー入力として解釈（推奨）
+  - RAW: 生の値として解釈
+- include_values_in_response: レスポンスに値を含めるか（0または1）
+- response_value_render_option: レスポンスの値表示形式
+- response_date_time_render_option: レスポンスの日時表示形式
+
+■入力
+- batch_get: なし（パラメータで直接指定）
+- batch_update: 通常はテンプレート変換ノードからJSON形式のデータを受け取る
+
+■出力
+- json: 操作結果のJSONオブジェクト
+- text: 操作結果のテキスト（エラーメッセージなど）
+- files: ファイル出力（通常は使用しない）
+
+■使用例（完全版）
+
+### データ取得（batch_get）の例
+```yaml
+- data:
+    desc: "スプレッドシートからデータを取得"
+    is_team_authorization: true
+    output_schema: null
+    paramSchemas: [省略]
+    params:
+      date_time_render_option: ''
+      major_dimension: ''
+      ranges: ''
+      spreadsheet_id: ''
+      value_render_option: ''
+    provider_id: omluc/google_sheets/google_sheets
+    provider_name: omluc/google_sheets/google_sheets
+    provider_type: builtin
+    selected: false
+    title: データの取得fromシート
+    tool_configurations:
+      date_time_render_option: FORMATTED_STRING
+      major_dimension: null
+      value_render_option: null
+    tool_description: Retrieve data from multiple ranges in a Google Sheet
+    tool_label: Batch Get
+    tool_name: batch_get
+    tool_parameters:
+      ranges:
+        type: mixed
+        value: '["INPUT!A1:C3"]'
+      spreadsheet_id:
+        type: mixed
+        value: 1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ
+    type: tool
+  height: 142
+  id: '1751500625865'
+  position:
+    x: 223.88410677498985
+    y: 282
+  positionAbsolute:
+    x: 223.88410677498985
+    y: 282
+  selected: false
+  sourcePosition: right
+  targetPosition: left
+  type: custom
+  width: 244
+```
+
+### データ更新（batch_update）の例
+```yaml
+- data:
+    desc: "スプレッドシートにデータを反映"
+    is_team_authorization: true
+    output_schema: null
+    paramSchemas: [省略]
+    params:
+      data: ''
+      include_values_in_response: ''
+      response_date_time_render_option: ''
+      response_value_render_option: ''
+      spreadsheet_id: ''
+      value_input_option: ''
+    provider_id: omluc/google_sheets/google_sheets
+    provider_name: omluc/google_sheets/google_sheets
+    provider_type: builtin
+    selected: false
+    title: データの反映toシート
+    tool_configurations:
+      include_values_in_response: 0
+      response_date_time_render_option: null
+      response_value_render_option: null
+      value_input_option: USER_ENTERED
+    tool_description: Update data in multiple ranges in a Google Sheet
+    tool_label: Batch Update
+    tool_name: batch_update
+    tool_parameters:
+      data:
+        type: mixed
+        value: '{{#1751504626853.output#}}'
+      spreadsheet_id:
+        type: mixed
+        value: 1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ
+    type: tool
+  height: 168
+  id: '1751500758911'
+  position:
+    x: 1128.6255309391195
+    y: 282
+  positionAbsolute:
+    x: 1128.6255309391195
+    y: 282
+  selected: false
+  sourcePosition: right
+  targetPosition: left
+  type: custom
+  width: 244
+```
+
+■注意事項
+- スプレッドシートIDはURLから抽出（https://docs.google.com/spreadsheets/d/{スプレッドシートID}/edit）
+  - 暫定: `1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ`
+- ranges配列は文字列配列として指定（JSON形式）
+- データ更新時は必ずJSON形式で構造化されたデータを用意
+- 範囲指定はA1記法（例: "INPUT!A1:B2", "OUTPUT!A1:C3"）またはR1C1記法を使用
+  - 暫定: 取得は`INPUT`シート、反映は`OUTPUT`シートを使用
+- 大量データの処理時はタイムアウトに注意
+- チーム認証（is_team_authorization: true）を使用する場合、事前に認証設定が必要
+
+■ベストプラクティス
+1. データ取得と更新は別々のノードで実装
+2. テンプレート変換ノードを使用してデータ形式を整形
+3. エラーハンドリングのためにIF/ELSEノードと組み合わせる
+4. 範囲指定は必要最小限に（パフォーマンス向上）
+5. バッチ処理を活用（複数範囲を一度に処理）
+6. 日時データは FORMATTED_STRING を使用（可読性向上）
+7. value_input_option は USER_ENTERED を推奨（自動型変換）
+
+■よくある間違い
+1. dependenciesセクションの記述漏れ（Tool not foundエラー）
+2. スプレッドシートIDの誤り（無効なIDエラー）
+3. 範囲指定の文法エラー（A1記法の誤り）
+4. JSON形式の不正（配列/オブジェクト構造の誤り）
+5. 権限不足（スプレッドシートへのアクセス権限なし）
+6. paramSchemasの省略（必須フィールド）
+7. tool_configurationsとtool_parametersの不整合

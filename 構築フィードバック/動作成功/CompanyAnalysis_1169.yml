@@ -1,0 +1,307 @@
+app:
+  description: "企業名を入力すると、その企業に関する最新情報をWEB検索で取得し、分析・整理して提供する企業情報分析ツール"
+  icon: "🏢"
+  icon_background: "#E0F2FF"
+  mode: advanced-chat
+  name: "企業情報分析ツール"
+  use_icon_as_answer_icon: false
+
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/tavily:0.0.5@b60e09d9cc1c314b7f9c0a853bb006bcb40cc12c3cf1f91406771b8f088beaae
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      企業情報分析ツールへようこそ！
+      
+      分析したい企業名を入力してください。
+      最新のニュースや動向を検索し、以下の観点で分析します：
+      
+      📊 企業概要
+      📈 最新動向
+      🏆 業界での位置づけ
+      🔮 今後の展望
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "トヨタ自動車"
+      - "ソフトバンクグループ"
+      - "任天堂"
+      - "ファーストリテイリング"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: tool
+        id: start-search-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: web_search_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: tool
+          targetType: llm
+        id: search-summarizer-edge
+        selected: false
+        source: web_search_node
+        sourceHandle: source
+        target: summarizer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: llm
+        id: summarizer-analyzer-edge
+        selected: false
+        source: summarizer_node
+        sourceHandle: source
+        target: analyzer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: analyzer-answer-edge
+        selected: false
+        source: analyzer_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "ユーザーから企業名を受け取る"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          provider_id: langgenius/tavily/tavily
+          provider_type: builtin
+          tool_name: tavily_search
+          provider_name: langgenius/tavily/tavily
+          tool_label: Tavily Search
+          is_team_authorization: true
+          tool_parameters:
+            query:
+              type: mixed
+              value: '{{#sys.query#}} 最新ニュース 動向 業績'
+          tool_configurations:
+            search_depth: basic
+            topic: news
+            time_range: week
+            max_results: 3
+            include_answer: 1
+            include_images: 0
+            include_raw_content: 0
+          type: tool
+          title: "企業情報検索"
+          desc: "Tavily Searchを使用して企業の最新情報を検索"
+          selected: false
+        height: 98
+        id: web_search_node
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "検索結果を要約してトークン数を削減"
+          model:
+            completion_params:
+              max_tokens: 1000
+              temperature: 0.3
+            mode: chat
+            name: gpt-3.5-turbo
+            provider: openai
+          prompt_template:
+            - id: system-1
+              role: system
+              text: |
+                あなたは企業情報の要約専門家です。
+                与えられた検索結果から重要な情報を抽出し、簡潔に要約してください。
+                
+                要約の際は以下の点に注目してください：
+                - 最新のニュースや発表
+                - 業績や財務情報
+                - 新製品やサービス
+                - 経営戦略や方針
+                - 業界内での動向
+                
+                冗長な情報は省き、分析に必要な情報のみを抽出してください。
+            - id: user-1
+              role: user
+              text: |
+                企業名：{{#sys.query#}}
+                
+                検索結果：
+                {{#web_search_node.text#}}
+                
+                上記の検索結果から重要な情報を抽出し、500文字程度で要約してください。
+          selected: false
+          structured_output_enabled: false
+          title: "情報要約"
+          type: llm
+          variables: []
+          vision:
+            enabled: false
+        height: 98
+        id: summarizer_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "要約された情報を基に企業分析を実施"
+          model:
+            completion_params:
+              max_tokens: 1500
+              temperature: 0.4
+            mode: chat
+            name: gpt-4o
+            provider: openai
+          prompt_template:
+            - id: system-2
+              role: system
+              text: |
+                あなたは企業分析の専門家です。
+                与えられた企業情報を基に、包括的な分析レポートを作成してください。
+                
+                分析は以下の4つの観点から行い、それぞれ明確に区別して記載してください：
+                1. 企業概要：事業内容、規模、主力商品・サービス
+                2. 最新動向：直近のニュース、発表、取り組み（3-5項目）
+                3. 業界での位置づけ：競合比較、市場シェア、強み・弱み
+                4. 今後の展望：成長戦略、課題、将来性
+                
+                客観的で建設的な分析を心がけ、投資家や経営者にとって有益な情報を提供してください。
+            - id: user-2
+              role: user
+              text: |
+                企業名：{{#sys.query#}}
+                
+                要約された情報：
+                {{#summarizer_node.text#}}
+                
+                上記の情報を基に、以下の形式で企業分析レポートを作成してください：
+                
+                ## 📊 企業概要
+                [企業の基本情報と事業内容を記載]
+                
+                ## 📈 最新動向
+                • [最新のニュースや取り組み1]
+                • [最新のニュースや取り組み2]
+                • [最新のニュースや取り組み3]
+                （3-5項目を箇条書きで）
+                
+                ## 🏆 業界での位置づけ
+                [競合他社との比較、市場での立ち位置、強みと課題を記載]
+                
+                ## 🔮 今後の展望
+                [成長戦略、将来性、注目すべきポイントを記載]
+          selected: false
+          structured_output_enabled: false
+          title: "企業分析"
+          type: llm
+          variables: []
+          vision:
+            enabled: false
+        height: 98
+        id: analyzer_node
+        position:
+          x: 950
+          y: 200
+        positionAbsolute:
+          x: 950
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: '{{#analyzer_node.text#}}'
+          desc: "分析結果を出力"
+          selected: false
+          title: "回答"
+          type: answer
+          variables: []
+        height: 107
+        id: answer_node
+        position:
+          x: 1250
+          y: 200
+        positionAbsolute:
+          x: 1250
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

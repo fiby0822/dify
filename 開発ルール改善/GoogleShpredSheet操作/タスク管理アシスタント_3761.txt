@@ -1,0 +1,53 @@
+# Dify YMLファイル作成依頼プロンプト
+
+## 要件
+GoogleスプレッドシートのINPUT/OUTPUTシートを使用したタスク管理アシスタントを作成してください。
+
+### 機能要件
+1. ユーザーからタスク名と担当者名を入力として受け取る
+2. 入力されたデータを現在の日時と共にOUTPUTシートに追記（A列：日時、B列：タスク名、C列：担当者）
+3. その後、INPUTシートから既存のタスクリスト（A1:C10の範囲）を取得
+4. 追記結果と既存データを整形して表示
+
+### 技術要件
+- version: 0.3.0を使用
+- advanced-chatモードで実装
+- GoogleSheets操作にはbatch_getとbatch_updateを使用
+- Codeノードは使用しない（template-transformも使用禁止）
+- データ整形はLLMノードで実施
+- エラーハンドリングを含める
+
+### 暫定使用値
+- スプレッドシートID: 1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ
+- データ取得元: INPUTシート
+- データ反映先: OUTPUTシート
+
+## アウトプットフォルダパス
+/Users/tatsuya/Documents/01_fiby/09_ゼット/Dev/GoogleShpredSheet操作
+
+## 参考資料フォルダパス（あれば）
+なし
+
+## コーディングルール
+Dify YMLファイルの作成にあたっては、以下のコーディングルールに従ってください：
+
+### 1. 全体コーディングルール
+/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/全体コーディングルール/全体コーディングルール.md を参照してください。
+
+### 2. コンポーネント別コーディングルール
+各コンポーネントを使用する際は、/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/コンポーネント別コーディングルール フォルダ内の該当するtxtファイルを参照してください。
+特に、GoogleShpredSheet操作については以下を参照：
+/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/コンポーネント別コーディングルール/コンポーネント記述ルール_GoogleShpredSheet操作.txt
+
+### 3. 品質チェック
+YMLファイル作成後は
+/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/品質チェック/品質チェックリスト.md
+/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/品質チェック/クラッシュ事項チェックリスト.md
+を参照し、必ずセルフレビューを実施してください。チェックに引っかかった場合は、ymlファイルを改修すること。
+
+## 重要な注意事項
+1. 必ずdependenciesセクションにGoogle Sheetsプラグインの定義を含める
+2. isInLoopを使用（isInIterationは使用禁止）
+3. template-transformノードは使用禁止
+4. advanced-chatモードではstartノードのvariablesを空配列[]にする
+5. YAMLファイル内にコメント（#で始まる行）を一切含めない

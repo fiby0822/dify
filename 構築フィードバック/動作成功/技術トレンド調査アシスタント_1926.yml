@@ -1,0 +1,362 @@
+app:
+  description: "技術キーワードを入力すると、最新のトレンドや動向をWEB検索で調査し、概要、ユースケース、今後の展望、参考情報源を整理して提示します。"
+  icon: "🔍"
+  icon_background: "#E4F2FF"
+  mode: advanced-chat
+  name: "技術トレンド調査アシスタント"
+  use_icon_as_answer_icon: false
+
+dependencies:
+- type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/tavily:0.0.5@d14b87f7a28b47d973e16b029f42c72dcb19d96cf4e5c8b0e4ac87f91a3a9eb1
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      技術トレンド調査アシスタントへようこそ！
+      
+      調査したい技術キーワードを入力してください。
+      最新のトレンドや動向をWEB検索で調査し、以下の観点で整理してお伝えします：
+      
+      📊 技術の概要と最新動向
+      💼 主要なユースケース
+      🔮 今後の展望
+      📚 参考となる情報源
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "生成AI"
+      - "量子コンピューティング"
+      - "WebAssembly"
+      - "エッジコンピューティング"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-query_optimizer-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: query_optimizer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: tool
+        id: query_optimizer-web_search-edge
+        selected: false
+        source: query_optimizer_node
+        sourceHandle: source
+        target: web_search_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: tool
+          targetType: llm
+        id: web_search-preprocessor-edge
+        selected: false
+        source: web_search_node
+        sourceHandle: source
+        target: preprocessor_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: llm
+        id: preprocessor-analyzer-edge
+        selected: false
+        source: preprocessor_node
+        sourceHandle: source
+        target: analyzer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: analyzer-answer-edge
+        selected: false
+        source: analyzer_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "ユーザーが入力した技術キーワードを受け取る"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "検索クエリを最適化"
+          selected: false
+          title: "クエリ最適化"
+          type: llm
+          model:
+            provider: openai
+            name: gpt-3.5-turbo
+            mode: chat
+            completion_params:
+              temperature: 0.3
+              max_tokens: 200
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          prompt_template:
+            - id: system-prompt-1
+              role: system
+              text: |
+                あなたはWEB検索クエリの最適化専門家です。
+                ユーザーが入力した技術キーワードを、より効果的な検索クエリに変換してください。
+                
+                以下の点を考慮してください：
+                - 最新情報を取得するための時期指定（2024年など）
+                - 技術トレンドを示すキーワード（trend、latest、futureなど）
+                - 具体的で検索しやすい形式への変換
+            - id: user-prompt-1
+              role: user
+              text: |
+                技術キーワード：{{#sys.query#}}
+                
+                上記のキーワードについて、最新のトレンドや動向を調査するための最適な検索クエリを生成してください。
+                出力は検索クエリのみとし、説明は不要です。
+        height: 98
+        id: query_optimizer_node
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "最適化されたクエリでWEB検索を実行"
+          provider_id: langgenius/tavily/tavily
+          provider_type: builtin
+          tool_name: tavily_search
+          provider_name: langgenius/tavily/tavily
+          tool_label: Tavily Search
+          is_team_authorization: true
+          selected: false
+          title: "技術トレンド検索"
+          type: tool
+          tool_parameters:
+            query:
+              type: mixed
+              value: '{{#query_optimizer_node.text#}}'
+          tool_configurations:
+            search_depth: basic
+            topic: general
+            max_results: 3
+            include_answer: 1
+            include_images: 0
+            include_raw_content: 0
+            time_range: month
+        height: 98
+        id: web_search_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "検索結果を要約してトークン数を削減"
+          selected: false
+          title: "検索結果前処理"
+          type: llm
+          model:
+            provider: openai
+            name: gpt-3.5-turbo
+            mode: chat
+            completion_params:
+              temperature: 0.3
+              max_tokens: 800
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          prompt_template:
+            - id: system-prompt-2
+              role: system
+              text: |
+                あなたは検索結果の要約専門家です。
+                WEB検索で取得した情報から重要なポイントのみを抽出し、簡潔に要約してください。
+                
+                要約のポイント：
+                - 最新の動向やトレンド
+                - 主要な技術的特徴
+                - 実用的な応用例
+                - 信頼できる情報源
+            - id: user-prompt-2
+              role: user
+              text: |
+                技術キーワード：{{#sys.query#}}
+                
+                検索結果：
+                {{#web_search_node.text#}}
+                
+                上記の検索結果から重要な情報を抽出し、箇条書きで要約してください。
+        height: 98
+        id: preprocessor_node
+        position:
+          x: 950
+          y: 200
+        positionAbsolute:
+          x: 950
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "要約された情報を最終分析"
+          selected: false
+          title: "トレンド分析"
+          type: llm
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+            completion_params:
+              temperature: 0.5
+              max_tokens: 1500
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          prompt_template:
+            - id: system-prompt-3
+              role: system
+              text: |
+                あなたは技術トレンド分析の専門家です。
+                提供された要約情報を基に、技術トレンドを体系的に分析し、ユーザーにとって有益な形で整理して提示してください。
+                
+                分析の観点：
+                1. 技術の概要と最新動向
+                2. 主要なユースケース
+                3. 今後の展望
+                4. 参考となる情報源
+                
+                客観的で中立的な立場から分析を行い、実用的な洞察を提供してください。
+            - id: user-prompt-3
+              role: user
+              text: |
+                技術キーワード：{{#sys.query#}}
+                
+                要約された検索結果：
+                {{#preprocessor_node.text#}}
+                
+                上記の情報を基に、この技術について以下の形式で分析結果を提示してください：
+                
+                📊 技術の概要と最新動向
+                [技術の基本概念と最新のトレンドを記載]
+                
+                💼 主要なユースケース
+                - [具体的な活用例を箇条書きで]
+                
+                🔮 今後の展望
+                - [将来的な発展可能性を箇条書きで]
+                
+                📚 参考となる情報源
+                - [詳細を学ぶための推奨リソースを箇条書きで]
+        height: 98
+        id: analyzer_node
+        position:
+          x: 1250
+          y: 200
+        positionAbsolute:
+          x: 1250
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#analyzer_node.text#}}"
+          desc: "分析結果を表示"
+          selected: false
+          title: "回答"
+          type: answer
+          variables: []
+        height: 107
+        id: answer_node
+        position:
+          x: 1550
+          y: 200
+        positionAbsolute:
+          x: 1550
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

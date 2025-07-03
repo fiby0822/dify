@@ -1,0 +1,145 @@
+コンポーネント記述ルール: Google Sheets操作
+
+■ブロック概要
+Google Sheetsとの連携を実現するtoolノード。データの読み取り（batch_get）と書き込み（batch_update）を提供。
+
+■依存関係（必須）
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+
+■batch_get（データ取得）
+
+### 必須パラメータ
+- spreadsheet_id: スプレッドシートID（44文字）
+- ranges: 取得範囲の配列（文字列形式必須）
+
+### 正しい記述例
+```yaml
+tool_parameters:
+  ranges:
+    type: mixed
+    value: '["INPUT!A1:C10"]'  # 全体を引用符で囲む
+  spreadsheet_id:
+    type: mixed
+    value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+```
+
+### よくある間違い
+```yaml
+# NG：引用符なし（YAMLパースエラー）
+ranges:
+  type: mixed
+  value: ["INPUT!A1:C10"]
+```
+
+■batch_update（データ書き込み）
+
+### 必須パラメータ
+- spreadsheet_id: スプレッドシートID
+- data: 書き込みデータ（JSON配列形式）
+
+### データ形式
+```json
+[
+  {
+    "range": "OUTPUT!A1:B2",
+    "values": [
+      ["ヘッダー1", "ヘッダー2"],
+      ["データ1", "データ2"]
+    ]
+  }
+]
+```
+
+### LLM出力の使用（重要）
+LLMの出力を直接batch_updateのdataに使用するとクラッシュの原因となります。
+必ずtemplate-transformノードで整形してください。
+
+#### NG例：
+```yaml
+data:
+  type: mixed
+  value: '[{"range": "OUTPUT!A1:B5", "values": {{#llm_analyzer.text#}}}]'
+```
+
+#### 推奨パターン：
+1. LLMノードで構造化されたデータを生成
+2. template-transformノードでJSON形式に整形
+3. batch_updateノードで書き込み
+
+■エラー防止チェックリスト
+- [ ] dependenciesにGoogle Sheetsツールが定義されている
+- [ ] rangesパラメータが引用符で囲まれている
+- [ ] dataパラメータがJSON配列形式
+- [ ] LLM出力を直接使用していない
+- [ ] 各行のカラム数が一致している
+- [ ] 空のセルも""として明示的に指定
+
+■完全な実装例
+
+```yaml
+# 依存関係
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+
+# データ読み取りノード
+- data:
+    type: tool
+    provider_id: omluc/google_sheets
+    provider_name: Google Sheets
+    provider_type: marketplace
+    tool_label: Google Sheets
+    tool_name: batch_get
+    tool_parameters:
+      ranges:
+        type: mixed
+        value: '["INPUT!A1:C10"]'
+      spreadsheet_id:
+        type: mixed
+        value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+    selected: false
+    title: Google Sheets読み取り
+    desc: 入力データを取得
+
+# データ書き込みノード
+- data:
+    type: tool
+    provider_id: omluc/google_sheets
+    provider_name: Google Sheets
+    provider_type: marketplace
+    tool_label: Google Sheets
+    tool_name: batch_update
+    tool_parameters:
+      data:
+        type: mixed
+        value: '{{#template_node.output#}}'
+      spreadsheet_id:
+        type: mixed
+        value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+      value_input_option:
+        type: mixed
+        value: "USER_ENTERED"
+    selected: false
+    title: Google Sheets書き込み
+    desc: 結果を出力
+```
+
+■トラブルシューティング
+
+### エラー：Unable to parse data
+原因：rangesパラメータの引用符不足またはJSON形式エラー
+対策：全体を引用符で囲み、JSON形式を確認
+
+### エラー：Invalid spreadsheet ID
+原因：スプレッドシートIDの形式不正
+対策：44文字の正しいIDを確認
+
+### エラー：Authentication failed
+原因：依存関係設定の不備
+対策：dependencies設定を確認

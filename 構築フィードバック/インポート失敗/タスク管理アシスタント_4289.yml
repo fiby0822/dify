@@ -1,0 +1,353 @@
+app:
+  description: GoogleスプレッドシートのINPUT/OUTPUTシートを使用してタスクを管理するアシスタント
+  icon: 📋
+  icon_background: '#FFEAD5'
+  mode: advanced-chat
+  name: タスク管理アシスタント
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions: []
+      allowed_file_types: []
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        image_file_size_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: 'こんにちは！タスク管理アシスタントです。
+    
+    タスク名と担当者名を教えてください。GoogleスプレッドシートのOUTPUTシートに記録し、INPUTシートの既存タスクと一緒に表示します。
+    
+    例: 「会議資料作成を田中さんが担当」'
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+    - 報告書作成を山田さんが担当
+    - プレゼン準備を佐藤さんが担当
+    - システム改修を鈴木さんが担当
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        selected: false
+        sourceType: start
+        targetType: llm
+      id: start_to_format
+      source: start_node
+      sourceHandle: source
+      target: llm_data_format
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        selected: false
+        sourceType: llm
+        targetType: tool
+      id: format_to_update
+      source: llm_data_format
+      sourceHandle: source
+      target: batch_update_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        selected: false
+        sourceType: tool
+        targetType: tool
+      id: update_to_get
+      source: batch_update_node
+      sourceHandle: source
+      target: batch_get_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        selected: false
+        sourceType: tool
+        targetType: llm
+      id: get_to_formatter
+      source: batch_get_node
+      sourceHandle: source
+      target: llm_formatter
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        selected: false
+        sourceType: llm
+        targetType: answer
+      id: formatter_to_answer
+      source: llm_formatter
+      sourceHandle: source
+      target: answer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: ''
+        selected: false
+        title: 開始
+        type: start
+        variables: []
+      height: 54
+      id: start_node
+      position:
+        x: 50
+        y: 300
+      positionAbsolute:
+        x: 50
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: ユーザー入力からJSON形式のデータを生成
+        memory:
+          enabled: false
+        model:
+          completion_params:
+            max_tokens: 500
+            temperature: 0.2
+          mode: chat
+          name: gpt-3.5-turbo
+          provider: openai
+        prompt_template:
+        - id: prompt_1
+          role: system
+          text: あなたはデータ変換の専門家です。ユーザーの入力から、GoogleスプレッドシートのOUTPUTシートに記録するためのJSON形式のデータを生成してください。
+
+            現在の日時を含めて、以下の形式で出力してください：
+            [{"range": "OUTPUT!A1:C1", "values": [["日時", "タスク名", "担当者"]]}]
+
+            必ず有効なJSON形式で、1行分のデータとして出力してください。
+        - id: prompt_2
+          role: user
+          text: '{{#sys.query#}}'
+        selected: false
+        structured_output_enabled: false
+        title: データフォーマット生成
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 98
+      id: llm_data_format
+      position:
+        x: 350
+        y: 300
+      positionAbsolute:
+        x: 350
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: OUTPUTシートにデータを追記
+        is_team_authorization: true
+        output_schema: null
+        paramSchemas: []
+        params:
+          data: ''
+          include_values_in_response: ''
+          response_date_time_render_option: ''
+          response_value_render_option: ''
+          spreadsheet_id: ''
+          value_input_option: ''
+        provider_id: omluc/google_sheets/google_sheets
+        provider_name: omluc/google_sheets/google_sheets
+        provider_type: builtin
+        selected: false
+        title: データ追記（OUTPUT）
+        tool_configurations:
+          include_values_in_response: 0
+          response_date_time_render_option: null
+          response_value_render_option: null
+          value_input_option: USER_ENTERED
+        tool_description: Update data in multiple ranges in a Google Sheet
+        tool_label: Batch Update
+        tool_name: batch_update
+        tool_parameters:
+          data:
+            type: mixed
+            value: '{{#llm_data_format.text#}}'
+          spreadsheet_id:
+            type: mixed
+            value: 1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ
+        type: tool
+      height: 168
+      id: batch_update_node
+      position:
+        x: 650
+        y: 300
+      positionAbsolute:
+        x: 650
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: INPUTシートから既存データを取得
+        is_team_authorization: true
+        output_schema: null
+        paramSchemas: []
+        params:
+          date_time_render_option: ''
+          major_dimension: ''
+          ranges: ''
+          spreadsheet_id: ''
+          value_render_option: ''
+        provider_id: omluc/google_sheets/google_sheets
+        provider_name: omluc/google_sheets/google_sheets
+        provider_type: builtin
+        selected: false
+        title: 既存データ取得（INPUT）
+        tool_configurations:
+          date_time_render_option: FORMATTED_STRING
+          major_dimension: null
+          value_render_option: null
+        tool_description: Retrieve data from multiple ranges in a Google Sheet
+        tool_label: Batch Get
+        tool_name: batch_get
+        tool_parameters:
+          ranges:
+            type: mixed
+            value: '["INPUT!A1:C10"]'
+          spreadsheet_id:
+            type: mixed
+            value: 1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ
+        type: tool
+      height: 142
+      id: batch_get_node
+      position:
+        x: 950
+        y: 300
+      positionAbsolute:
+        x: 950
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 追記結果と既存データを整形して表示
+        memory:
+          enabled: false
+        model:
+          completion_params:
+            max_tokens: 1000
+            temperature: 0.3
+          mode: chat
+          name: gpt-3.5-turbo
+          provider: openai
+        prompt_template:
+        - id: prompt_3
+          role: system
+          text: あなたはデータ整形の専門家です。GoogleスプレッドシートのOUTPUTシートへの追記結果とINPUTシートの既存データを、分かりやすく整形して表示してください。
+
+            以下の形式で表示してください：
+            1. 今回追加したタスク（OUTPUTシートへの追記内容）
+            2. 既存のタスクリスト（INPUTシートの内容）
+
+            表形式で見やすく整形してください。
+        - id: prompt_4
+          role: user
+          text: 'OUTPUTシートへの追記結果：
+          {{#batch_update_node.json#}}
+
+          INPUTシートの既存データ：
+          {{#batch_get_node.json#}}'
+        selected: false
+        structured_output_enabled: false
+        title: 結果整形
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 98
+      id: llm_formatter
+      position:
+        x: 1250
+        y: 300
+      positionAbsolute:
+        x: 1250
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '{{#llm_formatter.text#}}'
+        desc: ''
+        selected: false
+        title: 回答
+        type: answer
+        variables: []
+      height: 107
+      id: answer_node
+      position:
+        x: 1550
+        y: 300
+      positionAbsolute:
+        x: 1550
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: 100
+      y: 100
+      zoom: 0.8

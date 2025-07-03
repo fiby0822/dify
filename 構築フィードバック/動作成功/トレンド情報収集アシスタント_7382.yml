@@ -1,0 +1,350 @@
+app:
+  description: 最新のトレンド情報を収集し、整理して提供します。WEB検索機能を活用し、効率的に必要な情報をまとめます。
+  icon: 🔍
+  icon_background: "#E1D7FF"
+  mode: advanced-chat
+  name: トレンド情報収集アシスタント
+  use_icon_as_answer_icon: false
+
+dependencies:
+  - type: marketplace
+    value:
+      marketplace_plugin_unique_identifier: langgenius/tavily:0.0.5@42e5db8eb3ad2d2e97e1285cf0ca7feb71e3f6f2
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+      file_size_limit: 10
+      allowed_extensions: []
+    opening_statement: |
+      トレンド情報収集アシスタントへようこそ！
+      
+      最新のトレンド情報について知りたいことがあれば、お気軽にお尋ねください。
+      例えば、技術動向、市場トレンド、業界ニュースなど、様々な分野の最新情報を調査できます。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - AI技術の最新トレンドについて教えてください
+      - 今週のフィンテック業界の注目ニュースは何ですか？
+      - 生成AIの企業での活用事例を調べてください
+      - サステナビリティ関連の最新動向を教えてください
+    text_to_speech:
+      enabled: false
+      language: ""
+      voice: ""
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start_node-query_optimizer_node
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: query_optimizer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: tool
+        id: query_optimizer_node-web_search_node
+        selected: false
+        source: query_optimizer_node
+        sourceHandle: source
+        target: web_search_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: tool
+          targetType: llm
+        id: web_search_node-preprocessor_node
+        selected: false
+        source: web_search_node
+        sourceHandle: source
+        target: preprocessor_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: llm
+        id: preprocessor_node-analyzer_node
+        selected: false
+        source: preprocessor_node
+        sourceHandle: source
+        target: analyzer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: analyzer_node-answer_node
+        selected: false
+        source: analyzer_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: ''
+          selected: false
+          title: 開始
+          type: start
+          variables: []
+        height: 98
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          completion_params:
+            temperature: 0.3
+            max_tokens: 200
+          context:
+            enabled: false
+            variable_selector: []
+          desc: 検索キーワードを最適化
+          model:
+            provider: openai
+            name: gpt-3.5-turbo
+            mode: chat
+          prompt_template:
+            - id: system-prompt-optimizer
+              role: system
+              text: |
+                あなたは検索キーワード最適化の専門家です。
+                ユーザーの質問から、最も関連性の高い検索結果を得られるキーワードを抽出してください。
+                
+                ルール：
+                1. 簡潔で具体的なキーワードを使用
+                2. 業界用語や専門用語を適切に含める
+                3. 最新情報を得るため、必要に応じて年や期間を含める
+                4. 英語のキーワードも適宜使用
+                5. 3-5単語程度の検索クエリを生成
+            - id: user-prompt-optimizer
+              role: user
+              text: |
+                以下の質問から検索キーワードを抽出してください：
+                {{#sys.query#}}
+          selected: false
+          structured_output_enabled: false
+          title: クエリ最適化
+          type: llm
+          variables: []
+          vision:
+            enabled: false
+        height: 98
+        id: query_optimizer_node
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: ''
+          is_team_authorization: true
+          provider_id: langgenius/tavily/tavily
+          provider_name: langgenius/tavily/tavily
+          provider_type: builtin
+          selected: false
+          title: WEB検索
+          tool_configurations:
+            days: 7
+            exclude_domains: ""
+            include_answer: 1
+            include_domains: ""
+            include_image_descriptions: 0
+            include_images: 0
+            include_raw_content: 0
+            max_results: 3
+            search_depth: basic
+            time_range: week
+            topic: general
+          tool_label: Tavily Search
+          tool_name: tavily_search
+          tool_parameters:
+            query:
+              type: mixed
+              value: '{{#query_optimizer_node.text#}}'
+          type: tool
+        height: 132
+        id: web_search_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          completion_params:
+            temperature: 0.3
+            max_tokens: 1000
+          context:
+            enabled: false
+            variable_selector: []
+          desc: 検索結果を要約
+          model:
+            provider: openai
+            name: gpt-3.5-turbo
+            mode: chat
+          prompt_template:
+            - id: system-prompt-preprocessor
+              role: system
+              text: |
+                あなたは情報要約の専門家です。
+                WEB検索結果から重要な情報を抽出し、簡潔にまとめてください。
+                
+                要約のルール：
+                1. 各情報源の信頼性を考慮
+                2. 重複する情報は統合
+                3. 日付や数値などの具体的な情報を保持
+                4. 箇条書き形式で整理
+                5. 500文字以内に要約
+            - id: user-prompt-preprocessor
+              role: user
+              text: |
+                以下の検索結果を要約してください：
+                {{#web_search_node.text#}}
+          selected: false
+          structured_output_enabled: false
+          title: 前処理
+          type: llm
+          variables: []
+          vision:
+            enabled: false
+        height: 98
+        id: preprocessor_node
+        position:
+          x: 950
+          y: 200
+        positionAbsolute:
+          x: 950
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          completion_params:
+            temperature: 0.7
+            max_tokens: 2000
+          context:
+            enabled: false
+            variable_selector: []
+          desc: 最終的な分析と回答生成
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-prompt-analyzer
+              role: system
+              text: |
+                あなたはトレンド分析の専門家です。
+                収集された情報を基に、ユーザーの質問に対して包括的で洞察に富んだ回答を提供してください。
+                
+                回答のガイドライン：
+                1. 最新のトレンドを明確に説明
+                2. 具体的な事例や数値を含める
+                3. 今後の展望や影響について考察
+                4. 情報源の信頼性に言及
+                5. 読みやすい構造で整理
+                
+                回答形式：
+                - 見出しを使って構造化
+                - 重要なポイントは箇条書き
+                - 結論を明確に提示
+            - id: user-prompt-analyzer
+              role: user
+              text: |
+                ユーザーの質問：
+                {{#sys.query#}}
+                
+                要約された検索結果：
+                {{#preprocessor_node.text#}}
+                
+                上記の情報を基に、ユーザーの質問に対して詳細で洞察に富んだ回答を作成してください。
+          selected: false
+          structured_output_enabled: false
+          title: 最終分析
+          type: llm
+          variables: []
+          vision:
+            enabled: false
+        height: 98
+        id: analyzer_node
+        position:
+          x: 1250
+          y: 200
+        positionAbsolute:
+          x: 1250
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: '{{#analyzer_node.text#}}'
+          desc: ''
+          selected: false
+          title: 回答
+          type: answer
+        height: 107
+        id: answer_node
+        position:
+          x: 1550
+          y: 200
+        positionAbsolute:
+          x: 1550
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

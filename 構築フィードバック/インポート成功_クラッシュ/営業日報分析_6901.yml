@@ -1,0 +1,387 @@
+app:
+  description: 営業日報データをGoogle Sheetsから読み込み、分析・集計を行い、結果を書き込むシステム
+  icon: 📊
+  icon_background: '#E8F4FD'
+  mode: advanced-chat
+  name: 営業日報分析システム
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        image_file_size_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: '営業日報分析システムへようこそ！
+    
+    「分析開始」と入力すると、Google SheetsのINPUTシートから営業日報データを読み込み、分析・集計を行い、結果をOUTPUTシートに書き込みます。'
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+    - 分析開始
+    - 日報分析を実行
+    - 営業データを集計して
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: start
+        targetType: tool
+      id: start-source-get_sheet_data-target
+      selected: false
+      source: start
+      sourceHandle: source
+      target: get_sheet_data
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: template-transform
+      id: get_sheet_data-source-format_data-target
+      selected: false
+      source: get_sheet_data
+      sourceHandle: source
+      target: format_data
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: template-transform
+        targetType: llm
+      id: format_data-source-analyze_data-target
+      selected: false
+      source: format_data
+      sourceHandle: source
+      target: analyze_data
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: template-transform
+      id: analyze_data-source-prepare_output-target
+      selected: false
+      source: analyze_data
+      sourceHandle: source
+      target: prepare_output
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: template-transform
+        targetType: tool
+      id: prepare_output-source-update_sheet_data-target
+      selected: false
+      source: prepare_output
+      sourceHandle: source
+      target: update_sheet_data
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: answer
+      id: update_sheet_data-source-answer-target
+      selected: false
+      source: update_sheet_data
+      sourceHandle: source
+      target: answer
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: ''
+        selected: false
+        title: 開始
+        type: start
+        variables: []
+      height: 54
+      id: start
+      position:
+        x: 50
+        y: 282
+      positionAbsolute:
+        x: 50
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: "Google SheetsのINPUTシートから営業日報データを取得"
+        is_team_authorization: true
+        output_schema: null
+        paramSchemas: []
+        params:
+          date_time_render_option: ''
+          major_dimension: ''
+          ranges: ''
+          spreadsheet_id: ''
+          value_render_option: ''
+        provider_id: omluc/google_sheets/google_sheets
+        provider_name: omluc/google_sheets/google_sheets
+        provider_type: builtin
+        selected: false
+        title: 営業日報データ取得
+        tool_configurations:
+          date_time_render_option: FORMATTED_STRING
+          major_dimension: null
+          value_render_option: null
+        tool_description: Retrieve data from multiple ranges in a Google Sheet
+        tool_label: Batch Get
+        tool_name: batch_get
+        tool_parameters:
+          ranges:
+            type: mixed
+            value: '["INPUT!A1:D10"]'
+          spreadsheet_id:
+            type: mixed
+            value: 1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ
+        type: tool
+      height: 142
+      id: get_sheet_data
+      position:
+        x: 350
+        y: 282
+      positionAbsolute:
+        x: 350
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: "取得したデータを分析用に整形"
+        selected: false
+        template: '営業日報データ：
+        
+        {{#get_sheet_data.json#}}'
+        title: データ整形
+        type: template-transform
+        variables:
+        - value_selector:
+          - get_sheet_data
+          - json
+          value_type: array[object]
+          variable: get_sheet_data
+      height: 54
+      id: format_data
+      position:
+        x: 650
+        y: 282
+      positionAbsolute:
+        x: 650
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        completion_params:
+          frequency_penalty: 0
+          max_tokens: 2000
+          presence_penalty: 0
+          stop: []
+          temperature: 0.7
+          top_p: 1
+        context:
+          enabled: false
+          variable_selector: []
+        desc: "営業日報データを分析"
+        id: analyze_data
+        memory:
+          enabled: false
+          window:
+            enabled: false
+            size: 10
+        mode: chat
+        name: gpt-4o
+        prompt_template:
+        - id: "1"
+          role: system
+          text: "あなたは営業分析の専門家です。営業日報データを分析し、以下の項目について要約・分析を行ってください：\n1. 売上合計の計算\n2. 訪問先企業の傾向分析\n3. 営業活動の要約\n\n分析結果は簡潔にまとめてください。"
+        - id: "2"
+          role: user
+          text: "以下の営業日報データを分析してください：\n\n{{#format_data.output#}}\n\n売上合計、訪問先企業の傾向、営業活動の要約をお願いします。"
+        provider: openai
+        selected: false
+        structured_output_enabled: false
+        title: 営業データ分析
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 125
+      id: analyze_data
+      position:
+        x: 950
+        y: 282
+      positionAbsolute:
+        x: 950
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: "分析結果をGoogle Sheets書き込み用に整形"
+        selected: false
+        template: |
+          [
+            {
+              "range": "OUTPUT!A1:B1",
+              "values": [["営業日報分析結果", {{#analyze_data.text#|tojson}}]]
+            }
+          ]
+        title: 出力データ準備
+        type: template-transform
+        variables:
+        - value_selector:
+          - analyze_data
+          - text
+          value_type: string
+          variable: analyze_data
+      height: 54
+      id: prepare_output
+      position:
+        x: 1250
+        y: 282
+      positionAbsolute:
+        x: 1250
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: "分析結果をOUTPUTシートに書き込み"
+        is_team_authorization: true
+        output_schema: null
+        paramSchemas: []
+        params:
+          data: ''
+          include_values_in_response: ''
+          response_date_time_render_option: ''
+          response_value_render_option: ''
+          spreadsheet_id: ''
+          value_input_option: ''
+        provider_id: omluc/google_sheets/google_sheets
+        provider_name: omluc/google_sheets/google_sheets
+        provider_type: builtin
+        selected: false
+        title: 分析結果書き込み
+        tool_configurations:
+          include_values_in_response: 0
+          response_date_time_render_option: null
+          response_value_render_option: null
+          value_input_option: USER_ENTERED
+        tool_description: Update data in multiple ranges in a Google Sheet
+        tool_label: Batch Update
+        tool_name: batch_update
+        tool_parameters:
+          data:
+            type: mixed
+            value: '{{#prepare_output.output#}}'
+          spreadsheet_id:
+            type: mixed
+            value: 1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ
+        type: tool
+      height: 168
+      id: update_sheet_data
+      position:
+        x: 1550
+        y: 282
+      positionAbsolute:
+        x: 1550
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '営業日報の分析が完了しました。
+
+          取得したデータ：
+          {{#format_data.output#}}
+
+          分析結果：
+          {{#analyze_data.text#}}
+
+          分析結果はGoogle SheetsのOUTPUTシートに保存されました。'
+        desc: ''
+        selected: false
+        title: 回答
+        type: answer
+        variables: []
+      height: 174
+      id: answer
+      position:
+        x: 1850
+        y: 282
+      positionAbsolute:
+        x: 1850
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: 239.64533984412526
+      y: 255.26793447542514
+      zoom: 0.5336577473637851

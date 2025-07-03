@@ -1,20 +1,20 @@
 次のymlを読み込み、コーディングルールの改善案を作成して下さい
 
 #読み込み対象
-/Users/tatsuya/Documents/01_fiby/09_ゼット/ymlサンプル/検索テスト.yml
+/Users/tatsuya/Documents/01_fiby/09_ゼット/ymlサンプル/GoogleShpredSheetサンプル.yml
 
 #追加したい内容
-WEB検索に関するコンポーネント別コーディングルール
+Googleスプレッドシートからの読み込み/値の反映に関するコンポーネント別コーディングルール
 
 #追加先
-/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/コンポーネント別コーディングルール/コンポーネント記述ルール_検索.txt
+/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/コンポーネント別コーディングルール/コンポーネント記述ルール_GoogleShpredSheet操作.txt
 
 #下記の構造にあることを理解した上で、改善案を考えること
 ①全体品質を保つためのもの
 /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/全体コーディングルール/全体コーディングルール.md
 
 ②各コンポーネントの品質を保つためのもの
-/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/コンポーネント別コーディングルール/コンポーネント記述ルール_知識検索.txt
+/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/コンポーネント別コーディングルール/コンポーネント記述ルール_GoogleShpredSheet操作.txt
 
 ③作成後に品質チェックするためのリスト
 /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/品質チェック/品質チェックリスト.md

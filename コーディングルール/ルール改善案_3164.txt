@@ -1,0 +1,308 @@
+# Difyコーディングルール改善案
+
+生成日時: 2025-07-03
+ファイル番号: 3164
+
+## 改善案の背景
+
+インポート失敗、クラッシュ、動作エラーの分析結果に基づき、以下のルール改善を提案します。
+
+### 分析結果サマリー
+
+1. **インポート失敗** - タスク管理アシスタント_4289.yml
+   - 原因：YAMLファイル内の文字列に引用符が不足（データの中の'["INPUT!A1:C10"]'）
+
+2. **インポート成功・クラッシュ** - 営業日報分析_6901.yml
+   - 原因：特定のLLM出力処理でのエラー（{{#llm_analyzer.text#}}を直接valuesに使用）
+
+3. **動作エラー ケース1** - シート連携データ管理ツール_7392.yml
+   - 原因：IF-ELSEノードのlogical_operatorフィールド欠落
+
+4. **動作エラー ケース2** - 営業日報集計システム_5623.yml
+   - 原因：LLMノードのmemory.windowフィールド欠落
+
+## 改善提案
+
+### 1. 全体コーディングルール.mdへの追加
+
+#### セクション0.3 構造エラーの確認への追加項目
+
+```markdown
+### 0.3 構造エラーの確認
+
+（既存項目の後に追加）
+
+- [ ] **GoogleSheetsツールのrangesパラメータが正しく引用符で囲まれている**
+  - 例：value: '["INPUT!A1:C10"]' （配列全体を引用符で囲む）
+  - NG例：value: ["INPUT!A1:C10"] （引用符なしはパースエラー）
+```
+
+#### セクション5.2 GoogleSheets固有の注意事項（新規追加）
+
+```markdown
+## 5.2 GoogleSheets固有の注意事項
+
+### データ形式の厳密な管理
+```yaml
+# batch_updateでLLMの出力を直接使用する場合のNG例
+tool_parameters:
+  data:
+    type: mixed
+    value: '[{"range": "OUTPUT!A1:B5", "values": {{#llm_analyzer.text#}}}]'
+    # エラー：LLMの出力形式が保証されない
+
+# 推奨：template-transformノードで整形
+- data:
+    type: template-transform
+    template: |
+      [{
+        "range": "OUTPUT!A1:B5",
+        "values": [
+          ["項目", "内容"],
+          ["結果", {{#llm_analyzer.text#|tojson}}]
+        ]
+      }]
+```
+
+### rangesパラメータの記述方法
+```yaml
+# 正しい記述（全体を引用符で囲む）
+ranges:
+  type: mixed
+  value: '["INPUT!A1:C10"]'
+
+# 間違った記述（YAMLパースエラー）
+ranges:
+  type: mixed
+  value: ["INPUT!A1:C10"]
+```
+```
+
+### 2. コンポーネント記述ルール_IF_ELSE.txtへの追加
+
+#### 必須パラメータセクションの修正
+
+```
+■必須パラメータ（ノードレベル）
+（既存の項目リストの最後に追加）
+- [ ] logical_operator: 論理演算子（"and"または"or"）※各caseに必須
+```
+
+#### よくある間違いセクションの修正
+
+```
+■よくある間違い（エラーの原因）
+（既存リストを以下のように修正）
+
+1. ★最頻出エラー★ logical_operatorフィールドの欠落
+   - 症状: "logical_operator Field required"エラー
+   - 原因: casesの各要素にlogical_operatorを忘れる
+   - 対策: 必ず各caseにlogical_operator: "and"または"or"を設定
+```
+
+### 3. 品質チェックリスト.mdへの追加
+
+#### セクション4.2 llmノードへの追加
+
+```markdown
+### 4.2 llmノード
+
+（既存項目の後に追加）
+
+- [ ] **memoryフィールドを使用する場合、以下の完全な構造になっている**
+  ```yaml
+  memory:
+    enabled: false
+    window:
+      enabled: false
+      size: 10
+  ```
+- [ ] **または、memoryフィールド自体を完全に省略している（推奨）**
+```
+
+#### セクション4.13.1 Google Sheets操作への追加
+
+```markdown
+#### 4.13.1 Google Sheets操作の場合
+
+（既存項目の後に追加）
+
+- [ ] **batch_getのrangesパラメータが引用符で囲まれた文字列形式になっている**
+- [ ] **LLM出力を直接batch_updateのvaluesに使用していない**
+- [ ] **必要に応じてtemplate-transformノードでデータ整形している**
+```
+
+### 4. クラッシュ事項チェックリスト.mdへの追加
+
+#### セクション3.2 IF_ELSEノードへの追加
+
+```markdown
+### 3.2 IF_ELSEノード
+
+（既存項目の最初に追加）
+
+- [ ] **全てのcaseにlogical_operatorが設定されている（最重要）**
+```
+
+#### セクション5.1 memory設定への修正
+
+```markdown
+### 5.1 memory設定
+
+- [ ] memoryフィールドを使用する場合、windowフィールドが含まれている
+- [ ] windowフィールドにはenabledとsizeの両方が設定されている
+- [ ] または、memoryフィールド自体を省略している（推奨）
+```
+
+#### 新規セクション13.8 GoogleSheets固有のデータ形式エラー
+
+```markdown
+### 13.8 GoogleSheets固有のデータ形式エラー
+
+#### 症状
+- "Unable to parse data"エラー
+- "Invalid JSON format"エラー
+- LLM出力の直接使用によるクラッシュ
+
+#### 原因
+- rangesパラメータの引用符不足
+- LLM出力を直接batch_updateのdataに使用
+- JSON配列の形式不正
+
+#### チェック項目
+- [ ] **rangesパラメータ全体が引用符で囲まれている**
+- [ ] **LLM出力を直接使用せず、template-transformで整形している**
+- [ ] **データ構造が[{"range": "...", "values": [[...]]}]形式**
+
+#### 防止策
+```yaml
+# NG：LLM出力の直接使用
+data:
+  type: mixed
+  value: '[{"range": "OUTPUT!A1:B5", "values": {{#llm.text#}}}]'
+
+# OK：template-transformで整形
+- data:
+    type: template-transform
+    template: |
+      [{
+        "range": "OUTPUT!A1:B5", 
+        "values": [
+          ["ヘッダー1", "ヘッダー2"],
+          ["データ1", "データ2"]
+        ]
+      }]
+```
+```
+
+### 5. コンポーネント記述ルール_GoogleShpredSheet操作.txt（新規作成推奨）
+
+```
+コンポーネント記述ルール: Google Sheets操作
+
+■ブロック概要
+Google Sheetsとの連携を実現するtoolノード。データの読み取り（batch_get）と書き込み（batch_update）を提供。
+
+■依存関係（必須）
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+
+■batch_get（データ取得）
+
+### 必須パラメータ
+- spreadsheet_id: スプレッドシートID（44文字）
+- ranges: 取得範囲の配列（文字列形式必須）
+
+### 正しい記述例
+```yaml
+tool_parameters:
+  ranges:
+    type: mixed
+    value: '["INPUT!A1:C10"]'  # 全体を引用符で囲む
+  spreadsheet_id:
+    type: mixed
+    value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+```
+
+### よくある間違い
+```yaml
+# NG：引用符なし（YAMLパースエラー）
+ranges:
+  type: mixed
+  value: ["INPUT!A1:C10"]
+```
+
+■batch_update（データ書き込み）
+
+### 必須パラメータ
+- spreadsheet_id: スプレッドシートID
+- data: 書き込みデータ（JSON配列形式）
+
+### データ形式
+```json
+[
+  {
+    "range": "OUTPUT!A1:B2",
+    "values": [
+      ["ヘッダー1", "ヘッダー2"],
+      ["データ1", "データ2"]
+    ]
+  }
+]
+```
+
+### LLM出力の使用（重要）
+LLMの出力を直接batch_updateのdataに使用するとクラッシュの原因となります。
+必ずtemplate-transformノードで整形してください。
+
+#### NG例：
+```yaml
+data:
+  type: mixed
+  value: '[{"range": "OUTPUT!A1:B5", "values": {{#llm_analyzer.text#}}}]'
+```
+
+#### 推奨パターン：
+1. LLMノードで構造化されたデータを生成
+2. template-transformノードでJSON形式に整形
+3. batch_updateノードで書き込み
+
+■エラー防止チェックリスト
+- [ ] dependenciesにGoogle Sheetsツールが定義されている
+- [ ] rangesパラメータが引用符で囲まれている
+- [ ] dataパラメータがJSON配列形式
+- [ ] LLM出力を直接使用していない
+- [ ] 各行のカラム数が一致している
+- [ ] 空のセルも""として明示的に指定
+```
+
+## 実装優先順位
+
+1. **最優先**
+   - IF-ELSEノードのlogical_operator必須化の明記
+   - LLMノードのmemory.window構造の明確化
+   - GoogleSheetsのranges引用符ルールの追加
+
+2. **高優先度**
+   - GoogleSheets操作の独立したコーディングルール作成
+   - LLM出力の直接使用禁止ルールの追加
+
+3. **中優先度**
+   - 品質チェックリストへの詳細項目追加
+   - クラッシュ事項チェックリストの更新
+
+## 期待される効果
+
+1. インポート失敗率の低下（特にGoogleSheets関連）
+2. 動作時エラーの削減（IF-ELSE、LLMノード）
+3. クラッシュ事例の防止（データ形式エラー）
+4. 開発者の理解向上（具体例の充実）
+
+## 補足事項
+
+- 検証YML_5931.ymlの成功パターンを参考に、独立実行パターンを推奨
+- エラーメッセージから原因を特定しやすいよう、チェックリストを構造化
+- 新規発見されたエラーパターンは随時追加更新する体制を推奨

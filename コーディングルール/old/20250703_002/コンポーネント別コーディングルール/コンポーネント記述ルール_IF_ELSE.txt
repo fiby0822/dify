@@ -24,7 +24,7 @@
       - comparison_operator: 比較演算子
       - value: 比較値
       - varType: 変数タイプ（オプション、例: "file"）
-    - logical_operator: 論理演算子（"and"または"or"）※★必須★ 条件が1つでも必要
+    - logical_operator: 論理演算子（"and"または"or"）
   - selected: false（必須）
   - title: ノードタイトル（必須）
   - desc: ノードの説明（推奨）
@@ -346,44 +346,24 @@ IF-ELSEノードからのエッジでは、sourceHandleに以下の値を設定�
 {{#urgent_order_node.text#}}
 ```
 
-■よくある間違い（エラーの原因）- 改訂版
-1. ★最頻出エラー★ logical_operatorフィールドの欠落
-   - 症状: "logical_operator Field required"エラー
-   - 原因: casesの各要素にlogical_operatorを忘れる
-   - 対策: 必ずlogical_operator: "and"または"or"を設定
-   - 例：
-   ```yaml
-   # ❌ 間違い
-   cases:
-     - case_id: 'true'
-       conditions:
-         - comparison_operator: contains
-           # logical_operatorがない！
-   
-   # ✅ 正解
-   cases:
-     - case_id: 'true'
-       conditions:
-         - comparison_operator: contains
-       logical_operator: and  # 必須！
-   ```
-2. ★頻出エラー★ 条件IDの欠落（※注：idフィールドはオプションであることが判明）
+■よくある間違い（エラーの原因）
+1. ★頻出エラー★ 条件IDの欠落（※注：idフィールドはオプションであることが判明）
    - 症状: conditionsの各要素にidフィールドがない
    - 原因: 条件作成時にidフィールドを忘れる
    - 対策: 条件のidフィールドはオプションだが、デバッグや管理のため設定を推奨
-3. ★頻出エラー★ case_idフィールドの欠落
+2. ★頻出エラー★ case_idフィールドの欠落
    - 症状: "case_id Field required"エラー
    - 原因: idだけ設定してcase_idを忘れる
    - 対策: 必ずid/case_idをペアで設定
-4. ★頻出エラー★ sourceHandleとcase_idの不一致
+3. ★頻出エラー★ sourceHandleとcase_idの不一致
    - 症状: エッジが正しく接続されない
    - 原因: エッジのsourceHandleがケースのcase_idと異なる
    - 対策: sourceHandleにはケースのcase_id（またはid）を正確に指定
-5. Unicode文字の使用（推奨：ASCII文字 ">="、"<="、"!="を使用）
-6. 外側のtype属性を"if-else"にする（正しくは"custom"）
-7. height/widthの省略
-8. positionAbsoluteの省略
-9. data.selectedやdata.titleの省略
+4. Unicode文字の使用（推奨：ASCII文字 ">="、"<="、"!="を使用）
+5. 外側のtype属性を"if-else"にする（正しくは"custom"）
+6. height/widthの省略
+7. positionAbsoluteの省略
+8. data.selectedやdata.titleの省略
 
 ■よくあるインポートエラーパターン
 1. fiby_versionフィールドエラー

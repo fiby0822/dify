@@ -1,0 +1,65 @@
+# Dify YMLファイル作成依頼プロンプト
+
+## 要件
+営業日報の分析・集計システムを作成してください。
+Google Sheetsと連携し、INPUTシートから営業日報データを読み込み、LLMで分析・要約を行い、その結果をOUTPUTシートに書き込む機能を実装してください。
+
+### 機能要件
+1. Google SheetsのINPUTシートから営業日報データを取得
+   - 範囲：A1:D10（担当者名、日付、売上金額、訪問先企業名）
+2. 取得したデータをLLMで分析
+   - 売上合計の計算
+   - 訪問先企業の傾向分析
+   - 営業活動の要約
+3. 分析結果をOUTPUTシートに書き込み
+   - A1に「分析日時」
+   - B1に分析結果のサマリー
+
+### 技術要件
+- version: 0.3.0を必ず使用
+- mode: advanced-chatを使用
+- Codeノードは使用しない
+- Google Sheetsツールを使用（batch_get/batch_update）
+- template-transformノードでデータ形式を変換
+
+## アウトプットフォルダパス
+/Users/tatsuya/Documents/01_fiby/09_ゼット/Dev/GoogleShpredSheet操作
+
+## 参考資料フォルダパス（あれば）
+/Users/tatsuya/Documents/01_fiby/09_ゼット/ymlサンプル/GoogleShpredSheetサンプル.yml
+
+## コーディングルール
+Dify YMLファイルの作成にあたっては、以下のコーディングルールに従ってください：
+
+### 1. 全体コーディングルール
+/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/全体コーディングルール/全体コーディングルール.md を参照してください。
+
+### 2. コンポーネント別コーディングルール
+各コンポーネントを使用する際は、/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/コンポーネント別コーディングルール フォルダ内の該当するtxtファイルを参照してください。
+特に、/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/コンポーネント別コーディングルール/コンポーネント記述ルール_GoogleShpredSheet操作.txt を必ず参照してください。
+
+### 3. Google Sheets固有の設定
+- spreadsheet_id: 1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ（暫定使用）
+- 取得元シート: INPUT
+- 反映先シート: OUTPUT
+- 依存関係を必ず設定：
+```yaml
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+```
+
+### 4. 品質チェック
+YMLファイル作成後は
+/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/品質チェック/品質チェックリスト.md
+/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/品質チェック/クラッシュ事項チェックリスト.md
+を参照し、必ずセルフレビューを実施してください。チェックに引っかかった場合は、ymlファイルを改修すること。
+
+### 5. 特に注意すべき点
+- YAMLファイル内にコメント（#で始まる行）を一切含めない
+- advanced-chatモードではstartノードのvariablesを必ず空配列[]にする
+- すべてのエッジにisInLoop: false、selected: false、zIndex: 0を設定
+- app.use_icon_as_answer_icon: false を必ず設定
+- template-transformノードの使用は単純な変換のみ（複雑な処理は避ける）

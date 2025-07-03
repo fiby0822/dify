@@ -1,40 +1,40 @@
-# NewsSearch_4732.yml エラー原因分析
+エラー原因分析：シート連携データ管理ツール_7392.yml
 
-## エラー内容
-モデルの最大コンテキスト長（8192トークン）を超過
-- 要求トークン数：8389トークン
-- 内訳：メッセージ6889トークン + 出力設定1500トークン
+【エラー内容】
+Run failed: 1 validation error for IfElseNodeData cases.0.logical_operator Field required
 
-## エラー原因の詳細分析
+【原因】
+if-elseノード（id: 1733143906465）の定義において、cases配列内の各条件にlogical_operatorフィールドが必須であるにも関わらず、記載されていない。
 
-### 1. 根本原因
-LLMノード（summarize_node）に入力される内容が長すぎる
-- web_search_nodeからの検索結果全体が無加工でsummarize_nodeに渡されている
-- max_tokens: 1500の出力設定と合わせてトークン上限を超過
-
-### 2. 設計上の問題点
-**検索クエリの最適化プロセスが欠如**
-- start_nodeから直接sys.queryをweb検索に使用している
-- 成功例では、query_analyzer_nodeで検索クエリを最適化してから検索を実行
-
-### 3. 構成の違い（成功例との比較）
-**ケース1（エラー）の構成：**
-```
-start_node → web_search_node → summarize_node → answer_node
+【該当箇所】
+228-236行目のif-elseノード定義：
+```yaml
+cases:
+  - case_id: 'true'
+    conditions:
+      - comparison_operator: contains
+        id: 'true'
+        value: '["values"]'
+        variable_selector:
+          - '1733143906464'
+          - json
 ```
 
-**成功例（検証yml_3629.yml）の構成：**
-```
-start_node → query_analyzer_node → web_search_node → result_analyzer_node → answer_node
+【修正方法】
+casesの中に`logical_operator`フィールドを追加する必要がある。
+例：
+```yaml
+cases:
+  - case_id: 'true'
+    logical_operator: and  # この行を追加
+    conditions:
+      - comparison_operator: contains
+        id: 'true'
+        value: '["values"]'
+        variable_selector:
+          - '1733143906464'
+          - json
 ```
 
-### 4. 具体的な問題箇所
-- web_search_nodeで取得した検索結果の全文をそのまま次のLLMノードに渡している
-- 検索結果の前処理や要約が行われていない
-- ニュース検索（topic: news）は一般検索より長い結果を返す可能性がある
-
-## 解決策の提案
-1. 検索クエリ最適化ノードの追加
-2. 検索結果の中間処理（トークン数削減）
-3. max_resultsの調整（必要に応じて削減）
-4. include_raw_contentが0でも検索結果が長い場合の対策
+【成功例との比較】
+成功しているymlファイルでは、if-elseノードを使用していないか、または正しくlogical_operatorフィールドが設定されている。

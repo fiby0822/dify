@@ -1,0 +1,236 @@
+# Dify開発用コーディングルール改善案
+
+## 実施日：2025年1月7日
+## 改善案番号：2718
+
+## 概要
+今回のエラー分析から特定された問題点に基づき、以下のコーディングルール改善を提案します。
+
+## 1. 発見された問題点
+
+### 1.1 JSONパラメータの記述エラー
+- **問題**：tool_parametersのranges値で、JSON配列の閉じ括弧が欠けているケースが多発
+- **症例**：`'["INPUT!A1:C10"]'` → 閉じ括弧が欠落
+
+### 1.2 IF_ELSEノードのlogical_operator欠落
+- **問題**：必須フィールドであるlogical_operatorが記載されていない
+- **症例**：`1 validation error for IfElseNodeData cases.0.logical_operator Field required`
+
+### 1.3 LLMノードのmemory.window欠落
+- **問題**：memoryフィールド使用時、必須のwindowフィールドが欠けている
+- **症例**：`1 validation error for LLMNodeData memory.window Field required`
+
+### 1.4 template-transformでの誤った記法
+- **問題**：`{{#variable#|tojson}}`という誤った記法が使用されている
+- **正解**：`{{#variable | json#}}`
+
+## 2. 改善提案
+
+### 2.1 全体コーディングルールへの追加
+
+#### セクション：0.3 JSON形式の記述エラー（新規追加）
+```yaml
+### 0.3 JSON形式の記述エラー
+
+#### よくある配列記述ミス
+```yaml
+# ❌ 間違い：閉じ括弧が欠けている
+ranges:
+  type: mixed
+  value: '["INPUT!A1:C10"]'  # 閉じ括弧忘れ
+
+# ✅ 正解：正しく閉じられたJSON配列
+ranges:
+  type: mixed
+  value: '["INPUT!A1:C10"]'  # 必ず閉じ括弧を確認
+```
+
+#### tool_parametersのJSON値チェック
+- JSON配列は必ず`[`で始まり`]`で終わる
+- JSON文字列は必ず`"`で囲む
+- 値の前後の引用符`'`を忘れない
+```
+
+### 2.2 コンポーネント別ルール（IF_ELSE）への追加
+
+#### 必須パラメータセクションの強調（27行目付近に追加）
+```yaml
+    - logical_operator: 論理演算子（"and"または"or"）※★必須★
+```
+
+#### よくある間違いセクションの更新（349行目付近）
+```yaml
+■よくある間違い（エラーの原因）- 改訂版
+1. ★最頻出エラー★ logical_operatorフィールドの欠落
+   - 症状: "logical_operator Field required"エラー
+   - 原因: conditionsを設定したがlogical_operatorを忘れる
+   - 対策: 必ずlogical_operator: "and"または"or"を設定
+   - 例：
+   ```yaml
+   # ❌ 間違い
+   cases:
+     - case_id: 'true'
+       conditions:
+         - comparison_operator: contains
+           # logical_operatorがない！
+   
+   # ✅ 正解
+   cases:
+     - case_id: 'true'
+       conditions:
+         - comparison_operator: contains
+       logical_operator: and  # 必須！
+   ```
+```
+
+### 2.3 コンポーネント別ルール（LLM）への追加（新規作成推奨）
+
+```yaml
+■LLMノードのmemory設定（必須構造）
+
+### memoryフィールドの完全な構造
+memoryを使用する場合、以下の完全な構造が必須：
+
+```yaml
+memory:
+  enabled: false  # または true
+  window:         # ★必須★
+    enabled: false
+    size: 10
+
+# または、memoryを使用しない場合は完全に省略
+# （memoryフィールド自体を記載しない）
+```
+
+### よくあるエラー
+```yaml
+# ❌ 間違い：windowフィールドがない
+memory:
+  enabled: false
+
+# ✅ 正解1：完全な構造
+memory:
+  enabled: false
+  window:
+    enabled: false
+    size: 10
+
+# ✅ 正解2：memoryを使用しない場合は省略
+# （memoryフィールドを記載しない）
+```
+```
+
+### 2.4 品質チェックリストへの追加
+
+#### 0.6 エラー頻発箇所の特別チェック（追加項目）
+```markdown
+#### JSONパラメータ
+- [ ] すべてのJSON配列が正しく閉じられている（特にranges値）
+- [ ] tool_parametersのvalue値が有効なJSONである
+- [ ] 配列の最後の`]`が欠けていない
+
+#### IF/ELSEノード（更新）
+- [ ] **全てのケースにlogical_operatorが設定されている（"and"または"or"）**
+- [ ] 全てのケースにcase_idが設定されている（idと同じ値）
+- [ ] 比較演算子にUnicode文字（≥、≤、≠）を使用していない
+
+#### LLMノード（更新）
+- [ ] memoryフィールドを省略、または完全な構造で記述している
+- [ ] **memory使用時は必ずwindowフィールドが含まれている**
+- [ ] windowフィールドにenabledとsizeが設定されている
+
+#### template-transformノード（新規）
+- [ ] Jinja2テンプレートの記法が正しい
+- [ ] `{{#variable | json#}}`形式を使用（`|tojson`ではない）
+```
+
+### 2.5 Google Sheetsツール専用ガイドライン（新規追加推奨）
+
+```yaml
+# Google Sheets tool_parameters記述ガイド
+
+## ranges パラメータ
+必ず以下の形式で記述：
+```yaml
+ranges:
+  type: mixed
+  value: '["シート名!開始セル:終了セル"]'  # 必ず閉じ括弧を確認
+```
+
+### 正しい例
+- `'["INPUT!A1:C10"]'`
+- `'["INPUT!A1:C10", "OUTPUT!A1:B5"]'`  # 複数範囲
+
+### よくある間違い
+- `'["INPUT!A1:C10"]'`  # 閉じ括弧忘れ
+- `["INPUT!A1:C10"]`    # 外側の引用符忘れ
+- `"INPUT!A1:C10"`      # 配列形式でない
+
+## data パラメータ（Batch Update用）
+```yaml
+data:
+  type: mixed
+  value: '[{"range": "OUTPUT!A1:B1", "values": [["データ1", "データ2"]]}]'
+```
+
+### template-transformからの参照時
+```yaml
+data:
+  type: mixed
+  value: '{{#prepare_output.output#}}'  # 変数参照時は引用符で囲む
+```
+```
+
+### 2.6 クラッシュ事項チェックリストへの追加
+
+```markdown
+## 4. パラメータ記述関連（新規セクション）
+
+### 4.1 JSON形式パラメータ
+- [ ] すべてのJSON配列パラメータが正しく閉じられている
+- [ ] ranges値の`]`が欠けていない
+- [ ] data値のJSON構造が有効である
+- [ ] 文字列として渡すJSON値が引用符で囲まれている
+
+### 4.2 必須フィールドの完全性
+- [ ] IF_ELSEノードのすべてのケースにlogical_operatorが設定されている
+- [ ] LLMノードでmemory使用時、windowフィールドが含まれている
+- [ ] windowフィールドにenabledとsizeが設定されている
+```
+
+## 3. 開発プロセスの改善提案
+
+### 3.1 YMLファイルの検証手順
+1. JSON形式のパラメータは、JSONバリデータで事前確認
+2. 必須フィールドのチェックリストを作成時から使用
+3. インポート前に構文チェックツールの活用
+
+### 3.2 テンプレート化の推進
+- IF_ELSEノードの基本テンプレート作成
+- LLMノードのmemory設定テンプレート作成
+- Google Sheetsツールのパラメータテンプレート作成
+
+### 3.3 エラーパターンのドキュメント化
+今回発見されたエラーパターンを「よくあるエラー集」として別途文書化し、開発者が参照できるようにする。
+
+## 4. 実装優先度
+
+### 高優先度（即時対応）
+1. IF_ELSEルールへのlogical_operator必須の明記
+2. 品質チェックリストへのJSON形式チェック追加
+3. Google Sheetsパラメータのテンプレート作成
+
+### 中優先度（1週間以内）
+1. LLMコンポーネントルールの作成
+2. template-transformルールの追加
+3. よくあるエラー集の作成
+
+### 低優先度（継続的改善）
+1. 自動検証ツールの開発
+2. ビジュアルエディタとの連携強化
+
+## 5. 結論
+
+今回の分析により、JSON形式のパラメータ記述ミスと必須フィールドの欠落が主要なエラー原因であることが判明しました。これらの改善案を実装することで、開発時のエラーを大幅に削減できると期待されます。
+
+特に、logical_operatorとmemory.windowフィールドの必須性を明確にすることで、実行時エラーを防止できます。また、Google Sheetsツールのパラメータに関する具体的なガイドラインを設けることで、頻発するJSON記述エラーを削減できます。

@@ -1,0 +1,720 @@
+app:
+  description: ''
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  mode: advanced-chat
+  name: GoogleShpredSheetサンプル
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        image_file_size_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: start
+        targetType: tool
+      id: 1751499742975-source-1751500625865-target
+      source: '1751499742975'
+      sourceHandle: source
+      target: '1751500625865'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: tool
+        targetType: template-transform
+      id: 1751500625865-source-1751502692999-target
+      source: '1751500625865'
+      sourceHandle: source
+      target: '1751502692999'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: tool
+        targetType: template-transform
+      id: 1751500758911-source-1751502964408-target
+      source: '1751500758911'
+      sourceHandle: source
+      target: '1751502964408'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: template-transform
+        targetType: answer
+      id: 1751502964408-source-answer-target
+      source: '1751502964408'
+      sourceHandle: source
+      target: answer
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: template-transform
+        targetType: template-transform
+      id: 1751502692999-source-1751504626853-target
+      source: '1751502692999'
+      sourceHandle: source
+      target: '1751504626853'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: template-transform
+        targetType: tool
+      id: 1751504626853-source-1751500758911-target
+      source: '1751504626853'
+      sourceHandle: source
+      target: '1751500758911'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: ''
+        selected: false
+        title: 開始
+        type: start
+        variables: []
+      height: 54
+      id: '1751499742975'
+      position:
+        x: -73.54027372697783
+        y: 282
+      positionAbsolute:
+        x: -73.54027372697783
+        y: 282
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '取得結果
+
+          {{#1751502692999.output#}}
+
+
+          反映結果(入力データ)
+
+          {{#1751504626853.output#}}
+
+
+          反映結果(レスポンス)
+
+          {{#1751502964408.output#}}'
+        desc: ''
+        selected: false
+        title: 回答
+        type: answer
+        variables: []
+      height: 174
+      id: answer
+      position:
+        x: 1840.2501619787872
+        y: 282
+      positionAbsolute:
+        x: 1840.2501619787872
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: ''
+        is_team_authorization: true
+        output_schema: null
+        paramSchemas:
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: The ID of the Google Sheet (found in the URL)
+            ja_JP: The ID of the Google Sheet (found in the URL)
+            pt_BR: O ID da planilha Google (encontrado na URL)
+            zh_Hans: Google 表格的 ID（在 URL 中）
+          label:
+            en_US: Spreadsheet ID
+            ja_JP: Spreadsheet ID
+            pt_BR: ID da Planilha
+            zh_Hans: 表格 ID
+          llm_description: The ID of the Google Sheet, which can be found in the sheet's
+            URL
+          max: null
+          min: null
+          name: spreadsheet_id
+          options: []
+          placeholder: null
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: List of ranges to retrieve (e.g. ["Sheet1!A1:C3", "Sheet2!B2:D4"])
+            ja_JP: List of ranges to retrieve (e.g. ["Sheet1!A1:C3", "Sheet2!B2:D4"])
+            pt_BR: Lista de intervalos para recuperar (ex. ["Sheet1!A1:C3", "Sheet2!B2:D4"])
+            zh_Hans: 要检索的范围列表（例如 ["Sheet1!A1:C3", "Sheet2!B2:D4"]）
+          label:
+            en_US: Ranges
+            ja_JP: Ranges
+            pt_BR: Intervalos
+            zh_Hans: 范围列表
+          llm_description: An array of range strings to retrieve in A1 notation or
+            R1C1 notation (e.g. ["Sheet1!A1:C3", "Sheet2!B2:D4"])
+          max: null
+          min: null
+          name: ranges
+          options: []
+          placeholder: null
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: SERIAL_NUMBER
+          form: form
+          human_description:
+            en_US: How dates, times, and durations should be represented in the output
+            ja_JP: How dates, times, and durations should be represented in the output
+            pt_BR: Como datas, horários e durações devem ser representados na saída
+            zh_Hans: 日期、时间和持续时间在输出中的表示方式
+          label:
+            en_US: Date Time Render Option
+            ja_JP: Date Time Render Option
+            pt_BR: Opção de Renderização de Data e Hora
+            zh_Hans: 日期时间渲染选项
+          llm_description: How dates, times, and durations should be represented in
+            the output
+          max: null
+          min: null
+          name: date_time_render_option
+          options:
+          - icon: ''
+            label:
+              en_US: SERIAL_NUMBER
+              ja_JP: SERIAL_NUMBER
+              pt_BR: NÚMERO DE SÉRIE
+              zh_Hans: 序列号
+            value: SERIAL_NUMBER
+          - icon: ''
+            label:
+              en_US: FORMATTED_STRING
+              ja_JP: FORMATTED_STRING
+              pt_BR: STRING FORMATADA
+              zh_Hans: 格式化字符串
+            value: FORMATTED_STRING
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: select
+        - auto_generate: null
+          default: null
+          form: form
+          human_description:
+            en_US: The major dimension that results should use
+            ja_JP: The major dimension that results should use
+            pt_BR: A dimensão principal que os resultados devem usar
+            zh_Hans: 结果应使用的主要维度
+          label:
+            en_US: Major Dimension
+            ja_JP: Major Dimension
+            pt_BR: Dimensão Principal
+            zh_Hans: 主要维度
+          llm_description: The major dimension that results should use (ROWS or COLUMNS)
+          max: null
+          min: null
+          name: major_dimension
+          options:
+          - icon: ''
+            label:
+              en_US: ROWS
+              ja_JP: ROWS
+              pt_BR: LINHAS
+              zh_Hans: 行
+            value: ROWS
+          - icon: ''
+            label:
+              en_US: COLUMNS
+              ja_JP: COLUMNS
+              pt_BR: COLUNAS
+              zh_Hans: 列
+            value: COLUMNS
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: select
+        - auto_generate: null
+          default: null
+          form: form
+          human_description:
+            en_US: How values should be represented in the output
+            ja_JP: How values should be represented in the output
+            pt_BR: Como os valores devem ser representados na saída
+            zh_Hans: 值在输出中的表示方式
+          label:
+            en_US: Value Render Option
+            ja_JP: Value Render Option
+            pt_BR: Opção de Renderização de Valor
+            zh_Hans: 值渲染选项
+          llm_description: How values should be represented in the output
+          max: null
+          min: null
+          name: value_render_option
+          options:
+          - icon: ''
+            label:
+              en_US: FORMATTED_VALUE
+              ja_JP: FORMATTED_VALUE
+              pt_BR: VALOR FORMATADO
+              zh_Hans: 格式化值
+            value: FORMATTED_VALUE
+          - icon: ''
+            label:
+              en_US: FORMULA
+              ja_JP: FORMULA
+              pt_BR: FÓRMULA
+              zh_Hans: 公式
+            value: FORMULA
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: select
+        params:
+          date_time_render_option: ''
+          major_dimension: ''
+          ranges: ''
+          spreadsheet_id: ''
+          value_render_option: ''
+        provider_id: omluc/google_sheets/google_sheets
+        provider_name: omluc/google_sheets/google_sheets
+        provider_type: builtin
+        selected: false
+        title: データの取得fromシート
+        tool_configurations:
+          date_time_render_option: FORMATTED_STRING
+          major_dimension: null
+          value_render_option: null
+        tool_description: Retrieve data from multiple ranges in a Google Sheet
+        tool_label: Batch Get
+        tool_name: batch_get
+        tool_parameters:
+          ranges:
+            type: mixed
+            value: '["INPUT!A1:C3"]'
+          spreadsheet_id:
+            type: mixed
+            value: 1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ
+        type: tool
+      height: 142
+      id: '1751500625865'
+      position:
+        x: 223.88410677498985
+        y: 282
+      positionAbsolute:
+        x: 223.88410677498985
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: ''
+        is_team_authorization: true
+        output_schema: null
+        paramSchemas:
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: The ID of the Google Sheet (found in the URL)
+            ja_JP: The ID of the Google Sheet (found in the URL)
+            pt_BR: O ID da planilha Google (encontrado na URL)
+            zh_Hans: Google 表格的 ID（在 URL 中）
+          label:
+            en_US: Spreadsheet ID
+            ja_JP: Spreadsheet ID
+            pt_BR: ID da Planilha
+            zh_Hans: 表格 ID
+          llm_description: The ID of the Google Sheet, which can be found in the sheet's
+            URL
+          max: null
+          min: null
+          name: spreadsheet_id
+          options: []
+          placeholder: null
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: JSON array of objects, each with 'range' (A1 notation like 'Sheet1!A1:B5')
+              and 'values' (2D array of cell values). Example - [{"range":"Sheet1!A1:B2",
+              "values":[["Name","Age"],["John",30]]}]
+            ja_JP: JSON array of objects, each with 'range' (A1 notation like 'Sheet1!A1:B5')
+              and 'values' (2D array of cell values). Example - [{"range":"Sheet1!A1:B2",
+              "values":[["Name","Age"],["John",30]]}]
+            pt_BR: Array JSON de objetos, cada um com 'range' (notação A1 como 'Sheet1!A1:B5')
+              e 'values' (array 2D de valores de célula). Exemplo - [{"range":"Sheet1!A1:B2",
+              "values":[["Nome","Idade"],["João",30]]}]
+            zh_Hans: JSON 对象数组，每个对象包含 'range'（A1 表示法，如 'Sheet1!A1:B5'）和 'values'（单元格值的二维数组）。例如
+              - [{"range":"Sheet1!A1:B2", "values":[["姓名","年龄"],["约翰",30]]}]
+          label:
+            en_US: Data
+            ja_JP: Data
+            pt_BR: Dados
+            zh_Hans: 数据
+          llm_description: An array of objects to update in Google Sheets. Each object
+            must contain - 1) 'range' - A string in A1 notation specifying the cells
+            (e.g., 'A1:B5', 'Sheet1!A1:B5', or 'MyNamedRange'), and 2) 'values' -
+            A 2D array representing row/column values to insert. Example - [{"range":"Sheet1!A1:B2",
+            "values":[["Header1","Header2"],["Value1","Value2"]]}]. The dimensions
+            of 'values' must match the range, and you can update multiple non-contiguous
+            ranges in a single request.
+          max: null
+          min: null
+          name: data
+          options: []
+          placeholder: null
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: USER_ENTERED
+          form: form
+          human_description:
+            en_US: How the input data should be interpreted
+            ja_JP: How the input data should be interpreted
+            pt_BR: Como os dados de entrada devem ser interpretados
+            zh_Hans: 如何解释输入数据
+          label:
+            en_US: Value Input Option
+            ja_JP: Value Input Option
+            pt_BR: Opção de Entrada de Valor
+            zh_Hans: 值输入选项
+          llm_description: How the input data should be interpreted
+          max: null
+          min: null
+          name: value_input_option
+          options:
+          - icon: ''
+            label:
+              en_US: USER_ENTERED
+              ja_JP: USER_ENTERED
+              pt_BR: ENTRADA DO USUÁRIO
+              zh_Hans: 用户输入
+            value: USER_ENTERED
+          - icon: ''
+            label:
+              en_US: RAW
+              ja_JP: RAW
+              pt_BR: BRUTO
+              zh_Hans: 原始
+            value: RAW
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: select
+        - auto_generate: null
+          default: 0
+          form: form
+          human_description:
+            en_US: Whether to include the values in the response
+            ja_JP: Whether to include the values in the response
+            pt_BR: Se deve incluir os valores na resposta
+            zh_Hans: 是否在响应中包含值
+          label:
+            en_US: Include Values in Response
+            ja_JP: Include Values in Response
+            pt_BR: Incluir Valores na Resposta
+            zh_Hans: 在响应中包含值
+          llm_description: Whether to include the values in the response
+          max: null
+          min: null
+          name: include_values_in_response
+          options: []
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: boolean
+        - auto_generate: null
+          default: null
+          form: form
+          human_description:
+            en_US: How the values in the response should be rendered
+            ja_JP: How the values in the response should be rendered
+            pt_BR: Como os valores na resposta devem ser renderizados
+            zh_Hans: 响应中的值应如何渲染
+          label:
+            en_US: Response Value Render Option
+            ja_JP: Response Value Render Option
+            pt_BR: Opção de Renderização de Valor da Resposta
+            zh_Hans: 响应值渲染选项
+          llm_description: How the values in the response should be rendered
+          max: null
+          min: null
+          name: response_value_render_option
+          options:
+          - icon: ''
+            label:
+              en_US: FORMATTED_VALUE
+              ja_JP: FORMATTED_VALUE
+              pt_BR: VALOR FORMATADO
+              zh_Hans: 格式化值
+            value: FORMATTED_VALUE
+          - icon: ''
+            label:
+              en_US: FORMULA
+              ja_JP: FORMULA
+              pt_BR: FÓRMULA
+              zh_Hans: 公式
+            value: FORMULA
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: select
+        - auto_generate: null
+          default: null
+          form: form
+          human_description:
+            en_US: How dates, times, and durations in the response should be rendered
+            ja_JP: How dates, times, and durations in the response should be rendered
+            pt_BR: Como datas, horários e durações na resposta devem ser renderizados
+            zh_Hans: 响应中的日期、时间和持续时间应如何渲染
+          label:
+            en_US: Response Date Time Render Option
+            ja_JP: Response Date Time Render Option
+            pt_BR: Opção de Renderização de Data e Hora da Resposta
+            zh_Hans: 响应日期时间渲染选项
+          llm_description: How dates, times, and durations in the response should
+            be rendered
+          max: null
+          min: null
+          name: response_date_time_render_option
+          options:
+          - icon: ''
+            label:
+              en_US: SERIAL_NUMBER
+              ja_JP: SERIAL_NUMBER
+              pt_BR: NÚMERO DE SÉRIE
+              zh_Hans: 序列号
+            value: SERIAL_NUMBER
+          - icon: ''
+            label:
+              en_US: FORMATTED_STRING
+              ja_JP: FORMATTED_STRING
+              pt_BR: STRING FORMATADA
+              zh_Hans: 格式化字符串
+            value: FORMATTED_STRING
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: select
+        params:
+          data: ''
+          include_values_in_response: ''
+          response_date_time_render_option: ''
+          response_value_render_option: ''
+          spreadsheet_id: ''
+          value_input_option: ''
+        provider_id: omluc/google_sheets/google_sheets
+        provider_name: omluc/google_sheets/google_sheets
+        provider_type: builtin
+        selected: false
+        title: データの反映toシート
+        tool_configurations:
+          include_values_in_response: 0
+          response_date_time_render_option: null
+          response_value_render_option: null
+          value_input_option: USER_ENTERED
+        tool_description: Update data in multiple ranges in a Google Sheet
+        tool_label: Batch Update
+        tool_name: batch_update
+        tool_parameters:
+          data:
+            type: mixed
+            value: '{{#1751504626853.output#}}'
+          spreadsheet_id:
+            type: mixed
+            value: 1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ
+        type: tool
+      height: 168
+      id: '1751500758911'
+      position:
+        x: 1128.6255309391195
+        y: 282
+      positionAbsolute:
+        x: 1128.6255309391195
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: ''
+        selected: false
+        template: '{{ Get_Input }}'
+        title: 変換(データの取得)
+        type: template-transform
+        variables:
+        - value_selector:
+          - '1751500625865'
+          - json
+          value_type: array[object]
+          variable: Get_Input
+      height: 54
+      id: '1751502692999'
+      position:
+        x: 509.516964765989
+        y: 282
+      positionAbsolute:
+        x: 509.516964765989
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: ''
+        selected: false
+        template: '{{ upload_autput }}'
+        title: 変換(データの反映)
+        type: template-transform
+        variables:
+        - value_selector:
+          - '1751500758911'
+          - json
+          value_type: array[object]
+          variable: upload_autput
+      height: 54
+      id: '1751502964408'
+      position:
+        x: 1495.016845526583
+        y: 282
+      positionAbsolute:
+        x: 1495.016845526583
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: ''
+        selected: false
+        template: "[\n  {\n    \"range\": \"OUTPUT!A1:B1\",\n    \"values\": [[\"\
+          text\", {{ arg1 | trim | tojson }} ]]\n  }\n]\n"
+        title: ユーザー入力のJSON変換
+        type: template-transform
+        variables:
+        - value_selector:
+          - sys
+          - query
+          value_type: string
+          variable: arg1
+      height: 54
+      id: '1751504626853'
+      position:
+        x: 818.1334151583254
+        y: 282
+      positionAbsolute:
+        x: 818.1334151583254
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: 239.64533984412526
+      y: 255.26793447542514
+      zoom: 0.5336577473637851

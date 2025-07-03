@@ -1,0 +1,203 @@
+Dify YMLコーディングルール改善案
+
+作成日：2025-01-03
+分析対象：インポート失敗、クラッシュ、動作エラー事例
+
+==============================
+【エラー分析結果サマリー】
+==============================
+
+1. インポート失敗の原因
+   - 特定不可（sys.query使用でも成功例あり）
+   - YMLファイルの構造エラーが疑われる
+
+2. インポート成功_クラッシュの原因
+   - template-transformノードのtojsonフィルタ使用が疑われる
+   - Google Sheets連携時のデータ形式不整合
+
+3. 動作エラーの原因
+   - ケース1：IF-ELSEノードのlogical_operator欠落
+   - ケース2：LLMノードのmemory.windowフィールド欠落
+
+==============================
+【改善案一覧】
+==============================
+
+■ 1. 全体コーディングルール.mdへの追加項目
+
+セクション：「0. 致命的エラーチェック（最優先）」に追加
+
+### 0.7 システム予約変数エラーの防止
+- [ ] advanced-chatモードでstartノードのvariablesにシステム予約変数を定義していない
+- [ ] sys.query、sys.files、sys.conversation_id、sys.user_idを変数名として使用していない
+- [ ] workflowモードの場合、sys.queryを参照していない（使用不可）
+
+セクション：「4.2.1 トークン数管理チェック」を新規追加
+
+### 4.2.1 トークン数管理チェック
+- [ ] **外部データ（検索結果、ファイル内容）を直接LLMに渡していない**
+- [ ] **prompt_template + 想定される最大入力 + max_tokens < モデル上限**
+- [ ] **検索結果を扱う場合、前処理ノードが存在する**
+- [ ] **max_tokensが適切に設定されている（通常1000-2000）**
+- [ ] **大量データ処理時の分割戦略が実装されている**
+- [ ] **WEB検索結果を処理する場合、gpt-4oまたはgpt-3.5-turboを使用している**
+- [ ] **検索結果のmax_resultsとLLMモデルの組み合わせが適切**
+- [ ] **必要に応じて中間処理ノードで検索結果を要約している**
+
+セクション：「8. toolノード関連」に追加
+
+### 8.1 Google Sheets操作関連
+
+#### 8.1.1 データ形式の確認
+- [ ] batch_updateのdataパラメータがJSON配列形式になっているか
+- [ ] 各要素が{"range": "A1:B2", "values": [[...]]}}形式か
+- [ ] valuesが2次元配列形式になっているか
+- [ ] JSONパラメータにエスケープが必要な文字が含まれていないか
+- [ ] template-transformノードでtojsonフィルタを使用する場合の注意事項を理解しているか
+
+■ 2. コンポーネント記述ルール_IF_ELSE.txtへの追加項目
+
+必須パラメータセクションに以下を明記：
+
+### 必須フィールドの強調（追加）
+- **logical_operatorは必須フィールド**
+  - 条件が1つでも必ず設定が必要
+  - 省略すると"logical_operator Field required"エラーが発生
+  - 必ず"and"または"or"を指定
+
+■ 3. 新規コンポーネント記述ルールの作成
+
+ファイル名：コンポーネント記述ルール_GoogleShpredSheet操作.txt
+
+内容：
+```
+コンポーネント記述ルール: Google Sheets操作
+
+■ブロック概要
+Google Sheetsのデータ読み書きを実現するtoolノード。依存関係の設定が必須。
+
+■必須パラメータ
+- spreadsheet_id: 44文字のGoogle Sheets ID
+- operation: 操作種別（read_data/append_data/update_data等）
+- tool_configurations:
+  - SheetsScopes: 1（必須、boolean値は0/1形式）
+
+■依存関係設定（最重要）
+```yaml
+dependencies:
+  - marketplace_plugin_unique_identifier: langgenius/google-sheets:1.1.0
+```
+
+■batch_get（データ取得）
+- ranges: A1表記の配列形式（例：["Sheet1!A1:D10"]）
+- date_time_render_option: FORMATTED_STRING推奨
+
+■batch_update（データ書き込み）
+- data: JSON配列形式で指定
+  ```json
+  [
+    {
+      "range": "OUTPUT!A1:B1",
+      "values": [["ラベル", "値"]]
+    }
+  ]
+  ```
+- value_input_option: USER_ENTERED推奨
+
+■データ形式の注意点
+1. valuesは必ず2次元配列
+2. 文字列内のダブルクォートはエスケープが必要
+3. template-transformノードでtojsonフィルタ使用時は要注意
+4. 空のデータも[[""]]として明示的に指定
+
+■エラー対策
+- "Invalid spreadsheet ID": IDの形式確認
+- "Range not found": シート名や範囲の確認
+- "Authentication failed": 依存関係設定の確認
+```
+
+■ 4. クラッシュ事項チェックリスト.mdへの追加項目
+
+セクション：「15. システム予約変数エラー」を新規追加
+
+### 15. システム予約変数エラー
+
+### 15.1 症状
+- "sys.query is required in input form"エラー
+- 実行時に入力フォームが正しく表示されない
+- チャット開始時にエラーが発生
+
+### 15.2 原因
+- advanced-chatモードでstartノードにシステム予約変数を定義
+- sys.queryをユーザー定義変数として使用
+
+### 15.3 チェック項目
+- [ ] **startノードでvariable: sys.queryを定義していない**
+- [ ] **startノードでvariable: sys.filesを定義していない**
+- [ ] **startノードでvariable: sys.conversation_idを定義していない**
+- [ ] **startノードでvariable: sys.user_idを定義していない**
+- [ ] **advanced-chatモードではvariables: []（空配列）を使用している**
+
+### 15.4 正しい実装
+```yaml
+# advanced-chatモード
+- data:
+    type: start
+    variables: []  # 必ず空配列
+
+# LLMノードでの参照
+prompt_template:
+  - role: user
+    text: "ユーザー入力：{{#sys.query#}}"  # これは問題なし
+```
+
+■ 5. 品質チェックリスト.mdへの追加項目
+
+セクション：「4.2 llmノード」に以下を追加
+
+- [ ] memory設定が正しい形式で記述されている（使用する場合）
+  - [ ] windowフィールドが含まれている（enabled, size）
+  - [ ] role_prefixが含まれている（推奨）
+  - [ ] または、memoryフィールドが完全に省略されている（推奨）
+
+■ 6. 概念的な推奨事項
+
+【モデル選択のガイドライン】
+- WEB検索結果を処理する場合：gpt-4oまたはgpt-3.5-turboを優先
+- gpt-4は8Kトークン制限のため、長文処理には不適
+- 大量データ処理時は中間処理ノードで要約を実施
+
+【template-transformノードの注意】
+- tojsonフィルタはデータ形式によってはクラッシュの原因となる
+- Google Sheets連携時は特に注意が必要
+- 代替案：codeノードでJSON形式への変換を実装
+
+==============================
+【新規追加を推奨する検証ステップ】
+==============================
+
+1. トークン数事前検証
+   - LLMノードに入力されるデータサイズの確認
+   - 必要に応じて中間処理ノードの追加
+
+2. テンプレート検証
+   - 各コンポーネントのテンプレートを使用したテストYML作成
+   - インポート成功確認
+   - 実行テスト
+
+3. Google Sheets連携テスト
+   - ダミースプレッドシートでの動作確認
+   - データ形式の検証
+   - エラーハンドリングの確認
+
+==============================
+【最重要ポイント】
+==============================
+
+1. **IF-ELSEノードのlogical_operatorは絶対に省略不可**
+2. **LLMノードのmemory使用時はwindowフィールド必須**
+3. **advanced-chatモードでsys.queryを変数定義しない**
+4. **Google Sheets連携時は依存関係設定が必須**
+5. **トークン数管理を意識した設計が必要**
+
+以上
