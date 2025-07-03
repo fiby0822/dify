@@ -1,0 +1,131 @@
+# Google Sheets操作に関するコーディングルール改善案
+
+## 背景と目的
+現在のコーディングルールでは「marketplaceの使用は禁止」とされていますが、これがprovider_type: marketplaceの使用禁止を意味するのか、marketplaceから取得したツールの使用禁止を意味するのかが曖昧です。
+Google Sheetsツール（omluc/google_sheets:0.0.2）を適切に使用するため、ルールの明確化と改善が必要です。
+
+## 改善が必要な箇所
+
+### 1. 全体コーディングルール.md
+#### 現状の問題点
+- 「provider_type: marketplace は無効な値」という記述はあるが、「marketplaceの使用禁止」との関係が不明確
+
+#### 改善案
+以下の記述を追加：
+```
+## マーケットプレイスツールの使用について
+
+### 混同しやすい概念の明確化
+- **provider_type: marketplace** → これは無効な値。使用禁止（エラーの原因）
+- **マーケットプレイスから取得したツール** → 使用可能。ただし適切な設定が必要
+
+### 許可されるマーケットプレイスツール
+以下のツールは使用を許可します：
+- Google Sheets (omluc/google_sheets:0.0.2)
+  - 識別子: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+
+### 正しい設定方法
+マーケットプレイスから取得したツールでも、provider_typeは'builtin'を使用：
+```yaml
+provider_type: builtin  # 'marketplace'ではない
+provider_id: omluc/google_sheets/google_sheets
+provider_name: omluc/google_sheets/google_sheets
+```
+```
+
+### 2. コンポーネント記述ルール_GoogleShpredSheet操作.txt
+#### 現状の問題点
+- provider_typeの推奨値は記載されているが、dependenciesセクションの記載方法が不明確
+
+#### 改善案
+以下の内容を追加：
+```
+## Google Sheetsツールの設定
+
+### 1. 基本設定（変更なし）
+provider_type: builtin
+provider_id: omluc/google_sheets/google_sheets
+provider_name: omluc/google_sheets/google_sheets
+
+### 2. dependenciesセクション（新規追加）
+YMLファイルのmetadata部分に以下を必ず記載：
+```yaml
+dependencies:
+- marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+```
+
+### 3. tool_configurationsセクション（明確化）
+以下の設定を必ず含める：
+```yaml
+tool_configurations:
+  date_time_render_option: FORMATTED_STRING
+  major_dimension: null
+  value_render_option: null
+```
+
+### 4. 認証設定（新規追加）
+```yaml
+is_team_authorization: true  # チーム認証を使用
+```
+```
+
+### 3. 品質チェックリスト.md
+#### 現状の問題点
+- Google Sheets特有のdependencies確認項目が不足
+
+#### 改善案
+以下のチェック項目を追加：
+```
+### Google Sheets操作の追加チェック項目
+
+#### dependenciesセクション
+- [ ] metadataセクションにdependenciesが定義されているか
+- [ ] omluc/google_sheets:0.0.2の正しい識別子が記載されているか
+- [ ] 識別子のフォーマットが正しいか（バージョン番号@ハッシュ値）
+
+#### 認証設定
+- [ ] is_team_authorization: true が設定されているか
+- [ ] tool_configurationsセクションが存在するか
+- [ ] date_time_render_optionが設定されているか
+```
+
+### 4. クラッシュ事項チェックリスト.md
+#### 現状の問題点
+- dependencies関連のエラーパターンが不足
+
+#### 改善案
+以下のエラーパターンを追加：
+```
+### Google Sheets関連の追加エラーパターン
+
+#### 1. Dependencies未定義エラー
+- **症状**: Tool not found: omluc/google_sheets
+- **原因**: metadataセクションにdependenciesが未定義
+- **対策**: 
+  ```yaml
+  metadata:
+    dependencies:
+    - marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@...
+  ```
+
+#### 2. マーケットプレイスツールの誤解によるエラー
+- **症状**: Input should be 'plugin', 'builtin'... エラー
+- **原因**: provider_type: marketplace を使用（これは無効）
+- **対策**: マーケットプレイスツールでもprovider_type: builtinを使用
+
+#### 3. 認証エラー
+- **症状**: 認証失敗によるツール実行エラー
+- **原因**: is_team_authorizationの設定漏れ
+- **対策**: is_team_authorization: true を明示的に設定
+```
+
+## 実装の優先順位
+1. 全体コーディングルール.mdの「マーケットプレイスツール」セクション追加（最優先）
+2. コンポーネント記述ルール_GoogleShpredSheet操作.txtのdependencies記載追加
+3. 品質チェックリスト.mdへのdependencies確認項目追加
+4. クラッシュ事項チェックリスト.mdへのエラーパターン追加
+
+## 補足
+- provider_type: marketplace という設定値自体が無効であることを強調
+- マーケットプレイスから取得したツールの使用は、適切な設定により可能であることを明確化
+- Google Sheetsツール（omluc/google_sheets:0.0.2）は明示的に使用を許可

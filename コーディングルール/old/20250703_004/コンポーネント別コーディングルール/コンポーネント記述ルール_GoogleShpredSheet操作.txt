@@ -1,28 +1,14 @@
 コンポーネント記述ルール: Google Sheets操作
 
-■重要な許可事項
-Google Sheets操作に限り、以下のmarketplaceプラグインの使用が許可されています：
-- omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
-
-この許可は他のmarketplaceプラグインには適用されません。
-
 ■ブロック概要
 Google Sheetsとの連携を実現するtoolノード。データの読み取り（batch_get）と書き込み（batch_update）を提供。
 
 ■依存関係（必須）
-【重要】Google Sheetsツールは特別に許可されたマーケットプレイスツールです。
-以下の設定を必ず含めてください：
-
 dependencies:
 - current_identifier: null
-  type: marketplace  # Google Sheetsのみ例外的に許可
+  type: marketplace
   value:
     marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
-
-注意事項：
-- この識別子は完全一致である必要があります
-- バージョンを含む全文字列をコピーして使用してください
-- 他のmarketplaceツールの使用は引き続き禁止です
 
 ■batch_get（データ取得）
 
@@ -100,17 +86,14 @@ data:
 
 ■provider_typeの設定（重要）
 
-【状況別推奨設定】
+Google Sheetsツールを使用する際のprovider_typeは以下のいずれかを使用：
 
-1. omluc/google_sheets:0.0.2 を使用する場合
-   - provider_type: builtinを使用（marketplaceではない）
-   - 理由：このプラグインは特殊な処理により、builtinとして扱われる
+【推奨】provider_type: builtin
+- Difyに組み込まれているツールとして使用
+- 安定性が高い
 
-2. その他のGoogle Sheetsツールを使用する場合
-   - provider_type: builtinを使用
-   - 通常の組み込みツールとして処理
-
-【重要】どちらの場合も provider_type: marketplace は使用禁止。
+【非推奨】provider_type: marketplace
+- エラーの原因となるため使用禁止
 
 【有効な値一覧】
 - builtin: 組み込みツール（推奨）
@@ -141,11 +124,11 @@ tool_configurations:  # 必須フィールド
 # 依存関係
 dependencies:
 - current_identifier: null
-  type: marketplace  # Google Sheetsのみ許可
+  type: marketplace
   value:
     marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
 
-# データ読み取りノード（omluc版）
+# データ読み取りノード（修正版）
 - data:
     type: tool
     provider_id: omluc/google_sheets/google_sheets  # 3段階の形式
