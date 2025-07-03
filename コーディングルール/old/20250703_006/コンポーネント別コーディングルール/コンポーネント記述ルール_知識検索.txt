@@ -1,0 +1,252 @@
+コンポーネント記述ルール: 知識検索
+
+■ブロック概要
+事前に登録されたナレッジベース（知識データベース）から関連情報を検索・取得するノード。FAQ、マニュアル、技術文書などの検索に使用。
+
+■必須パラメータ
+- id: 意味のある名前（例: "knowledge_search_node", "faq_retrieval"）
+- type: "custom"（ノード全体のtype - 固定）
+- position:
+  - x: 任意の値
+  - y: 任意の値
+- positionAbsolute:（positionと同値で設定）
+  - x: 任意の値
+  - y: 任意の値
+- width: 244（推奨値）
+- height: 92（推奨値）
+- sourcePosition: right
+- targetPosition: left
+- selected: false（固定値）
+- data:
+  - type: "knowledge-retrieval"（data内のtype - 固定）
+  - dataset_ids: 検索対象データセットIDの配列
+    - "データセットID文字列"
+  - query_variable_selector: クエリテキストの参照元
+    - ノードID
+    - フィールド名
+  - retrieval_mode: 検索モード（"single"または"multiple"）
+  - desc: ''（空文字列でも必須）
+  - selected: false（固定値）
+  - title: ノードのタイトル
+
+
+■オプションパラメータ
+- multiple_retrieval_config: 複数検索モード時の詳細設定
+  - reranking_enable: リランキング有効化（boolean）
+  - reranking_mode: リランキングモード（"weighted_score"等）
+  - top_k: 取得する結果の最大数
+  - weights: 重み設定
+    - keyword_setting:
+      - keyword_weight: キーワード検索の重み（0-1）
+    - vector_setting:
+      - embedding_model_name: 埋め込みモデル名
+      - embedding_provider_name: プロバイダー名
+      - vector_weight: ベクトル検索の重み（0-1）
+
+■エッジ接続
+- 入力エッジ（前のノードから接続）:
+  - targetHandle: target
+  - targetType: knowledge-retrieval
+- 出力エッジ（次のノードへ接続）:
+  - sourceHandle: source
+  - sourceType: knowledge-retrieval
+
+■入力
+- query_variable_selector: 検索クエリテキストの変数参照
+
+■出力
+- result: 検索結果のテキスト
+- metadata: 検索結果のメタ情報（オプション）
+
+■使用例
+```yaml
+# 単一データセット検索
+- data:
+    dataset_ids:
+      - "7ccfkMYSp7EbvPLfz84xM+MGWesznlJf6laOpWdSR4vOjJa6XZ3W7JdALMg/4IRY"
+    desc: ''
+    query_variable_selector:
+      - start_node
+      - user_query
+    retrieval_mode: single
+    selected: false
+    title: 知識検索
+    type: knowledge-retrieval
+  height: 92
+  id: knowledge_search_node
+  position:
+    x: 350
+    y: 200
+  positionAbsolute:
+    x: 350
+    y: 200
+  selected: false
+  sourcePosition: right
+  targetPosition: left
+  type: custom
+  width: 244
+
+# 複数データセット検索（リランキング付き）
+- data:
+    dataset_ids:
+      - "7ccfkMYSp7EbvPLfz84xM+MGWesznlJf6laOpWdSR4vOjJa6XZ3W7JdALMg/4IRY"
+      - "8ddglNZTq8FcwQMgz95yN+NHXftzomlKg7mbPqXeTR5wPkJb7YZ4X8KeALNh/5JSZ"
+      - "9eehMOaUr9GdxRNha06zO+OIYguaplMLh8ncQrYfUS6xQlKc8Za5Y9LfBMOi/6KTa"
+    desc: ''
+    multiple_retrieval_config:
+      reranking_enable: true
+      reranking_mode: weighted_score
+      top_k: 4
+      weights:
+        keyword_setting:
+          keyword_weight: 0
+        vector_setting:
+          embedding_model_name: text-embedding-3-large
+          embedding_provider_name: langgenius/openai/openai
+          vector_weight: 1
+    query_variable_selector:
+      - identify_product_spec_node
+      - text
+    retrieval_mode: multiple
+    selected: false
+    title: 知識検索
+    type: knowledge-retrieval
+  height: 92
+  id: multi_knowledge_search
+  position:
+    x: 450
+    y: 300
+  positionAbsolute:
+    x: 450
+    y: 300
+  selected: true
+  sourcePosition: right
+  targetPosition: left
+  type: custom
+  width: 244
+
+# エッジ接続例
+- data:
+    isInLoop: false
+    sourceType: llm
+    targetType: knowledge-retrieval
+  id: llm-to-knowledge-edge
+  selected: false
+  source: identify_product_spec_node
+  sourceHandle: source
+  target: knowledge_search_node
+  targetHandle: target
+  type: custom
+  zIndex: 0
+```
+
+■サンプルデータセットID（テスト用）
+- "mUJqT0QSpLmBBBGsAg6tP+rLJoOBsXRCgClBvqhk7NKJWFKdH7o5AOBH9nG0DiXe"
+- "7ccfkMYSp7EbvPLfz84xM+MGWesznlJf6laOpWdSR4vOjJa6XZ3W7JdALMg/4IRY"
+（注意：実際の開発では、事前にDifyで作成したデータセットIDを使用）
+
+■注意事項（改訂）
+- データセットIDは事前にDifyで作成されたものを指定（開発時の仮IDは明確に区別）
+- **開発時は"PLACEHOLDER_"プレフィックスを使用して仮IDであることを明示**
+- retrieval_modeがmultipleの場合、multiple_retrieval_configの設定推奨
+- **検索結果が空の場合の処理を必ず実装（後続のLLMノードで対応）**
+- selected: falseは必須（trueにするとエラーの可能性）
+
+■実行環境での動作確認（新規追加）
+知識検索ノードは、YMLファイル上で正しく設定されていても、以下の理由で実行時にエラーが発生する可能性があります：
+
+### dataset_idsの検証チェックリスト
+- [ ] 指定したdataset_idが実際にDify環境に存在するか確認
+- [ ] dataset_idに対するアクセス権限があるか確認
+- [ ] dataset_idの有効期限が切れていないか確認
+- [ ] 暗号化されたIDが正しい形式か確認（例：64文字の英数字+記号）
+
+### 実行環境での確認方法
+1. Difyの管理画面でナレッジベースの一覧を確認
+2. 使用予定のdataset_idが存在することを確認
+3. テスト実行で実際にナレッジが検索されることを確認
+
+### ダミーデータセットIDに関する警告
+```yaml
+# ⚠️ 警告：以下のようなサンプルIDは実環境では動作しません
+dataset_ids:
+  - "mUJqT0QSpLmBBBGsAg6tP+rLJoOBsXRCgClBvqhk7NKJWFKdH7o5AOBH9nG0DiXe"  # サンプルID
+  
+# ✅ 正解：実際のDify環境で作成されたIDを使用
+dataset_ids:
+  - "実際のDify環境で生成されたデータセットID"
+```
+
+### query_variable_selectorの記述形式（重要）
+query_variable_selectorには複数の記述形式があります：
+
+1. **システム変数の直接参照**（advanced-chatモード推奨）
+```yaml
+query_variable_selector:
+  - sys
+  - query
+```
+
+2. **特定ノードの変数参照**
+```yaml
+query_variable_selector:
+  - analyze_question_node
+  - text
+```
+
+3. **startノード経由のシステム変数参照**（特殊な形式）
+```yaml
+query_variable_selector:
+  - start_node
+  - sys.query  # この形式は避ける
+```
+
+推奨：形式1または2を使用。形式3は実行時エラーの原因となる可能性があります。
+
+■エラーハンドリングの実装例（新規追加）
+```yaml
+# 知識検索後のLLMノードで実装
+prompt_template:
+  - role: system
+    text: |
+      検索結果を基に回答を生成してください。
+      検索結果が空の場合は、一般的な回答を提供してください。
+  - role: user
+    text: |
+      質問: {{#sys.query#}}
+      検索結果: {{#knowledge_node.result#}}
+      
+      検索結果が空の場合の代替回答:
+      申し訳ございません。該当する情報が見つかりませんでした。
+      サポートセンターまでお問い合わせください。
+```
+
+■ベストプラクティス
+- 適切なtop_k値の設定（3-5推奨）
+- クエリの前処理で検索精度向上
+- 検索結果の後処理を考慮
+- 複数データセットを使う場合は関連性を考慮
+- リランキング設定で検索精度を最適化
+- ベクトル検索とキーワード検索の重みバランスを調整
+
+■version 0.3.0準拠の注意点
+- 必ずversion: 0.3.0のYAMLで使用すること
+- positionAbsoluteは必須（positionと同値で設定）
+- typeは"custom"で固定（ノード全体のtype）
+- data内のtypeは"knowledge-retrieval"で固定
+- 全体の構造はworkflow.graph.nodes配列内に配置
+
+■トラブルシューティングセクション（新規追加）
+
+### よくある問題と対処法
+1. **「ナレッジが選択されていない」エラー**
+   - 原因1：dataset_idsの形式エラー
+     - 対処：配列形式を確認
+   - 原因2：無効なdataset_id
+     - 対処：Difyプラットフォームで有効なIDを再取得
+   - 原因3：プラットフォーム側の同期問題
+     - 対処：インポート後、UI上で手動選択
+
+2. **検索結果が返らない**
+   - retrieval_modeの設定を確認
+   - query_variable_selectorの参照が正しいか確認

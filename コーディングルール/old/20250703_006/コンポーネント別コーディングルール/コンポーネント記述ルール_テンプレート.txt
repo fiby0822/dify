@@ -116,47 +116,14 @@ Jinja2テンプレートエンジンを使用して、変数をテンプレー�
    - tojson: JSON形式への変換
    - その他Jinja2フィルターが使用可能
 
-■重要：変数参照記法の使い分け（最優先事項）
-
-### 1. Jinja2テンプレート内での変数参照
-template-transformノードのtemplateフィールド内では、標準的なJinja2記法を使用します：
-
-✅ 正しい記法：
-- 変数出力：{{ 変数名 }}
-- フィルタ付き：{{ 変数名 | trim | tojson }}
-- 条件文：{% if 変数名 %}
-
-❌ 誤った記法：
-- {{#変数名#}}  ← Difyの記法をテンプレート内で使用（エラー）
-- {{#変数名 | trim | tojson#}}  ← エラー
-
-### 2. その他の場所での変数参照
-YAMLの他の場所（例：tool_parametersのvalue）では、Difyの記法を使用：
-- {{#node_id.output#}}
-- {{#sys.query#}}
-
-### 3. 具体例
-```yaml
-# template-transformノード内（Jinja2記法）
-template: |
-  ユーザー入力：{{ sys.query }}
-  データ：{{ batch_get_data }}
-  
-# tool_parametersなど（Dify記法）
-tool_parameters:
-  data:
-    type: mixed
-    value: '{{#transform_node.output#}}'
-```
-
 ■注意事項
 1. **テンプレート構文**
-   - 変数参照は{{ }}で囲む（#記号は使用しない）
+   - 変数参照は{{ }}で囲む
    - 制御構造は{% %}を使用（if、for文など）
    - コメントは{# #}を使用
 
 2. **JSON生成時の注意**
-   - tojsonフィルターでエスケープ処理を行う（jsonではなくtojson）
+   - tojsonフィルターでエスケープ処理を行う
    - 手動でのエスケープは避ける
 
 3. **パフォーマンス**
@@ -166,30 +133,6 @@ tool_parameters:
 4. **制限事項**
    - 一部の環境でtemplate-transformノードに制限がある場合がある
    - 複雑な変換はcodeノードを推奨
-   - date関数の使用は環境により制限される場合がある
-
-5. **日付処理に関する注意事項**
-   template-transformノード内でdate関数の使用は環境により制限される場合があります。
-   
-   ❌ 避けるべき記法：
-   ```yaml
-   template: |
-     ["更新日時", "{{ 'now' | date('Y/m/d H:i') }}"]
-   ```
-   
-   ✅ 推奨される代替案：
-   1. codeノードで日付を生成
-   2. 固定値として設定
-   3. LLMノードで日付を含めた出力を生成
-   
-   例：
-   ```yaml
-   # codeノードで日付生成
-   code: |
-     from datetime import datetime
-     current_time = datetime.now().strftime("%Y/%m/%d %H:%M")
-     return {"timestamp": current_time}
-   ```
 
 ■ベストプラクティス
 1. **可読性を重視**

@@ -1,0 +1,324 @@
+Difyコーディングルール改善案
+================================
+作成日：2025年1月14日
+
+■ 概要
+本文書は、エラー分析結果に基づいて、既存のコーディングルールを改善するための提案をまとめたものです。
+特に、実際に発生したエラーを防止するための具体的な対策を追加しています。
+
+==========================================
+■ 1. template-transformノードに関する改善提案
+==========================================
+
+【現状の問題】
+全ケース（ケース1〜3）で、template-transformノード内でのJinja2テンプレート変数参照の誤りが発生。
+エラー内容：jinja2.exceptions.TemplateSyntaxError: unexpected char '#' 
+
+【原因】
+- {{#変数名#}}という誤った記法の使用
+- Difyの変数参照記法とJinja2テンプレート記法の混同
+
+【改善提案】
+
+1. コンポーネント記述ルール_テンプレート.txt への追加：
+```
+■ 重要：変数参照記法の使い分け（最優先事項）
+
+### 1. Jinja2テンプレート内での変数参照
+template-transformノードのtemplateフィールド内では、標準的なJinja2記法を使用します：
+
+✅ 正しい記法：
+- 変数出力：{{ 変数名 }}
+- フィルタ付き：{{ 変数名 | trim | tojson }}
+- 条件文：{% if 変数名 %}
+
+❌ 誤った記法：
+- {{#変数名#}}  ← Difyの記法をテンプレート内で使用（エラー）
+- {{#変数名 | trim | tojson#}}  ← エラー
+
+### 2. その他の場所での変数参照
+YAMLの他の場所（例：tool_parametersのvalue）では、Difyの記法を使用：
+- {{#node_id.output#}}
+- {{#sys.query#}}
+
+### 3. 具体例
+```yaml
+# template-transformノード内（Jinja2記法）
+template: |
+  ユーザー入力：{{ sys.query }}
+  データ：{{ batch_get_data }}
+  
+# tool_parametersなど（Dify記法）
+tool_parameters:
+  data:
+    type: mixed
+    value: '{{#transform_node.output#}}'
+```
+```
+
+2. 品質チェックリスト.md への追加：
+```
+### 4.10.1 template-transform変数参照チェック（最重要）
+- [ ] **template内で{{#変数#}}形式を使用していない（エラーの原因）**
+- [ ] **template内では{{ 変数 }}形式を使用している**
+- [ ] **variablesで定義した変数名と一致している**
+- [ ] **Jinja2の条件文では{% if 変数 %}形式を使用**
+- [ ] **value_selectorで参照元を正しく指定している**
+```
+
+==========================================
+■ 2. LLMノードのmodel設定に関する改善提案
+==========================================
+
+【現状の問題】
+クラッシュ事例（営業データ分析ツール_5623.yml）で、LLMノードにmodel_configという存在しないキーを使用。
+
+【原因】
+- 正しいキー名（model）の誤解
+- 設定構造の混同
+
+【改善提案】
+
+1. 全体コーディングルール.md への追加：
+```
+### LLMノードの必須設定（エラー防止重要項目）
+
+#### modelフィールドの正しい設定
+LLMノードでは必ず`model`フィールドを使用します（`model_config`は存在しません）：
+
+✅ 正しい設定：
+```yaml
+- data:
+    type: llm
+    model:
+      mode: chat
+      name: gpt-4o
+      provider: openai
+    prompt_template:
+      - id: system-1
+        role: system
+        text: "システムプロンプト"
+```
+
+❌ 誤った設定（クラッシュの原因）：
+```yaml
+- data:
+    type: llm
+    model_config:  # 存在しないキー
+      model: gpt-4o
+      mode: chat
+```
+
+#### completion_paramsの位置
+completion_paramsはmodel内ではなく、dataの直下に配置：
+```yaml
+- data:
+    type: llm
+    model:
+      mode: chat
+      name: gpt-4o
+      provider: openai
+    completion_params:  # dataの直下
+      temperature: 0.7
+      max_tokens: 1500
+```
+```
+
+==========================================
+■ 3. エッジ設定に関する改善提案
+==========================================
+
+【現状の問題】
+エッジのisInLoop/isInIterationフィールドに関する説明が不足。
+
+【改善提案】
+
+1. 全体コーディングルール.md への追加：
+```
+### エッジのdata設定（互換性考慮）
+
+#### isInLoopフィールド（推奨）
+新規作成時は`isInLoop`を使用：
+```yaml
+edges:
+  - data:
+      isInLoop: false  # 必須
+      sourceType: tool
+      targetType: answer
+```
+
+#### 既存ファイルの扱い
+既存ファイルで`isInIteration`が含まれる場合も動作可能：
+```yaml
+edges:
+  - data:
+      isInIteration: false  # 旧形式（非推奨だが動作可）
+      isInLoop: false       # 新形式（推奨）
+      sourceType: tool
+      targetType: answer
+```
+
+注意：新規作成時は`isInLoop`のみを使用し、`isInIteration`は含めないでください。
+```
+
+==========================================
+■ 4. Google Sheets date関数に関する改善提案
+==========================================
+
+【現状の問題】
+クラッシュ事例で、template-transform内でdate関数を使用してエラー。
+
+【改善提案】
+
+1. コンポーネント記述ルール_GoogleShpredSheet操作.txt への追加：
+```
+■ 日付処理に関する注意事項
+
+### template-transformでのdate関数使用制限
+template-transformノード内でdate関数の使用は環境により制限される場合があります。
+
+❌ 避けるべき記法：
+```yaml
+template: |
+  ["更新日時", "{{ 'now' | date('Y/m/d H:i') }}"]
+```
+
+✅ 推奨される代替案：
+1. codeノードで日付を生成
+2. 固定値として設定
+3. LLMノードで日付を含めた出力を生成
+
+例：
+```yaml
+# codeノードで日付生成
+code: |
+  from datetime import datetime
+  current_time = datetime.now().strftime("%Y/%m/%d %H:%M")
+  return {"timestamp": current_time}
+```
+```
+
+==========================================
+■ 5. エラー頻発パターンのチェックリスト追加
+==========================================
+
+【改善提案】
+
+クラッシュ事項チェックリスト.md への追加：
+```
+## 0.10 実際のエラー事例に基づく最重要チェック項目
+
+### template-transformノードのエラー
+- [ ] **template内で{{#変数#}}を使用していない（必ず{{ 変数 }}形式）**
+- [ ] **Jinja2テンプレート内での変数参照が正しい**
+- [ ] **date関数を使用していない（制限あり）**
+
+### LLMノードのエラー
+- [ ] **modelフィールドを使用（model_configは存在しない）**
+- [ ] **completion_paramsがmodel内ではなくdata直下に配置**
+
+### 変数参照の統一チェック
+- [ ] **テンプレート内：{{ 変数 }}**
+- [ ] **YAMLのvalue内：{{#ノード.フィールド#}}**
+- [ ] **使い分けが正しい**
+```
+
+==========================================
+■ 6. 開発者向けクイックリファレンス追加
+==========================================
+
+【改善提案】
+
+新規ファイル「変数参照クイックリファレンス.md」の作成：
+```
+# Dify変数参照クイックリファレンス
+
+## 場所別の正しい記法
+
+### 1. template-transformのtemplate内
+```yaml
+template: |
+  ユーザー入力：{{ sys.query }}
+  データ：{{ data_variable }}
+  フィルタ付き：{{ result | trim | tojson }}
+```
+
+### 2. tool_parametersのvalue
+```yaml
+tool_parameters:
+  data:
+    type: mixed
+    value: '{{#transform_node.output#}}'
+```
+
+### 3. LLMのprompt_template
+```yaml
+prompt_template:
+  - role: user
+    text: "入力：{{#sys.query#}}"
+```
+
+### 4. answerノードのanswer
+```yaml
+answer: |
+  結果：{{#llm_node.text#}}
+```
+
+## よくある間違いと修正方法
+
+❌ template内で：{{#変数#}}
+✅ 修正：{{ 変数 }}
+
+❌ LLMでmodel_config使用
+✅ 修正：modelを使用
+
+❌ date関数の使用
+✅ 修正：codeノードで日付生成
+```
+
+==========================================
+■ 7. 成功例（検証YML_5931.yml）の活用
+==========================================
+
+【改善提案】
+
+成功例のパターンを明示的にルール化：
+
+1. 全体コーディングルール.md への追加：
+```
+### 検証済み成功パターン
+
+#### 複雑な条件分岐（IF-ELSE）
+検証YML_5931.ymlの実装パターンを参考に：
+- 各caseに必ずlogical_operatorを設定
+- case_idとidを同じ値に設定
+- 条件の重複を避ける
+- ASCII文字の比較演算子のみ使用
+
+#### ノード間の変数受け渡し
+- 条件分岐後は独立した処理パスを構築
+- 最終統合時は空文字列連結パターンを使用
+- 実行されない可能性のあるノードの出力は参照しない
+```
+
+==========================================
+■ 実装優先順位
+==========================================
+
+1. 【最優先】template-transform変数参照ルールの明確化
+2. 【優先】LLMノードのmodel設定エラー防止
+3. 【重要】エラー頻発パターンのチェックリスト追加
+4. 【推奨】クイックリファレンスの作成
+5. 【推奨】成功パターンの文書化
+
+==========================================
+■ 期待される効果
+==========================================
+
+1. template-transformエラーの撲滅（全ケースで発生していた問題）
+2. LLMノード設定ミスによるクラッシュ防止
+3. 開発者の混乱防止（変数参照記法の統一理解）
+4. 成功パターンの再現性向上
+5. デバッグ時間の大幅削減
+
+以上

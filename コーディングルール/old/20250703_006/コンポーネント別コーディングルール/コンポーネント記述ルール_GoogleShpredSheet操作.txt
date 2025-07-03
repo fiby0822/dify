@@ -356,63 +356,6 @@ toolノードの出力を参照する際の正しい形式：
   value_selector: [google_sheets_read, data]  # dataは無効
 ```
 
-■日付処理に関する注意事項
-
-### template-transformでのdate関数使用制限
-template-transformノード内でdate関数の使用は環境により制限される場合があります。
-
-❌ 避けるべき記法：
-```yaml
-template: |
-  ["更新日時", "{{ 'now' | date('Y/m/d H:i') }}"]
-```
-
-✅ 推奨される代替案：
-1. codeノードで日付を生成
-2. 固定値として設定
-3. LLMノードで日付を含めた出力を生成
-
-例：
-```yaml
-# codeノードで日付生成
-code: |
-  from datetime import datetime
-  current_time = datetime.now().strftime("%Y/%m/%d %H:%M")
-  return {"timestamp": current_time}
-```
-
-### template-transformの活用パターン
-
-```yaml
-# パターン1：Google Sheets書き込み用データの整形
-template: |
-  [{
-    "range": "OUTPUT!A1:B5",
-    "values": [
-      ["項目", "値"],
-      ["分析結果", {{ analysis_result | tojson }}],
-      ["更新日時", "2025/01/14 15:30"]  # 固定値として設定
-    ]
-  }]
-
-# パターン2：LLM入力用のデータ整形
-template: |
-  取得データ（CSV形式）：
-  {% for row in sheet_data[0].values %}
-  {{ row | join(',') }}
-  {% endfor %}
-```
-
-### batch_updateツールのdata参数での推奨事項
-
-```yaml
-# batch_updateツールのdata参数では、以下の形式を推奨
-tool_parameters:
-  data:
-    type: mixed
-    value: '{{#transform_node.output#}}'  # 事前にtemplate-transformで整形済みデータを参照
-```
-
 ■トラブルシューティング
 
 ### エラー：provider_type Input should be...
