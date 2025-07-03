@@ -9,39 +9,6 @@ Google Sheets操作に限り、以下のmarketplaceプラグインの使用が�
 ■ブロック概要
 Google Sheetsとの連携を実現するtoolノード。データの読み取り（batch_get）と書き込み（batch_update）を提供。
 
-■エッジ設定の詳細
-
-Google Sheetsツールを含むエッジには、以下のdata設定を含めます：
-
-```yaml
-edges:
-  - data:
-      isInLoop: false       # 必須（推奨）
-      isInIteration: false  # 既存ファイルでは存在する場合あり（非推奨）
-      sourceType: tool      # 接続元のノードタイプ
-      targetType: template-transform  # 接続先のノードタイプ
-```
-
-注意：
-- 新規作成時はisInLoopのみを使用
-- 既存ファイルでisInIterationが含まれる場合も動作に問題なし
-- 将来的にはisInLoopに統一される予定
-
-■template-transformノードとの連携パターン（推奨）
-
-動作確認済みの構成パターン：
-
-1. **データ取得から変換**
-   batch_get → template-transform（取得データの変換）
-   
-2. **データ整形から書き込み**
-   template-transform（ユーザー入力のJSON変換） → batch_update
-   
-3. **書き込み結果の整形**
-   batch_update → template-transform（反映結果の変換）
-
-この連携により、データの形式変換を適切に行い、エラーを防止できます。
-
 ■依存関係（必須）
 【重要】Google Sheetsツールは特別に許可されたマーケットプレイスツールです。
 以下の設定を必ず含めてください：
@@ -122,7 +89,7 @@ data:
 - [ ] provider_idが完全な形式（omluc/google_sheets/google_sheets）か
 - [ ] provider_nameが設定されているか
 - [ ] tool_configurationsセクションが存在するか（必須）
-- [ ] is_team_authorization: trueが設定されている（チーム全体での認証、推奨）
+- [ ] is_team_authorization: trueが設定されている（推奨）
 - [ ] 変数参照で.dataを使用していないか（.json/.output/.textを使用）
 - [ ] dependenciesにGoogle Sheetsツールが定義されている
 - [ ] rangesパラメータが引用符で囲まれている
@@ -130,8 +97,6 @@ data:
 - [ ] LLM出力を直接使用していない
 - [ ] 各行のカラム数が一致している
 - [ ] 空のセルも""として明示的に指定
-- [ ] output_schema: nullが設定されている（推奨）
-- [ ] selected: falseに統一されている（推奨）
 
 ■provider_typeの設定（重要）
 
@@ -161,7 +126,6 @@ data:
 
 Google Sheetsツールノードには必ずtool_configurationsを設定してください：
 
-### batch_get用の設定
 ```yaml
 tool_configurations:  # 必須フィールド
   date_time_render_option: FORMATTED_STRING
@@ -169,58 +133,7 @@ tool_configurations:  # 必須フィールド
   value_render_option: null
 ```
 
-### batch_update用の設定
-```yaml
-tool_configurations:  # 必須フィールド
-  include_values_in_response: null
-  response_date_time_render_option: null
-  response_value_render_option: null
-  value_input_option: USER_ENTERED  # 推奨
-```
-
 【重要】このセクションが欠落するとエラーになります。
-batch_getとbatch_updateで異なる設定項目があることに注意してください。
-
-■paramSchemasセクション（オプション）
-
-paramSchemasを含める場合、tool_parametersと整合性を保つ必要があります：
-
-```yaml
-paramSchemas:  # オプション：含める場合は完全に定義
-  - name: spreadsheet_id
-    type: string
-    required: true
-    label:
-      en_US: Spreadsheet ID
-      ja_JP: Spreadsheet ID
-    human_description:
-      en_US: The ID of the Google Sheet (found in the URL)
-      ja_JP: The ID of the Google Sheet (found in the URL)
-    llm_description: The ID of the Google Sheet, which can be found in the sheet's URL
-  - name: ranges
-    type: mixed
-    required: true
-    label:
-      en_US: Ranges
-      ja_JP: Ranges
-    human_description:
-      en_US: The ranges to retrieve data from
-      ja_JP: The ranges to retrieve data from
-    llm_description: The ranges to retrieve data from
-```
-
-注意事項：
-- paramSchemasの各パラメータのnameとtool_parametersのキーが一致すること
-- requiredフィールドの設定に注意
-- 実行には影響しないが、含める場合は正確に記述
-
-■ノードの初期値設定（オプション）
-
-```yaml
-params:  # 初期値設定（オプション）
-  spreadsheet_id: ''
-  ranges: ''
-```
 
 ■完全な実装例
 
@@ -232,7 +145,7 @@ dependencies:
   value:
     marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
 
-# データ読み取りノード（完全版・動作確認済み）
+# データ読み取りノード（omluc版）
 - data:
     type: tool
     provider_id: omluc/google_sheets/google_sheets  # 3段階の形式
@@ -240,33 +153,6 @@ dependencies:
     provider_type: builtin  # marketplaceではなくbuiltin
     tool_label: Batch Get  # または Google Sheets
     tool_name: batch_get
-    tool_description: Retrieve data from multiple ranges in a Google Sheet
-    is_team_authorization: true  # チーム全体での認証（推奨）
-    output_schema: null  # 明示的に設定（推奨）
-    paramSchemas:  # オプション：含める場合は完全に定義
-      - name: spreadsheet_id
-        type: string
-        required: true
-        label:
-          en_US: Spreadsheet ID
-          ja_JP: Spreadsheet ID
-        human_description:
-          en_US: The ID of the Google Sheet (found in the URL)
-          ja_JP: The ID of the Google Sheet (found in the URL)
-        llm_description: The ID of the Google Sheet, which can be found in the sheet's URL
-      - name: ranges
-        type: mixed
-        required: true
-        label:
-          en_US: Ranges
-          ja_JP: Ranges
-        human_description:
-          en_US: The ranges to retrieve data from
-          ja_JP: The ranges to retrieve data from
-        llm_description: The ranges to retrieve data from
-    params:  # 初期値設定（オプション）
-      spreadsheet_id: ''
-      ranges: ''
     tool_configurations:  # 必須フィールド
       date_time_render_option: FORMATTED_STRING
       major_dimension: null
@@ -274,15 +160,16 @@ dependencies:
     tool_parameters:
       ranges:
         type: mixed
-        value: '["INPUT!A1:C3"]'
+        value: '["INPUT!A1:C10"]'
       spreadsheet_id:
         type: mixed
         value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
-    selected: false  # 全ノードでfalseに統一（推奨）
-    title: データの取得fromシート
-    desc: ''
+    is_team_authorization: true  # 推奨
+    selected: false
+    title: Google Sheets読み取り
+    desc: 入力データを取得
 
-# データ書き込みノード（完全版・動作確認済み）
+# データ書き込みノード（修正版）
 - data:
     type: tool
     provider_id: omluc/google_sheets/google_sheets  # 3段階の形式
@@ -290,48 +177,24 @@ dependencies:
     provider_type: builtin  # marketplaceではなくbuiltin
     tool_label: Batch Update  # または Google Sheets
     tool_name: batch_update
-    tool_description: Updates multiple ranges in a Google Sheet with specified values
-    is_team_authorization: true  # チーム全体での認証（推奨）
-    output_schema: null  # 明示的に設定（推奨）
-    paramSchemas:  # オプション：含める場合は完全に定義
-      - name: spreadsheet_id
-        type: string
-        required: true
-        label:
-          en_US: Spreadsheet ID
-          ja_JP: Spreadsheet ID
-        human_description:
-          en_US: The ID of the Google Sheet (found in the URL)
-          ja_JP: The ID of the Google Sheet (found in the URL)
-        llm_description: The ID of the Google Sheet, which can be found in the sheet's URL
-      - name: data
-        type: mixed
-        required: true
-        label:
-          en_US: Data
-          ja_JP: Data
-        human_description:
-          en_US: List of value ranges to update
-          ja_JP: List of value ranges to update
-        llm_description: A list of value ranges to update. Each value range should contain a 'range' and 'values' field.
-    params:  # 初期値設定（オプション）
-      spreadsheet_id: ''
-      data: ''
-    tool_configurations:  # 必須フィールド（batch_update用）
-      include_values_in_response: null
-      response_date_time_render_option: null
-      response_value_render_option: null
-      value_input_option: USER_ENTERED
+    tool_configurations:  # 必須フィールド
+      date_time_render_option: FORMATTED_STRING
+      major_dimension: null
+      value_render_option: null
     tool_parameters:
       data:
         type: mixed
-        value: '{{#transform_json_for_sheets.output#}}'  # template-transformノードからの出力
+        value: '{{#template_node.output#}}'
       spreadsheet_id:
         type: mixed
         value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
-    selected: false  # 全ノードでfalseに統一（推奨）
-    title: データの書き込みtoシート
-    desc: ''
+      value_input_option:
+        type: mixed
+        value: "USER_ENTERED"
+    is_team_authorization: true  # 推奨
+    selected: false
+    title: Google Sheets書き込み
+    desc: 結果を出力
 ```
 
 ■toolノードの出力参照

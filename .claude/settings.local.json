@@ -23,7 +23,8 @@
       "Bash(git add:*)",
       "Bash(git push:*)",
       "Bash(git commit:*)",
-      "Bash(echo $((RANDOM % 9000 + 1000)))"
+      "Bash(echo $((RANDOM % 9000 + 1000)))",
+      "Bash(sed:*)"
     ],
     "deny": []
   }

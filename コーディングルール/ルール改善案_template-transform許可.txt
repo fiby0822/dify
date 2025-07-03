@@ -1,0 +1,95 @@
+ルール改修案: template-transformノードの使用許可について
+
+作成日: 2025-01-20
+対象ファイル: 
+- クラッシュ事項チェックリスト.md
+- 品質チェックリスト.md
+
+■改修理由
+1. GoogleShpredSheetサンプル.yml（動作確認済み）でtemplate-transformノードが使用されている
+2. Google Sheets操作ルールでは、LLM出力の直接使用を避けるためtemplate-transformの使用を推奨
+3. 実際の動作確認で問題がないことが証明されている
+
+■改修内容
+
+【1. クラッシュ事項チェックリスト.md】
+
+11.1 使用禁止ノードタイプ の修正:
+（現行）
+- [ ] **templateノードを使用していない（使用禁止）**
+- [ ] **template-transformノードを使用していない（使用禁止）**
+
+（改修案）
+- [ ] **templateノードを使用していない（使用禁止）**
+- [ ] **template-transformノードは、以下の条件でのみ使用許可**
+  - Google Sheets操作でのデータ整形
+  - LLM出力の形式変換
+  - JSON配列の構築
+  - その他、データ形式の変換が必要な場合
+
+【2. 品質チェックリスト.md】
+
+0.8 ノードタイプチェック の修正:
+（現行）
+- [ ] 使用しているノードタイプは基本4種類（start、llm、if-else、answer）のみか
+- [ ] templateノードを使用していないか
+
+（改修案）
+- [ ] 使用しているノードタイプは基本5種類（start、llm、if-else、answer、template-transform）のみか
+- [ ] templateノードを使用していないか（使用禁止）
+- [ ] template-transformノードを使用する場合、明確な目的があるか
+
+4.7 ノードタイプの適切性 の追加:
+（追加案）
+### 4.10 template-transformノード
+- [ ] データ形式の変換目的が明確である
+- [ ] Jinja2テンプレート記法が正しい
+- [ ] 変数参照が{{#node_id.field#}}形式になっている
+- [ ] JSON出力の場合、適切なエスケープ処理がされている
+- [ ] trimやtojsonなどのフィルタが適切に使用されている
+
+■template-transformノード使用ガイドライン
+
+1. 推奨される使用場面:
+   - Google Sheetsへのデータ書き込み前の整形
+   - LLM出力を特定の形式に変換
+   - 複数の変数を結合してJSON配列を生成
+   - CSVやテーブル形式のデータ変換
+
+2. 使用上の注意:
+   - 複雑な処理はcodeノードを使用
+   - テンプレート内でのロジックは最小限に
+   - エラーハンドリングを考慮した記述
+
+3. 正しい使用例:
+   ```yaml
+   template: |
+     [{
+       "range": "OUTPUT!A1:B2",
+       "values": [
+         ["ヘッダー1", "ヘッダー2"],
+         ["{{#variable1#}}", "{{#variable2 | trim | tojson#}}"]
+       ]
+     }]
+   ```
+
+■関連ルールの整合性確保
+
+コンポーネント記述ルール_GoogleShpredSheet操作.txt:
+- 現行の推奨事項を維持（template-transformでの整形を推奨）
+- 使用例を充実させる
+
+■実装時の確認事項
+
+1. template-transformノードのtype属性
+   - 外側のtype: "custom"
+   - data.type: "template-transform"
+
+2. 必須フィールド
+   - template: テンプレート文字列
+   - variables: 変数マッピング配列
+
+3. エラー防止
+   - テンプレート構文エラーのチェック
+   - 変数参照の存在確認
+   - 出力形式の妥当性確認

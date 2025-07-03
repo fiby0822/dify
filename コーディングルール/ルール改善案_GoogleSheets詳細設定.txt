@@ -1,0 +1,150 @@
+ルール改修案: Google Sheets操作の詳細設定について
+
+作成日: 2025-01-20
+対象ファイル: コンポーネント記述ルール_GoogleShpredSheet操作.txt
+
+■改修理由
+GoogleShpredSheetサンプル.yml（動作確認済み）に含まれる詳細設定が現行ルールに記載されていない
+
+■追加すべき設定項目
+
+【1. paramSchemasセクション】
+
+動作確認済みサンプルには、toolノードにparamSchemasという詳細なパラメータ定義が含まれています。
+これは必須ではないが、含まれる場合の注意事項を追加：
+
+```yaml
+paramSchemas:
+  - name: spreadsheet_id
+    type: string
+    required: true
+    label:
+      en_US: Spreadsheet ID
+      ja_JP: Spreadsheet ID
+    human_description:
+      en_US: The ID of the Google Sheet (found in the URL)
+      ja_JP: The ID of the Google Sheet (found in the URL)
+    llm_description: The ID of the Google Sheet, which can be found in the sheet's URL
+    # その他のフィールド...
+```
+
+注意事項:
+- paramSchemasが存在する場合、tool_parametersと整合性を保つこと
+- 各パラメータのnameとtool_parametersのキーが一致すること
+- requiredフィールドの設定に注意
+
+【2. is_team_authorization設定】
+
+現行ルールでは「推奨」とされているが、より具体的に：
+
+```yaml
+is_team_authorization: true  # チーム全体での認証を使用（推奨）
+```
+
+【3. output_schemaフィールド】
+
+動作確認済みサンプルでは以下が設定されている：
+
+```yaml
+output_schema: null
+```
+
+これも必須ではないが、明示的に設定することを推奨。
+
+【4. ノードのselected状態】
+
+サンプルでは：
+- startノード: selected: true
+- その他のノード: selected: false
+
+これはUIでの選択状態を示すもので、実行には影響しないが、
+一貫性のため全てfalseに統一することを推奨。
+
+【5. 完全な実装例の更新】
+
+現行ルールの実装例を、動作確認済みサンプルに基づいて更新：
+
+```yaml
+# batch_getノード（完全版）
+- data:
+    desc: ''
+    is_team_authorization: true
+    output_schema: null
+    paramSchemas:  # オプション：含める場合は完全に定義
+      - name: spreadsheet_id
+        type: string
+        required: true
+        label:
+          en_US: Spreadsheet ID
+          ja_JP: Spreadsheet ID
+        # 他のフィールド...
+    params:  # 初期値設定（オプション）
+      spreadsheet_id: ''
+      ranges: ''
+    provider_id: omluc/google_sheets/google_sheets
+    provider_name: omluc/google_sheets/google_sheets
+    provider_type: builtin
+    selected: false
+    title: データの取得fromシート
+    tool_configurations:
+      date_time_render_option: FORMATTED_STRING
+      major_dimension: null
+      value_render_option: null
+    tool_description: Retrieve data from multiple ranges in a Google Sheet
+    tool_label: Batch Get
+    tool_name: batch_get
+    tool_parameters:
+      ranges:
+        type: mixed
+        value: '["INPUT!A1:C3"]'
+      spreadsheet_id:
+        type: mixed
+        value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+    type: tool
+```
+
+【6. エッジのdata設定の詳細】
+
+動作確認済みサンプルでは、エッジのdataに以下が含まれる：
+
+```yaml
+data:
+  isInIteration: false  # 一部で使用（廃止予定？）
+  isInLoop: false       # 推奨
+  sourceType: tool      # 接続元のノードタイプ
+  targetType: template-transform  # 接続先のノードタイプ
+```
+
+注意：isInIterationとisInLoopが混在している。
+今後はisInLoopに統一することを推奨。
+
+【7. tool_configurationsの詳細設定】
+
+batch_getとbatch_updateで異なる設定項目があることを明記：
+
+batch_get用:
+- date_time_render_option
+- major_dimension
+- value_render_option
+
+batch_update用:
+- include_values_in_response
+- response_date_time_render_option
+- response_value_render_option
+- value_input_option
+
+【8. template-transformノードとの連携パターン】
+
+動作確認済みサンプルの構成：
+1. batch_get → template-transform（取得データの変換）
+2. template-transform（ユーザー入力のJSON変換） → batch_update
+3. batch_update → template-transform（反映結果の変換）
+
+この連携パターンを推奨構成として追加。
+
+■改修後の効果
+
+1. 動作確認済みの設定を正確に再現できる
+2. オプション設定と必須設定の区別が明確になる
+3. エラーを防ぐための詳細な注意事項が追加される
+4. 実装例がより実践的になる
