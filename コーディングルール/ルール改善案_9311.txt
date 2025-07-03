@@ -1,0 +1,200 @@
+# Dify YML作成ルール改善案
+
+## 背景
+インポート失敗、クラッシュ、動作エラーの分析結果から、現行のコーディングルールで不足している点、更新が必要な点を整理しました。
+成功例（検証YML_5931.yml）を基準として、エラーを防ぐためのルール改善を提案します。
+
+## 改善案1: Google Sheets操作ルールの更新
+
+### 現行ルール（コンポーネント記述ルール_GoogleShpredSheet操作.txt）の問題点
+- provider_typeが"marketplace"と記載されているが、これは無効な値
+- tool_configurationsの記載が不十分
+- 新しいマーケットプレイス形式への対応が不完全
+
+### 改善内容
+
+#### 1.1 依存関係定義の正確な記載方法
+```yaml
+# 現行（エラーを引き起こす）
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@xxx
+
+# 改善後（成功例に基づく）
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+```
+
+#### 1.2 toolノードの正しい設定
+```yaml
+# 改善後の正しい記述
+- data:
+    type: tool
+    provider_id: omluc/google_sheets/google_sheets  # 3段階の形式
+    provider_name: omluc/google_sheets/google_sheets  # provider_idと同じ
+    provider_type: builtin  # marketplaceではなくbuiltin
+    tool_label: Google Sheets  # または Batch Get/Batch Update
+    tool_name: batch_get  # または batch_update
+    tool_configurations:  # 必須フィールド
+      date_time_render_option: FORMATTED_STRING
+      major_dimension: null
+      value_render_option: null
+    tool_parameters:
+      ranges:
+        type: mixed
+        value: '["INPUT!A1:C10"]'
+      spreadsheet_id:
+        type: mixed
+        value: "スプレッドシートID"
+    is_team_authorization: true  # 追加推奨
+```
+
+## 改善案2: 全体コーディングルールへの追加事項
+
+### 2.1 provider_typeの許可値を明記
+現行ルールには記載がないため、以下を追加：
+
+```
+### provider_typeの許可値（toolノード）
+- plugin
+- builtin
+- workflow
+- api
+- app
+- dataset-retrieval
+※ "marketplace"は無効な値のため使用禁止
+```
+
+### 2.2 tool_configurationsフィールドの必須化
+```
+### toolノードの必須フィールド
+- provider_id: プロバイダーID
+- provider_name: プロバイダー名（通常provider_idと同じ）
+- provider_type: 上記の許可値から選択
+- tool_label: ツールのラベル
+- tool_name: ツール名
+- tool_configurations: ツール設定（空オブジェクトでも必須）
+- tool_parameters: パラメータ設定
+```
+
+## 改善案3: 品質チェックリストの更新
+
+### 3.1 Google Sheets関連チェック項目の追加
+現行の品質チェックリストに以下を追加：
+
+```markdown
+### 4.13.2 Google Sheets操作の追加チェック項目
+- [ ] **provider_idが3段階形式（omluc/google_sheets/google_sheets）になっている**
+- [ ] **provider_typeが"builtin"に設定されている（"marketplace"は使用禁止）**
+- [ ] **tool_configurationsフィールドが存在する（空でも必須）**
+- [ ] **is_team_authorization: trueが設定されている（推奨）**
+- [ ] **依存関係のmarketplace_plugin_unique_identifierが完全な形式（ハッシュ値含む）**
+```
+
+## 改善案4: クラッシュ事項チェックリストの更新
+
+### 4.1 question-classifierノードのsys.query使用に関する警告
+```markdown
+### 新規追加: question-classifierノードのクラッシュ防止
+
+#### 症状
+- 実行時に「sys.query」関連のエラー
+- 条件分岐が正しく動作しない
+
+#### 原因
+- conditionsでvariable_selectorに[sys, query]を使用
+- query_variable_selectorに[sys, query]を使用
+
+#### 防止策
+- variable_selectorには実際のノードIDとフィールドを指定
+- sys.queryを直接参照せず、LLMノードで処理した結果を使用
+
+#### チェック項目
+- [ ] **question-classifierのconditionsでsys.queryを直接参照していない**
+- [ ] **query_variable_selectorは[sys, query]を使用（これは問題なし）**
+- [ ] **条件判定は前段のLLMノードの出力を使用している**
+```
+
+## 改善案5: 開発依頼プロンプトテンプレートへの追加
+
+### 5.1 Google Sheets操作時の注意事項
+```
+### Google Sheets操作を含む場合の必須事項
+1. dependenciesに以下を必ず追加：
+   ```yaml
+   dependencies:
+   - current_identifier: null
+     type: marketplace
+     value:
+       marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+   ```
+
+2. toolノードでは以下の設定を使用：
+   - provider_type: builtin（marketplaceは使用禁止）
+   - provider_id: omluc/google_sheets/google_sheets
+   - tool_configurationsフィールドを必ず追加（空でも可）
+   - is_team_authorization: true を追加
+
+3. rangesパラメータは必ず引用符で囲む：
+   ```yaml
+   ranges:
+     type: mixed
+     value: '["Sheet1!A1:B10"]'  # 正しい
+   ```
+```
+
+## 改善案6: template-transformノードの使用制限緩和
+
+現在のクラッシュチェックリストでは使用禁止となっているが、成功例（GoogleShpredSheetサンプル.yml）では正常に動作している。
+条件付きで使用を許可するよう変更：
+
+```markdown
+### 11.1 使用禁止ノードタイプ（更新）
+- [ ] **templateノードを使用していない（使用禁止）**
+- [ ] **template-transformノードは以下の条件でのみ使用可能：**
+  - [ ] Google Sheets操作のデータ整形
+  - [ ] 単純な文字列変換
+  - [ ] JSON形式への変換
+  - [ ] 複雑なテンプレート処理は避ける
+```
+
+## 改善案7: エラー原因の早期発見のための追加ルール
+
+### 7.1 インポート前の必須確認事項
+```markdown
+### インポート前の最終チェック（新規追加）
+1. provider_type検索：
+   ```bash
+   grep -n "provider_type: marketplace" yourfile.yml
+   ```
+   → 見つかった場合は"builtin"に変更
+
+2. tool_configurations存在確認：
+   ```bash
+   grep -A 5 "type: tool" yourfile.yml | grep -c "tool_configurations"
+   ```
+   → toolノードの数と一致することを確認
+
+3. marketplace_plugin_unique_identifier完全性確認：
+   - @マーク以降のハッシュ値（64文字）が含まれているか確認
+```
+
+## まとめ
+
+これらの改善により、以下のエラーを防止できます：
+1. インポート失敗（provider_type、依存関係の問題）
+2. クラッシュ（sys.queryの不適切な使用）
+3. 動作エラー（tool_configurationsの欠落）
+
+特に重要なのは：
+- Google Sheets操作時のprovider_typeを"builtin"に統一
+- tool_configurationsフィールドの必須化
+- 依存関係の完全な記載（ハッシュ値含む）
+- template-transformノードの条件付き使用許可
+
+これらの改善により、検証YML_5931.ymlのような成功パターンを確実に再現できるようになります。

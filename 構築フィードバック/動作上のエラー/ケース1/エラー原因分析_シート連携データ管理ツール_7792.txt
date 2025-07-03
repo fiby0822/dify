@@ -1,0 +1,70 @@
+エラー原因分析：シート連携データ管理ツール_7792.yml
+
+【エラー内容】
+Run failed: 2 validation errors for ToolNodeData 
+- provider_type Input should be 'plugin', 'builtin', 'workflow', 'api', 'app' or 'dataset-retrieval'
+- tool_configurations Field required
+
+【主要原因】
+1. provider_typeフィールドの値が無効
+   - 誤：provider_type: marketplace
+   - 正：provider_type: builtin または plugin
+
+2. tool_configurationsフィールドの欠落
+   - Google Sheetsツールを使用する際は必須フィールド
+   - 特にis_team_authorizationやGoogle Sheets固有の設定が必要
+
+【詳細分析】
+
+■エラー箇所1：provider_type
+- 現在の記述：provider_type: marketplace
+- 問題点：'marketplace'は有効な値ではない
+- 正しい値：'plugin', 'builtin', 'workflow', 'api', 'app', 'dataset-retrieval'のいずれか
+- Google Sheetsの場合：通常は'builtin'を使用
+
+■エラー箇所2：tool_configurations欠落
+現在のコード：
+```yaml
+- data:
+    desc: "入力シートからデータを読み取る"
+    provider_id: omluc/google_sheets
+    provider_name: Google Sheets
+    provider_type: marketplace  # 無効な値
+    selected: false
+    title: "データ読み取り"
+    tool_label: Google Sheets
+    tool_name: batch_get
+    tool_parameters:
+      ranges:
+        type: mixed
+        value: '["INPUT!A1:B10"]'
+      spreadsheet_id:
+        type: mixed
+        value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+    type: tool
+    # tool_configurationsが欠落
+```
+
+■必要な修正：
+1. provider_typeを'builtin'に変更
+2. tool_configurationsセクションを追加：
+   ```yaml
+   tool_configurations:
+     SheetsScopes: 1  # 必須：読み書き権限
+   ```
+
+■参考：正常動作するGoogleShpredSheetサンプル.ymlとの差異
+正常動作するサンプルでは：
+- provider_type: builtin が使用されている
+- tool_configurationsセクションが適切に設定されている
+- is_team_authorization: true が含まれている
+
+【修正方法】
+1. すべてのtoolノードでprovider_typeを'builtin'に変更
+2. Google Sheetsツールノードにtool_configurationsセクションを追加
+3. 必要に応じてis_team_authorizationフィールドを追加
+
+【根本原因】
+- コーディングルールにprovider_typeの有効な値のリストが明記されていない
+- tool_configurationsフィールドの必須性が強調されていない
+- marketplaceプラグインとbuiltinツールの使い分けが不明確

@@ -11,7 +11,7 @@ version: 0.3.0 をかならず使うこと
 
 ・作成した開発依頼文を実行し、ymlファイルを開発する 
 開発先は/Users/tatsuya/Documents/01_fiby/09_ゼット/Dev/GoogleShpredSheet操作 
-yml名には、ランダムな4桁の整数を入れること（並列開発時に名前がかぶることを回避）
+yml名には、適当な数字を入れること（並列開発時に名前がかぶることを回避）
 
 ・YMLファイル作成後は
 /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/品質チェック/品質チェックリスト.md

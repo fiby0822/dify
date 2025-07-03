@@ -1,0 +1,52 @@
+エラー原因分析：営業日報分析_最終版_5865.yml
+
+【エラー内容】
+Run failed: 2 validation errors for ToolNodeData 
+- provider_type Input should be 'plugin', 'builtin', 'workflow', 'api', 'app' or 'dataset-retrieval'
+- tool_configurations Field required
+
+【主要原因】
+シート連携データ管理ツール_7792.ymlと同一のエラーパターン
+
+【詳細分析】
+
+■エラー箇所1：provider_type（行104）
+```yaml
+provider_type: marketplace  # 無効な値
+```
+- 'marketplace'は許可されていない値
+- 正しくは'builtin'または'plugin'を使用すべき
+
+■エラー箇所2：tool_configurations欠落
+batch_getノード（行100-117）とbatch_updateノード（行211-243）の両方で：
+- tool_configurationsセクションが完全に欠落
+- Google Sheets操作に必要な認証設定が不足
+
+■他のymlファイルとの比較：
+1. 正常動作するGoogleShpredSheetサンプル.yml：
+   - provider_type: builtin を使用
+   - tool_configurationsが適切に設定されている
+   - is_team_authorization: true が含まれている
+
+2. インポート失敗の営業データ分析ツール_1186.yml：
+   - provider_type: marketplace を使用（同じエラー）
+   - ただし@langgenius/google-sheetsという依存関係は定義済み
+
+【エラーの連鎖】
+1. provider_typeが無効 → ツールタイプの判定に失敗
+2. tool_configurationsが欠落 → 必須フィールドエラー
+3. Google Sheets APIの認証設定が不完全 → 実行時エラーの可能性
+
+【修正提案】
+すべてのGoogle Sheetsツールノードで：
+```yaml
+provider_type: builtin  # marketplaceから変更
+tool_configurations:
+  SheetsScopes: 1      # 読み書き権限
+is_team_authorization: true  # チーム認証使用
+```
+
+【コーディングルールの問題点】
+- provider_typeの有効値リストが記載されていない
+- tool_configurationsの必須性が不明確
+- Google Sheets固有の設定要件が詳細に記載されていない

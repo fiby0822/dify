@@ -1,0 +1,65 @@
+# ケース1 エラー原因分析
+
+## 対象ファイル
+- シート連携データ管理ツール_7792.yml
+- 営業日報分析_最終版_5865.yml
+
+## エラー内容
+Run failed: 2 validation errors for ToolNodeData 
+1. provider_type Input should be 'plugin', 'builtin', 'workflow', 'api', 'app' or 'dataset-retrieval' 
+   [type=enum, input_value='marketplace', input_type=str]
+2. tool_configurations Field required [type=missing]
+
+GoogleShpredSheetの呼び出し用コンポーネントが使用されていません。
+
+## エラー原因分析
+
+### 1. 誤ったprovider_type値
+両ファイルのtoolノードで以下の設定が使用されている：
+```yaml
+provider_type: marketplace
+```
+
+しかし、Difyの仕様では`provider_type`として許可されている値は：
+- 'plugin'
+- 'builtin'
+- 'workflow'
+- 'api'
+- 'app'
+- 'dataset-retrieval'
+
+`marketplace`は有効な値ではないため、エラーが発生している。
+
+### 2. tool_configurationsフィールドの欠落
+エラーが発生したtoolノードには`tool_configurations`フィールドが定義されていない。
+正常に動作するサンプル（GoogleShpredSheetサンプル.yml）では以下のような設定がある：
+```yaml
+tool_configurations:
+  date_time_render_option: FORMATTED_STRING
+  major_dimension: null
+  value_render_option: null
+```
+
+### 3. 旧形式のプロバイダーID使用
+エラーファイルでは：
+```yaml
+provider_id: omluc/google_sheets
+```
+
+正常ファイルでは：
+```yaml
+provider_id: omluc/google_sheets/google_sheets
+provider_name: omluc/google_sheets/google_sheets
+provider_type: builtin
+```
+
+### 4. その他の注意点
+- LLMノード内で`sys.query`を使用している箇所がある（process_dataノード）
+- これはクラッシュの原因となる可能性がある
+
+## 修正方法
+1. `provider_type`を`marketplace`から`builtin`に変更
+2. `tool_configurations`フィールドを追加
+3. `provider_id`と`provider_name`を正しい形式に修正
+4. `is_team_authorization: true`を追加（必要に応じて）
+5. `sys.query`の使用を適切に管理する

@@ -1,0 +1,297 @@
+app:
+  description: 営業日報データを読み取り、LLMで分析して結果をシートに書き込むシステム
+  icon: 📊
+  icon_background: '#E0F2FE'
+  mode: advanced-chat
+  name: 営業日報集計分析システム
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/google-sheets:1.1.0@25c96f2b47b73962ceeb4dc0c4e963c2e78db9e7c3c3d6cd6bb37d956c4b8a51
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: 営業日報の集計・分析を開始します。スプレッドシートのIDを入力してください。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ja-JP
+      voice: ja-JP-KeitaNeural
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: start
+        targetType: tool
+      id: start-source-sheet_reader-target
+      markerEnd: none
+      selected: false
+      source: start
+      sourceHandle: source
+      target: sheet_reader
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: llm
+      id: sheet_reader-source-analyzer-target
+      markerEnd: none
+      selected: false
+      source: sheet_reader
+      sourceHandle: source
+      target: analyzer
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: analyzer-source-formatter-target
+      markerEnd: none
+      selected: false
+      source: analyzer
+      sourceHandle: source
+      target: formatter
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: code
+        targetType: tool
+      id: formatter-source-sheet_writer-target
+      markerEnd: none
+      selected: false
+      source: formatter
+      sourceHandle: source
+      target: sheet_writer
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: answer
+      id: sheet_writer-source-answer-target
+      markerEnd: none
+      selected: false
+      source: sheet_writer
+      sourceHandle: source
+      target: answer
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: ユーザー入力（スプレッドシートID）を受け取る
+        selected: false
+        title: 開始
+        type: start
+        variables: []
+      height: 54
+      id: start
+      position:
+        x: 30
+        y: 274
+      positionAbsolute:
+        x: 30
+        y: 274
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        provider_id: omluc/google_sheets
+        provider_name: marketplace
+        provider_type: marketplace
+        selected: false
+        title: 日報データ読み取り
+        tool_configurations:
+          SheetsScopes: 1
+        tool_label: Google Sheets
+        tool_name: batch_get
+        tool_parameters:
+          ranges:
+            type: mixed
+            value: '["日報!A1:E100"]'
+          spreadsheet_id:
+            type: mixed
+            value: '{{#sys.query#}}'
+        type: tool
+      height: 90
+      id: sheet_reader
+      position:
+        x: 334
+        y: 274
+      positionAbsolute:
+        x: 334
+        y: 274
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 日報データを分析し、週次サマリーと課題を抽出
+        model:
+          name: gpt-4o-mini
+          provider: openai
+        prompt_template:
+        - id: prompt_1
+          role: system
+          text: あなたは営業日報を分析するアナリストです。提供された日報データから週次サマリー、重要ポイント、課題、次週のアクションを抽出してください。
+        - id: prompt_2
+          role: user
+          text: |-
+            以下の営業日報データを分析してください：
+
+            {{#sheet_reader.result#}}
+
+            以下の形式で分析結果を出力してください：
+
+            週次サマリー：
+            [ここに週次サマリーを記載]
+
+            重要ポイント：
+            - ポイント1
+            - ポイント2
+            - ポイント3
+
+            課題：
+            - 課題1
+            - 課題2
+            - 課題3
+
+            次週のアクション：
+            - アクション1
+            - アクション2
+            - アクション3
+        selected: false
+        structured_output_enabled: false
+        title: 日報分析
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 98
+      id: analyzer
+      position:
+        x: 638
+        y: 274
+      positionAbsolute:
+        x: 638
+        y: 274
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        code: "import json\nimport datetime\n\nanalysis_text = analyzer_text\n\nsections = {\n    '週次サマリー': '',\n    '重要ポイント': '',\n    '課題': '',\n    '次週のアクション': ''\n}\n\ncurrent_section = None\nfor line in analysis_text.split('\\n'):\n    if '週次サマリー：' in line:\n        current_section = '週次サマリー'\n    elif '重要ポイント：' in line:\n        current_section = '重要ポイント'\n    elif '課題：' in line:\n        current_section = '課題'\n    elif '次週のアクション：' in line:\n        current_section = '次週のアクション'\n    elif current_section and line.strip():\n        sections[current_section] += line.strip() + ' '\n\ncurrent_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')\n\nresult = [{\n    \"range\": \"分析結果!A1:B6\",\n    \"values\": [\n        [\"項目\", \"内容\"],\n        [\"分析日時\", current_time],\n        [\"週次サマリー\", sections['週次サマリー'].strip()],\n        [\"重要ポイント\", sections['重要ポイント'].strip()],\n        [\"課題\", sections['課題'].strip()],\n        [\"次週のアクション\", sections['次週のアクション'].strip()]\n    ]\n}]\n\nresult = json.dumps(result, ensure_ascii=False)"
+        code_language: python3
+        desc: 分析結果をGoogle Sheets書き込み用のJSON形式に変換
+        outputs:
+          result:
+            type: string
+        selected: false
+        title: 結果フォーマット
+        type: code
+        variables:
+        - value_selector:
+          - analyzer
+          - text
+          variable: analyzer_text
+      height: 54
+      id: formatter
+      position:
+        x: 942
+        y: 274
+      positionAbsolute:
+        x: 942
+        y: 274
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        provider_id: omluc/google_sheets
+        provider_name: marketplace
+        provider_type: marketplace
+        selected: false
+        title: 分析結果書き込み
+        tool_configurations:
+          SheetsScopes: 1
+        tool_label: Google Sheets
+        tool_name: batch_update
+        tool_parameters:
+          data:
+            type: mixed
+            value: '{{#formatter.result#}}'
+          spreadsheet_id:
+            type: mixed
+            value: '{{#sys.query#}}'
+          value_input_option:
+            type: mixed
+            value: USER_ENTERED
+        type: tool
+      height: 90
+      id: sheet_writer
+      position:
+        x: 1246
+        y: 274
+      positionAbsolute:
+        x: 1246
+        y: 274
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: |-
+          営業日報の分析が完了しました。
+
+          分析結果はスプレッドシートの「分析結果」シートに書き込まれました。
+
+          {{#analyzer.text#}}
+        desc: 処理完了メッセージを表示
+        selected: false
+        title: 完了メッセージ
+        type: answer
+      height: 107
+      id: answer
+      position:
+        x: 1550
+        y: 274
+      positionAbsolute:
+        x: 1550
+        y: 274
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+  hash_id: null

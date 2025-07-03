@@ -1,0 +1,372 @@
+app:
+  description: "営業チームの月間売上データをGoogle Sheetsから取得し、分析結果を別シートに出力するツールです。売上合計、平均、最高・最低売上、TOP3営業担当者を自動的に計算します。"
+  icon: "📊"
+  icon_background: "#E8F4FD"
+  mode: advanced-chat
+  name: "営業データ分析ツール"
+  use_icon_as_answer_icon: false
+
+dependencies:
+  - name: "@langgenius/google-sheets"
+    value:
+      version: "1.0.0"
+
+kind: app
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_extensions: []
+      allowed_file_types: []
+      enabled: false
+      max_files: 5
+    opening_statement: |
+      営業データ分析ツールへようこそ！
+
+      このツールは、Google Sheetsの営業データを自動的に分析します。
+      以下の処理を実行します：
+      1. 「売上データ!A1:C50」から営業データを取得
+      2. 売上合計、平均、最高・最低売上を計算
+      3. 売上TOP3の営業担当者を特定
+      4. 分析結果を「分析結果!A1:B10」に出力
+
+      「開始」と入力してください。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "開始"
+      - "営業データを分析して"
+      - "売上データの分析を実行"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ""
+      voice: ""
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          priority: 1
+          sourceType: start
+          targetType: tool
+        id: edge_start_to_read
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: google_sheets_read
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          priority: 1
+          sourceType: tool
+          targetType: template-transform
+        id: edge_read_to_transform
+        selected: false
+        source: google_sheets_read
+        sourceHandle: source
+        target: data_formatter
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          priority: 1
+          sourceType: template-transform
+          targetType: llm
+        id: edge_transform_to_llm
+        selected: false
+        source: data_formatter
+        sourceHandle: source
+        target: data_analyzer
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          priority: 1
+          sourceType: llm
+          targetType: template-transform
+        id: edge_llm_to_prepare
+        selected: false
+        source: data_analyzer
+        sourceHandle: source
+        target: result_formatter
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          priority: 1
+          sourceType: template-transform
+          targetType: tool
+        id: edge_prepare_to_write
+        selected: false
+        source: result_formatter
+        sourceHandle: source
+        target: google_sheets_write
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          priority: 1
+          sourceType: tool
+          targetType: answer
+        id: edge_write_to_answer
+        selected: false
+        source: google_sheets_write
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "チャット開始ノード"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 90
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "Google Sheetsから営業データを取得"
+          provider_id: "@langgenius/google-sheets"
+          provider_name: "Google Sheets"
+          provider_type: marketplace
+          selected: false
+          title: "営業データ取得"
+          tool_label: "Google Sheets"
+          tool_name: batch_get
+          tool_parameters:
+            ranges:
+              type: mixed
+              value: '["売上データ!A1:C50"]'
+            spreadsheet_id:
+              type: mixed
+              value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+          type: tool
+        height: 146
+        id: google_sheets_read
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "取得データをCSV形式に変換"
+          template: |
+            取得した営業データ：
+            {{data | tojson}}
+          title: "データ整形"
+          type: template-transform
+          variables:
+            - variable: data
+              value_selector: [google_sheets_read, text]
+              value_type: string
+        height: 54
+        id: data_formatter
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          completion_params:
+            max_tokens: 1500
+            temperature: 0.2
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "営業データを分析"
+          model:
+            mode: chat
+            name: gpt-4o
+            provider: openai
+          prompt_template:
+            - id: system-prompt-1
+              role: system
+              text: |
+                あなたは優秀なデータアナリストです。
+                営業データを分析し、以下の形式で結果を出力してください。
+
+                出力形式（JSON形式）：
+                {
+                  "合計売上": "数値",
+                  "平均売上": "数値",
+                  "最高売上": "数値",
+                  "最低売上": "数値",
+                  "TOP1": "営業担当者名（売上金額）",
+                  "TOP2": "営業担当者名（売上金額）",
+                  "TOP3": "営業担当者名（売上金額）"
+                }
+
+                注意事項：
+                - 売上金額は数値のみ（円記号なし）
+                - TOP3は売上額の降順
+                - 営業担当者名と売上金額は「名前（金額）」形式
+            - id: user-prompt-1
+              role: user
+              text: |
+                以下の営業データを分析してください：
+                {{#data_formatter.output#}}
+          selected: false
+          structured_output_enabled: false
+          title: "データ分析"
+          type: llm
+          variables: []
+          vision:
+            enabled: false
+        height: 98
+        id: data_analyzer
+        position:
+          x: 950
+          y: 200
+        positionAbsolute:
+          x: 950
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "分析結果をGoogle Sheets用に整形"
+          template: |
+            [
+              {
+                "range": "分析結果!A1:B10",
+                "values": [
+                  ["項目", "値"],
+                  ["合計売上", "{{result.合計売上}}"],
+                  ["平均売上", "{{result.平均売上}}"],
+                  ["最高売上", "{{result.最高売上}}"],
+                  ["最低売上", "{{result.最低売上}}"],
+                  ["", ""],
+                  ["順位", "営業担当者（売上）"],
+                  ["TOP1", "{{result.TOP1}}"],
+                  ["TOP2", "{{result.TOP2}}"],
+                  ["TOP3", "{{result.TOP3}}"]
+                ]
+              }
+            ]
+          title: "結果整形"
+          type: template-transform
+          variables:
+            - variable: result
+              value_selector: [data_analyzer, text]
+              value_type: string
+        height: 54
+        id: result_formatter
+        position:
+          x: 1250
+          y: 200
+        positionAbsolute:
+          x: 1250
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "分析結果をGoogle Sheetsに書き込み"
+          provider_id: "@langgenius/google-sheets"
+          provider_name: "Google Sheets"
+          provider_type: marketplace
+          selected: false
+          title: "結果書き込み"
+          tool_label: "Google Sheets"
+          tool_name: batch_update
+          tool_parameters:
+            data:
+              type: mixed
+              value: '{{#result_formatter.output#}}'
+            spreadsheet_id:
+              type: mixed
+              value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+            value_input_option:
+              type: mixed
+              value: "USER_ENTERED"
+          type: tool
+        height: 146
+        id: google_sheets_write
+        position:
+          x: 1550
+          y: 200
+        positionAbsolute:
+          x: 1550
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            営業データの分析が完了しました！
+
+            分析結果は「分析結果!A1:B10」に出力されました。
+            以下の情報が記録されています：
+
+            - 売上合計
+            - 平均売上
+            - 最高売上と最低売上
+            - 売上TOP3の営業担当者
+
+            Google Sheetsでご確認ください。
+          desc: "完了メッセージ"
+          selected: false
+          title: "完了"
+          type: answer
+          variables: []
+        height: 107
+        id: answer_node
+        position:
+          x: 1850
+          y: 200
+        positionAbsolute:
+          x: 1850
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

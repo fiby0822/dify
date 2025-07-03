@@ -1,0 +1,118 @@
+# GoogleShpredSheet操作ルール検証結果レポート
+
+## 実施内容
+1. GoogleShpredSheet操作のコーディングルールに基づいた検証用YMLファイルを作成
+2. 品質チェックリストとクラッシュ事項チェックリストによるセルフレビューを実施
+3. 複数パターンのYMLファイルを作成し、ベストプラクティスを確認
+
+## 作成したファイル
+1. **開発依頼文**
+   - /Users/tatsuya/Documents/01_fiby/09_ゼット/開発ルール改善/GoogleShpredSheet操作/Dify_YML作成依頼_6059.txt
+
+2. **YMLファイル**
+   - 営業日報分析システム_4732.yml（初版）
+   - 営業日報分析システム_改善版_4667.yml（改善版）
+   - 営業日報分析_最終版_5865.yml（最終版）
+   - シート連携データ管理ツール_7792.yml（シンプル版）
+
+3. **サンプル説明**
+   - /Users/tatsuya/Documents/01_fiby/09_ゼット/yml サンプル/GoogleShpredSheetサンプル.yml
+
+## 主な確認ポイント
+
+### 1. GoogleSheets依存関係
+```yaml
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+```
+
+### 2. batch_getの正しい記述
+```yaml
+tool_parameters:
+  ranges:
+    type: mixed
+    value: '["INPUT!A1:B10"]'  # 引用符で囲む
+  spreadsheet_id:
+    type: mixed
+    value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+```
+
+### 3. template-transformによるデータ整形
+```yaml
+template: |
+  [
+    {
+      "range": "OUTPUT!A1:B2",
+      "values": [
+        ["項目", "内容"],
+        ["処理結果", {{ summary | trim | tojson }}]
+      ]
+    }
+  ]
+```
+
+### 4. batch_updateでの書き込み
+```yaml
+tool_parameters:
+  data:
+    type: mixed
+    value: '{{#prepare_output.output#}}'
+  spreadsheet_id:
+    type: mixed
+    value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+  value_input_option:
+    type: mixed
+    value: "USER_ENTERED"
+```
+
+## 重要な学習事項
+
+### 1. LLM出力の直接使用は避ける
+- LLMの出力を直接batch_updateのdataに使用するとエラーになる
+- 必ずtemplate-transformノードで整形する
+
+### 2. rangesパラメータの引用符
+- 配列全体を引用符で囲む必要がある
+- '["Sheet1!A1:B10"]' が正しい形式
+
+### 3. エッジの必須フィールド
+- isInLoop: false（isInIterationではない）
+- selected: false
+- zIndex: 0
+
+### 4. advanced-chatモードでの注意
+- startノードのvariablesは必ず空配列[]
+- ユーザー入力は{{#sys.query#}}で参照
+
+### 5. 必須セクション
+- conversation_variables: []
+- environment_variables: []
+- app.use_icon_as_answer_icon: false
+
+## 推奨事項
+
+### 1. シンプルな構成を心がける
+- start → tool(batch_get) → llm → template-transform → tool(batch_update) → answer
+
+### 2. エラーハンドリング
+- 空のデータやエラー時の処理を考慮
+- 適切なエラーメッセージの表示
+
+### 3. テスト手順
+1. サンプルスプレッドシートの作成
+2. 権限設定の確認
+3. 小規模なデータでのテスト
+4. 段階的な機能追加
+
+## 結論
+GoogleShpredSheet操作のコーディングルールは適切に機能することを確認しました。
+特に重要なのは：
+- 依存関係の正確な設定
+- rangesパラメータの引用符
+- LLM出力の適切な処理
+- template-transformノードの活用
+
+これらのポイントを守ることで、安定したGoogleSheets連携アプリケーションの開発が可能です。

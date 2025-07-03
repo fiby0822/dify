@@ -1,1 +1,2 @@
-Run failed: 1 validation error for IfElseNodeData cases.0.logical_operator Field required [type=missing, input_value={'id': 'true', 'case_id':...33143906464', 'json']}]}, input_type=dict] For further information visit https://errors.pydantic.dev/2.11/v/missing
+Run failed: 2 validation errors for ToolNodeData provider_type Input should be 'plugin', 'builtin', 'workflow', 'api', 'app' or 'dataset-retrieval' [type=enum, input_value='marketplace', input_type=str] For further information visit https://errors.pydantic.dev/2.11/v/enum tool_configurations Field required [type=missing, input_value={'desc': '入力シート...TqSQ'}}, 'type': 'tool'}, input_type=dict] For further information visit https://errors.pydantic.dev/2.11/v/missing
+GoogleShpredSheetの呼び出し用コンポーネントが使用されていません。

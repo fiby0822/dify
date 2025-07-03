@@ -5,6 +5,12 @@
 
 #追加したい内容
 Googleスプレッドシートからの読み込み/値の反映に関するコンポーネント別コーディングルール
+現状、marketplaceの使用は禁止されていますが、下記については許可をしたいです。
+
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
 
 #追加先
 /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/コンポーネント別コーディングルール/コンポーネント記述ルール_GoogleShpredSheet操作.txt

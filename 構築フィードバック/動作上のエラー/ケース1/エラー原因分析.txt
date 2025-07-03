@@ -1,40 +1,53 @@
-エラー原因分析：シート連携データ管理ツール_7392.yml
+# エラー原因分析レポート
 
-【エラー内容】
-Run failed: 1 validation error for IfElseNodeData cases.0.logical_operator Field required
+## 分析日時
+2025-07-03
 
-【原因】
-if-elseノード（id: 1733143906465）の定義において、cases配列内の各条件にlogical_operatorフィールドが必須であるにも関わらず、記載されていない。
+## 対象ファイル
+1. シート連携データ管理ツール_7792.yml
+2. 営業日報分析_最終版_5865.yml
 
-【該当箇所】
-228-236行目のif-elseノード定義：
-```yaml
-cases:
-  - case_id: 'true'
-    conditions:
-      - comparison_operator: contains
-        id: 'true'
-        value: '["values"]'
-        variable_selector:
-          - '1733143906464'
-          - json
-```
+## エラーの主要原因
 
-【修正方法】
-casesの中に`logical_operator`フィールドを追加する必要がある。
-例：
-```yaml
-cases:
-  - case_id: 'true'
-    logical_operator: and  # この行を追加
-    conditions:
-      - comparison_operator: contains
-        id: 'true'
-        value: '["values"]'
-        variable_selector:
-          - '1733143906464'
-          - json
-```
+### 1. toolノードの設定エラー
+- **問題**: `provider_type: marketplace` を使用
+- **正しい値**: `builtin`, `plugin`, `workflow`, `api`, `app`, `dataset-retrieval` のいずれか
+- **該当箇所**: 
+  - シート連携データ管理ツール_7792.yml: line 104, 212
+  - 営業日報分析_最終版_5865.yml: line 104, 215
 
-【成功例との比較】
-成功しているymlファイルでは、if-elseノードを使用していないか、または正しくlogical_operatorフィールドが設定されている。
+### 2. 必須フィールドの欠落
+- **問題**: `tool_configurations` フィールドが未定義
+- **影響**: Google Sheetsツールの実行に必要な設定が不足
+
+### 3. 変数参照エラー
+- **問題**: 無効な変数参照形式を使用
+- **例**: 
+  - `{{#get_data.data#}}` (シート連携データ管理ツール_7792.yml: line 153)
+  - `{{#sheets_read.data#}}` (営業日報分析_最終版_5865.yml: line 156)
+- **正しい形式**: `{{#get_data.output#}}` または `{{#get_data.json#}}`
+
+### 4. システム予約変数の誤用
+- **問題**: `sys.query` の使用（シート連携データ管理ツール_7792.yml: line 155）
+- **影響**: システムクラッシュや予期しない動作の原因
+
+## 修正が必要な点
+
+1. **provider_type の修正**
+   - `marketplace` → `builtin` または適切な値に変更
+
+2. **tool_configurations の追加**
+   - Google Sheetsツールに必要な設定を追加
+
+3. **変数参照の修正**
+   - toolノードの出力は `.output` または `.json` で参照
+   - `.data` は無効な参照形式
+
+4. **sys.query の除去**
+   - システム予約変数の使用を避ける
+   - 必要に応じて通常の変数を使用
+
+## 推奨事項
+1. 正常動作している「GoogleShpredSheetサンプル.yml」や「検証YML_5931.yml」を参考に修正
+2. toolノードの設定は正確に記述し、必須フィールドを漏れなく含める
+3. 変数参照は正しい形式（.output, .json, .text）を使用する

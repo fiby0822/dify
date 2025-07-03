@@ -1,0 +1,434 @@
+app:
+  description: 'Google Spreadsheetsの日報管理シートから本日の日報データを取得し、未提出のものを提出済みに更新するワークフロー'
+  icon: 📊
+  icon_background: '#FFEAD5'
+  mode: advanced-chat
+  name: 日報管理ワークフロー
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: '日報管理システムへようこそ。本日の日報の確認と更新を行います。'
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: start
+        targetType: llm
+      id: start-source-get_today_date-target
+      source: start
+      sourceHandle: source
+      target: get_today_date
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: tool
+      id: get_today_date-source-fetch_daily_reports-target
+      source: get_today_date
+      sourceHandle: source
+      target: fetch_daily_reports
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: llm
+      id: fetch_daily_reports-source-extract_unsubmitted-target
+      source: fetch_daily_reports
+      sourceHandle: source
+      target: extract_unsubmitted
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: question-classifier
+      id: extract_unsubmitted-source-user_selection-target
+      source: extract_unsubmitted
+      sourceHandle: source
+      target: user_selection
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        cases:
+        - false
+        - true
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: llm
+      id: user_selection-1-prepare_update-target
+      source: user_selection
+      sourceHandle: '1'
+      target: prepare_update
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: tool
+      id: prepare_update-source-update_status-target
+      source: prepare_update
+      sourceHandle: source
+      target: update_status
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        cases:
+        - false
+        - true
+        isInLoop: false
+        sourceType: question-classifier
+        targetType: answer
+      id: user_selection-0-cancel_answer-target
+      source: user_selection
+      sourceHandle: '0'
+      target: cancel_answer
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: answer
+      id: update_status-source-success_answer-target
+      source: update_status
+      sourceHandle: source
+      target: success_answer
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    graph_dict: {}
+    nodes:
+    - data:
+        desc: ''
+        selected: false
+        title: Start
+        type: start
+        variables: []
+      height: 53
+      id: start
+      position:
+        x: 30
+        y: 282
+      positionAbsolute:
+        x: 30
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: '本日の日付を取得'
+        model:
+          completion_params:
+            temperature: 0.1
+          mode: chat
+          name: gpt-4o-mini
+          provider: openai
+        prompt_template:
+        - id: d8a47b5c-8a2e-4f5e-b6c3-9d7e2a4b8c1e
+          role: system
+          text: 'あなたは日付を管理するアシスタントです。本日の日付をYYYY-MM-DD形式で回答してください。'
+        - id: e9b58c6d-9a3f-4e6d-a7b4-8c2d3a5b9c1f
+          role: user
+          text: '今日の日付を教えてください。'
+        selected: false
+        structured_output_enabled: false
+        title: 本日の日付取得
+        type: llm
+        vision:
+          enabled: false
+      height: 97
+      id: get_today_date
+      position:
+        x: 334
+        y: 282
+      positionAbsolute:
+        x: 334
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: 'Google Sheetsから日報データを取得'
+        is_team_authorization: true
+        selected: false
+        title: 日報データ取得
+        tool_configurations:
+          SheetsScopes: 1
+        tool_label: Batch Get
+        tool_name: batch_get
+        tool_parameters:
+          ranges:
+            type: constant
+            value: '["日報管理!A:E"]'
+          spreadsheet_id:
+            type: constant
+            value: '1ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmno0'
+        type: tool
+      height: 142
+      id: fetch_daily_reports
+      position:
+        x: 638
+        y: 282
+      positionAbsolute:
+        x: 638
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - fetch_daily_reports
+          - output
+        desc: '未提出の日報を抽出して表示'
+        model:
+          completion_params:
+            temperature: 0.3
+          mode: chat
+          name: gpt-4o
+          provider: openai
+        prompt_template:
+        - id: f1a69d8e-1b3c-4d5f-a8e2-9c7d3b5a8e2f
+          role: system
+          text: |
+            あなたは日報管理システムのアシスタントです。
+            取得したデータから本日（{{#get_today_date.text#}}）の日報のみを抽出し、
+            その中から「未提出」ステータスのものを見つけて、ユーザーに分かりやすく表示してください。
+
+            データ形式:
+            - A列: 日付（YYYY-MM-DD形式）
+            - B列: 社員名
+            - C列: 日報タイトル  
+            - D列: ステータス（"未提出"/"提出済み"）
+            - E列: 更新日時
+
+            重要：各日報には行番号（2から始まる）を表示してください。
+            例：「行2: 田中太郎 - 営業日報」
+        - id: g2b79e8f-2c4d-5e6g-b9f3-0d8e4c6b9d3g
+          role: user
+          text: '取得したデータ: {{#fetch_daily_reports.output#}}'
+        selected: false
+        structured_output_enabled: false
+        title: 未提出日報の抽出
+        type: llm
+        vision:
+          enabled: false
+      height: 97
+      id: extract_unsubmitted
+      position:
+        x: 942
+        y: 282
+      positionAbsolute:
+        x: 942
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        cases:
+        - case_id: '0'
+          logical_operator: and
+          conditions:
+          - comparison_operator: contains
+            id: h3c80f9g-3d5e-6f7h-c0g4-1e9f5d7c0e4h
+            variable_selector:
+            - sys
+            - query
+            value: 'キャンセル'
+        - case_id: '1'
+          logical_operator: and
+          conditions: []
+        desc: ''
+        instruction: |
+          {{#extract_unsubmitted.text#}}
+
+          更新したい日報の番号を入力してください。
+          キャンセルする場合は「キャンセル」と入力してください。
+        model:
+          completion_params:
+            temperature: 0.1
+          mode: chat
+          name: gpt-4o-mini
+          provider: openai
+        query_variable_selector:
+        - sys
+        - query
+        selected: false
+        title: ユーザー選択
+        type: question-classifier
+      height: 95
+      id: user_selection
+      position:
+        x: 1246
+        y: 282
+      positionAbsolute:
+        x: 1246
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 'batch_update用のJSONを生成'
+        model:
+          completion_params:
+            temperature: 0.1
+          mode: chat
+          name: gpt-4o-mini
+          provider: openai
+        prompt_template:
+        - id: h3c90f8g-4d6e-7f8h-c1g5-2f0g6e8c1f5h
+          role: system
+          text: |
+            ユーザーが選択した行番号に基づいて、Google Sheetsのbatch_update用のJSONデータを生成してください。
+            
+            出力形式例:
+            [{"range": "日報管理!D2", "values": [["提出済み"]]}, {"range": "日報管理!E2", "values": [["2024-01-01 12:00:00"]]}]
+            
+            注意:
+            - D列には"提出済み"を設定
+            - E列には現在の日時を設定
+            - JSON形式のみを出力（説明文は不要）
+        - id: i4da91g9-5e7f-8g9i-d2h6-3g1h7f9d2g6i
+          role: user
+          text: '行番号: {{#user_selection.output#}}、本日の日付: {{#get_today_date.text#}}'
+        selected: false
+        structured_output_enabled: false
+        title: 更新JSON生成
+        type: llm
+        vision:
+          enabled: false
+      height: 97
+      id: prepare_update
+      position:
+        x: 1550
+        y: 282
+      positionAbsolute:
+        x: 1550
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: '選択された日報のステータスを更新'
+        is_team_authorization: true
+        selected: false
+        title: ステータス更新
+        tool_configurations:
+          SheetsScopes: 1
+        tool_label: Batch Update
+        tool_name: batch_update
+        tool_parameters:
+          data:
+            type: mixed
+            value: '{{#prepare_update.text#}}'
+          spreadsheet_id:
+            type: constant
+            value: '1ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmno0'
+        type: tool
+      height: 142
+      id: update_status
+      position:
+        x: 1854
+        y: 282
+      positionAbsolute:
+        x: 1854
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '操作をキャンセルしました。'
+        desc: ''
+        selected: false
+        title: キャンセル通知
+        type: answer
+      height: 105
+      id: cancel_answer
+      position:
+        x: 1550
+        y: 212
+      positionAbsolute:
+        x: 1550
+        y: 212
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: answer
+      width: 244
+    - data:
+        answer: |
+          日報のステータスを「提出済み」に更新しました。
+          
+          更新結果: {{#update_status.output#}}
+        desc: ''
+        selected: false
+        title: 更新完了通知
+        type: answer
+      height: 105
+      id: success_answer
+      position:
+        x: 2158
+        y: 282
+      positionAbsolute:
+        x: 2158
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: answer
+      width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 1

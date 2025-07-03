@@ -1,0 +1,227 @@
+# Difyコーディングルール改善案
+
+## 作成日時
+2025-07-03
+
+## 分析結果の概要
+
+今回の分析で判明した主な問題点：
+1. インポート失敗：dependencies形式の不整合
+2. インポート成功後のクラッシュ：tool_configurationsの欠落、変数参照エラー
+3. 動作時エラー：provider_typeの誤り、変数参照形式の間違い
+
+## ルール改善提案
+
+### 1. 全体コーディングルール（全体コーディングルール.md）への追加
+
+#### 1.1 toolノードに関する詳細仕様の追加
+
+現在のルールには`provider_type`の適切な値に関する記載が不足しています。以下を追加：
+
+```
+### toolノードの必須設定
+
+#### provider_typeの設定値
+- `builtin`: Dify内蔵ツール
+- `plugin`: プラグインツール
+- `workflow`: ワークフローツール
+- `api`: APIツール
+- `app`: アプリケーションツール
+- `dataset-retrieval`: データセット検索ツール
+
+※ `marketplace`は無効な値です。外部マーケットプレイスツールを使用する場合も、上記のいずれかを使用してください。
+
+#### Google Sheets操作の場合の設定例
+provider_type: builtin
+provider_id: omluc/google_sheets/google_sheets
+provider_name: omluc/google_sheets/google_sheets
+```
+
+#### 1.2 変数参照形式の明確化
+
+```
+### toolノードの出力参照
+
+toolノードの出力を参照する際の正しい形式：
+- テキスト出力: {{#node_id.text#}}
+- JSON出力: {{#node_id.json#}}
+- 一般的な出力: {{#node_id.output#}}
+
+※ {{#node_id.data#}}は無効な形式です。使用しないでください。
+```
+
+### 2. コンポーネント記述ルール_GoogleShpredSheet操作.txt への改善
+
+#### 2.1 provider設定の修正
+
+現在の記述：
+```yaml
+provider_type: marketplace
+```
+
+修正案：
+```yaml
+provider_type: builtin
+provider_id: omluc/google_sheets/google_sheets
+provider_name: omluc/google_sheets/google_sheets
+```
+
+#### 2.2 tool_configurationsセクションの追加
+
+現在のルールには`tool_configurations`に関する記載が不足。以下を追加：
+
+```yaml
+# Google Sheets操作時の必須設定
+tool_configurations:
+  # 認証スコープ設定（省略可能だが、明示的に設定推奨）
+  SheetsScopes: 1  # 1 = 読み書き権限
+  
+# 注意：tool_configurationsが完全に欠落するとエラーになる可能性があります
+```
+
+#### 2.3 出力参照の修正
+
+batch_get使用後の参照方法を明確化：
+
+```yaml
+# 正しい参照方法
+- variable: sheet_data
+  value_selector: [google_sheets_read, json]  # または output
+  value_type: array[object]
+
+# 間違った参照方法（エラーになる）
+- variable: sheet_data
+  value_selector: [google_sheets_read, data]  # dataは無効
+```
+
+### 3. 品質チェックリスト.md への追加
+
+#### 3.1 Google Sheets関連の詳細チェック項目
+
+セクション8.1に以下を追加：
+
+```markdown
+#### Google Sheets設定の完全性確認
+- [ ] provider_typeが'builtin'に設定されているか（'marketplace'は無効）
+- [ ] provider_idが完全な形式（omluc/google_sheets/google_sheets）か
+- [ ] provider_nameが設定されているか
+- [ ] tool_configurationsセクションが存在するか（空でも必須の場合あり）
+- [ ] 変数参照で.dataを使用していないか（.json/.output/.textを使用）
+```
+
+### 4. クラッシュ事項チェックリスト.md への追加
+
+#### 4.1 toolノード設定エラーの詳細化
+
+セクション13に以下を追加：
+
+```markdown
+### 13.9 provider_type設定エラー
+
+#### 症状
+- "Input should be 'plugin', 'builtin', 'workflow', 'api', 'app' or 'dataset-retrieval'"エラー
+- ツールノードの初期化失敗
+
+#### 原因
+- provider_typeに'marketplace'を使用（これは無効な値）
+- 適切なprovider_typeの選択ミス
+
+#### チェック項目
+- [ ] **provider_typeが有効な値のいずれかに設定されている**
+- [ ] **Google Sheetsの場合、provider_type: builtinを使用**
+- [ ] **provider_idとprovider_nameが正しい形式**
+
+#### 防止策
+```yaml
+# 間違った例
+provider_type: marketplace  # エラー
+
+# 正しい例
+provider_type: builtin
+provider_id: omluc/google_sheets/google_sheets
+```
+```
+
+### 5. 新規ドキュメントの作成提案
+
+#### 5.1 「よくあるエラーと対処法」ドキュメント
+
+以下の内容を含む新規ドキュメントの作成を推奨：
+
+```markdown
+# Dify YML開発でよくあるエラーと対処法
+
+## 1. provider_type エラー
+### エラーメッセージ
+"Input should be 'plugin', 'builtin', 'workflow', 'api', 'app' or 'dataset-retrieval'"
+
+### 原因
+provider_typeに無効な値（例：marketplace）を設定
+
+### 対処法
+provider_type: builtinに変更
+
+## 2. tool_configurations missing エラー
+### エラーメッセージ
+"Field required [type=missing, input_value=...] tool_configurations"
+
+### 原因
+tool_configurationsセクションが未定義
+
+### 対処法
+空でもtool_configurations: {}を追加
+
+## 3. 変数参照エラー
+### エラーメッセージ
+"Variable #node_id.data# not found"
+
+### 原因
+無効な変数参照形式（.data）の使用
+
+### 対処法
+.json、.output、.textのいずれかに変更
+```
+
+### 6. テンプレート更新の提案
+
+#### 6.1 Google Sheets操作テンプレートの更新
+
+成功例（検証YML_5931.yml）を基に、標準的なGoogle Sheets操作テンプレートを作成：
+
+```yaml
+# Google Sheets操作の標準テンプレート
+dependencies: []  # 外部依存なしの場合
+
+# toolノードの標準設定
+- data:
+    type: tool
+    provider_id: omluc/google_sheets/google_sheets
+    provider_name: omluc/google_sheets/google_sheets
+    provider_type: builtin  # 必ずbuiltinを使用
+    tool_label: Google Sheets
+    tool_name: batch_get
+    tool_configurations: {}  # 空でも明示的に記載
+    tool_parameters:
+      ranges:
+        type: mixed
+        value: '["Sheet1!A1:B10"]'
+      spreadsheet_id:
+        type: mixed
+        value: "YOUR_SPREADSHEET_ID"
+```
+
+## 実装優先度
+
+1. **最優先**：provider_type関連の修正（エラー頻度が高い）
+2. **高優先度**：変数参照形式の明確化
+3. **中優先度**：tool_configurationsの必須化
+4. **低優先度**：テンプレートの整備
+
+## 期待される効果
+
+- インポート失敗率の大幅削減（特にGoogle Sheets関連）
+- 動作時エラーの削減
+- 開発者の理解向上による品質向上
+- デバッグ時間の短縮
+
+#1 times.

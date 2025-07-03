@@ -71,52 +71,12 @@ data:
 3. batch_updateノードで書き込み
 
 ■エラー防止チェックリスト
-- [ ] provider_typeが'builtin'に設定されている（'marketplace'は無効）
-- [ ] provider_idが完全な形式（omluc/google_sheets/google_sheets）か
-- [ ] provider_nameが設定されているか
-- [ ] tool_configurationsセクションが存在するか（必須）
-- [ ] is_team_authorization: trueが設定されている（推奨）
-- [ ] 変数参照で.dataを使用していないか（.json/.output/.textを使用）
 - [ ] dependenciesにGoogle Sheetsツールが定義されている
 - [ ] rangesパラメータが引用符で囲まれている
 - [ ] dataパラメータがJSON配列形式
 - [ ] LLM出力を直接使用していない
 - [ ] 各行のカラム数が一致している
 - [ ] 空のセルも""として明示的に指定
-
-■provider_typeの設定（重要）
-
-Google Sheetsツールを使用する際のprovider_typeは以下のいずれかを使用：
-
-【推奨】provider_type: builtin
-- Difyに組み込まれているツールとして使用
-- 安定性が高い
-
-【非推奨】provider_type: marketplace
-- エラーの原因となるため使用禁止
-
-【有効な値一覧】
-- builtin: 組み込みツール（推奨）
-- plugin: プラグイン
-- workflow: ワークフロー
-- api: API
-- app: アプリケーション
-- dataset-retrieval: データセット検索
-
-※'marketplace'は無効な値です。使用するとエラーになります。
-
-■tool_configurationsセクション（必須）
-
-Google Sheetsツールノードには必ずtool_configurationsを設定してください：
-
-```yaml
-tool_configurations:  # 必須フィールド
-  date_time_render_option: FORMATTED_STRING
-  major_dimension: null
-  value_render_option: null
-```
-
-【重要】このセクションが欠落するとエラーになります。
 
 ■完全な実装例
 
@@ -128,18 +88,14 @@ dependencies:
   value:
     marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
 
-# データ読み取りノード（修正版）
+# データ読み取りノード
 - data:
     type: tool
-    provider_id: omluc/google_sheets/google_sheets  # 3段階の形式
-    provider_name: omluc/google_sheets/google_sheets  # provider_idと同じ
-    provider_type: builtin  # marketplaceではなくbuiltin
-    tool_label: Batch Get  # または Google Sheets
+    provider_id: omluc/google_sheets
+    provider_name: Google Sheets
+    provider_type: marketplace
+    tool_label: Google Sheets
     tool_name: batch_get
-    tool_configurations:  # 必須フィールド
-      date_time_render_option: FORMATTED_STRING
-      major_dimension: null
-      value_render_option: null
     tool_parameters:
       ranges:
         type: mixed
@@ -147,23 +103,18 @@ dependencies:
       spreadsheet_id:
         type: mixed
         value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
-    is_team_authorization: true  # 推奨
     selected: false
     title: Google Sheets読み取り
     desc: 入力データを取得
 
-# データ書き込みノード（修正版）
+# データ書き込みノード
 - data:
     type: tool
-    provider_id: omluc/google_sheets/google_sheets  # 3段階の形式
-    provider_name: omluc/google_sheets/google_sheets  # provider_idと同じ
-    provider_type: builtin  # marketplaceではなくbuiltin
-    tool_label: Batch Update  # または Google Sheets
+    provider_id: omluc/google_sheets
+    provider_name: Google Sheets
+    provider_type: marketplace
+    tool_label: Google Sheets
     tool_name: batch_update
-    tool_configurations:  # 必須フィールド
-      date_time_render_option: FORMATTED_STRING
-      major_dimension: null
-      value_render_option: null
     tool_parameters:
       data:
         type: mixed
@@ -174,53 +125,12 @@ dependencies:
       value_input_option:
         type: mixed
         value: "USER_ENTERED"
-    is_team_authorization: true  # 推奨
     selected: false
     title: Google Sheets書き込み
     desc: 結果を出力
 ```
 
-■toolノードの出力参照
-
-toolノードの出力を参照する際の正しい形式：
-- テキスト出力: {{#node_id.text#}}
-- JSON出力: {{#node_id.json#}}
-- 一般的な出力: {{#node_id.output#}}
-
-※ {{#node_id.data#}}は無効な形式です。使用しないでください。
-
-正しい参照方法：
-```yaml
-- variable: sheet_data
-  value_selector: [google_sheets_read, json]  # または output
-  value_type: array[object]
-```
-
-間違った参照方法（エラーになる）：
-```yaml
-- variable: sheet_data
-  value_selector: [google_sheets_read, data]  # dataは無効
-```
-
 ■トラブルシューティング
-
-### エラー：provider_type Input should be...
-原因：provider_typeに無効な値を設定
-対策：provider_type: builtinに変更
-
-### エラー：tool_configurations Field required
-原因：tool_configurationsセクションの欠落
-対策：以下を追加
-```yaml
-tool_configurations:
-  date_time_render_option: FORMATTED_STRING
-  major_dimension: null
-  value_render_option: null
-```
-
-### エラー：Variable #node_id.data# not found
-原因：無効な変数参照形式（.data）の使用
-対策：.json、.output、.textのいずれかに変更
 
 ### エラー：Unable to parse data
 原因：rangesパラメータの引用符不足またはJSON形式エラー
