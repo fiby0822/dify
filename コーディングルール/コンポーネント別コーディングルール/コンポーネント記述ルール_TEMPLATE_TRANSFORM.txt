@@ -10,8 +10,14 @@
 3. 外側のtype: "custom"、内側のdata.type: "template-transform"
 
 ■必須パラメータ
-- id: ノードID
+- id: ノードID（意味のある名前。例: "format_data", "json_converter"）
 - type: "custom"（外側）
+- position: x, y座標
+- positionAbsolute: positionと同じ値を設定
+- sourcePosition: "right"（推奨）
+- targetPosition: "left"（推奨）
+- height: 数値（通常54）
+- width: 数値（通常244）
 - data:
   - type: "template-transform"（内側）
   - template: Jinja2テンプレート文字列
@@ -19,13 +25,45 @@
   - selected: false
   - title: ノードタイトル
 
+■オプションパラメータ
+- desc: ノードの説明
+
 ■変数定義の形式
 variables:
   - value_selector: [参照元ノード, フィールド名]
     value_type: string/array[object]/object等
     variable: テンプレート内で使用する変数名
 
-■使用例（Google Sheets書き込み用）
+■入力と出力
+- 入力: variables配列で定義した変数を通じて、他ノードからのデータを受け取る
+- 出力: output（テンプレート処理後の文字列）
+
+■Jinja2フィルター
+よく使用されるフィルター：
+- {{ variable | trim }}: 前後の空白を削除
+- {{ variable | tojson }}: JSON形式に変換（jsonではなくtojson）
+- {{ variable | upper }}: 大文字に変換
+- {{ variable | lower }}: 小文字に変換
+- {{ variable | replace("old", "new") }}: 文字列置換
+- {{ variable | default("デフォルト値") }}: デフォルト値設定
+
+■使用例
+
+### 基本的な変数埋め込み
+```yaml
+- data:
+    type: template-transform
+    template: "こんにちは、{{ user_name }}さん！"
+    variables:
+      - variable: user_name
+        value_selector: [start_node, name]
+        value_type: string
+    selected: false
+    title: "挨拶メッセージ生成"
+```
+
+### Google Sheets書き込み用JSON生成
+```yaml
 - data:
     type: template-transform
     template: |
@@ -44,20 +82,147 @@ variables:
         variable: analysis_result
     selected: false
     title: データ整形
+```
+
+### 複数変数の使用
+```yaml
+- data:
+    type: template-transform
+    template: |
+      ユーザー: {{ user_input }}
+      処理結果: {{ result }}
+      タイムスタンプ: {{ timestamp }}
+    variables:
+      - variable: user_input
+        value_selector: [sys, query]
+        value_type: string
+      - variable: result
+        value_selector: [processing_node, output]
+        value_type: string
+      - variable: timestamp
+        value_selector: [time_node, current_time]
+        value_type: string
+    title: "結果レポート生成"
+    type: template-transform
+```
+
+■重要：変数参照記法の使い分け（最優先事項）
+
+### 1. Jinja2テンプレート内での変数参照
+template-transformノードのtemplateフィールド内では、標準的なJinja2記法を使用します：
+
+✅ 正しい記法：
+- 変数出力：{{ 変数名 }}
+- フィルタ付き：{{ 変数名 | trim | tojson }}
+- 条件文：{% if 変数名 %}
+- コメント：{# コメント内容 #}
+
+❌ 誤った記法：
+- {{#変数名#}}  ← Difyの記法をテンプレート内で使用（エラー）
+- {{#変数名 | trim | tojson#}}  ← エラー
+
+### 2. その他の場所での変数参照
+YAMLの他の場所（例：tool_parametersのvalue）では、Difyの記法を使用：
+- {{#node_id.output#}}
+- {{#sys.query#}}
+
+### 3. 具体例
+```yaml
+# template-transformノード内（Jinja2記法）
+template: |
+  ユーザー入力：{{ sys_query }}
+  データ：{{ batch_get_data }}
+  
+# tool_parametersなど（Dify記法）
+tool_parameters:
+  data:
+    type: mixed
+    value: '{{#transform_node.output#}}'
+```
 
 ■よくあるエラーと対策
 1. {{#変数#}}記法の使用 → {{ 変数 }}に修正
 2. 変数未定義エラー → variablesセクションで定義
 3. インデックスエラー → 配列要素は[0]等で明示的に指定
 4. フィルターエラー → | tojson（jsonではない）を使用
+5. date関数の使用 → codeノードで日付生成を推奨
+
+■制限事項と注意点
+
+### 日付処理に関する注意事項
+template-transformノード内でdate関数の使用は環境により制限される場合があります。
+
+❌ 避けるべき記法：
+```yaml
+template: |
+  ["更新日時", "{{ 'now' | date('Y/m/d H:i') }}"]
+```
+
+✅ 推奨される代替案：
+1. codeノードで日付を生成
+2. 固定値として設定
+3. LLMノードで日付を含めた出力を生成
+
+例（codeノードで日付生成）：
+```yaml
+code: |
+  from datetime import datetime
+  current_time = datetime.now().strftime("%Y/%m/%d %H:%M")
+  return {"timestamp": current_time}
+```
+
+### その他の制限事項
+- 複雑な処理はcodeノードの使用を推奨
+- 大量データの処理には不向き（メモリ制限）
+- 数値計算や条件分岐はcodeノードを使用
 
 ■推奨される使用場面
 - Google Sheetsへの書き込みデータ整形
 - CSV形式への変換
 - JSON配列の構築
 - 複数変数の結合
+- LLM出力の形式変換
 
 ■使用を避けるべき場面
 - 複雑なロジック処理（codeノードを使用）
 - 大量データの処理（メモリ制限あり）
 - 数値計算や条件分岐（codeノードを使用）
+
+■Google Sheets連携での使用パターン
+1. **データ取得後の整形**
+   - batch_getの結果をテンプレートで処理
+   - JSONデータの特定要素を抽出
+
+2. **データ更新用JSON作成**
+   ```yaml
+   template: |
+     [
+       {
+         "range": "OUTPUT!A1:B1",
+         "values": [["text", {{ variable | trim | tojson }}]]
+       }
+     ]
+   ```
+
+3. **フィルター関数の活用**
+   - trim: 空白除去
+   - tojson: JSON形式への変換（エスケープ処理込み）
+   - その他Jinja2フィルターが使用可能
+
+■ベストプラクティス
+1. **可読性を重視**
+   - 複数行テンプレートは|を使用してインデント
+   - 適切な改行とインデントを使用
+
+2. **エラーハンドリング**
+   - defaultフィルターで未定義変数に対応
+   - 変数の存在確認を事前に実施
+
+3. **再利用性**
+   - 汎用的なテンプレートを作成
+   - 変数名を明確にする
+
+4. **JSON生成時の注意**
+   - tojsonフィルターでエスケープ処理を行う
+   - 手動でのエスケープは避ける
+   - JSON形式の正確性を確保
