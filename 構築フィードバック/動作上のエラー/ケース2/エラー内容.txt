@@ -1,1 +1,9 @@
-Run failed: 1 validation error for LLMNodeData memory.window Field required [type=missing, input_value={'enabled': False}, input_type=dict] For further information visit https://errors.pydantic.dev/2.11/v/missing
+Run failed: Traceback (most recent call last):
+File "/var/sandbox/sandbox-python/tmp/63980ee8_85e2_462d_8d13_f360c0c0a84a.py", line 48, in
+File "", line 31, in
+File "", line 22, in main
+File "/usr/local/lib/python3.10/site-packages/jinja2/environment.py", line 1291, in render
+self.environment.handle_exception()
+File "/usr/local/lib/python3.10/site-packages/jinja2/environment.py", line 925, in handle_exception
+raise rewrite_traceback_stack(source=source)
+File "

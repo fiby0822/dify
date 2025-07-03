@@ -1,0 +1,164 @@
+コンポーネント記述ルール: 開始
+
+■⚠️ 重要警告
+advanced-chatモードでstartノードにvariables定義を行うと「sys.query is required in input form」エラーが発生します。
+必ず以下のルールを厳守してください。
+
+■ブロック概要
+ワークフローの開始地点となるノード。ユーザーからの入力を受け取り、後続のノードに渡す役割を持つ。すべてのワークフローに必須のコンポーネント。
+
+■必須パラメータ（詳細）
+- id: "start_node"（固定推奨）
+- type: "custom"（外側のtype属性。固定値）
+- data.type: "start"（データ内のtype属性。固定値）
+- position: x, y座標（通常x:50から開始）
+- positionAbsolute: positionと同じ値を設定
+- selected: false（固定値）
+- sourcePosition: "right"（推奨）
+- targetPosition: "left"（推奨）
+- height: 数値（変数の数に応じて調整）
+- width: 数値（通常244）
+- data:
+  - desc: ノードの説明（推奨）
+  - selected: false（固定値）
+  - title: "開始"または"Start"（推奨）
+  - type: "start"（固定値）
+  - variables: 入力変数の配列
+
+■変数定義の標準形式
+
+### モード別の注意事項
+1. advanced-chatモード
+   - variables配列は必ず空（[]）にする
+   - 変数を定義すると実行時エラーになる
+   - ユーザー入力は{{#sys.query#}}で参照
+
+2. workflowモード
+   - variables配列に必要な変数を定義
+   - 各変数はrequired属性を明示的に設定
+   - default属性は使用しない（エラーの原因になる可能性）
+
+### フィールド記載順序（重要）
+変数定義では必ず以下の順序で記載してください：
+1. variable（変数名） - 最初に記載
+2. type（入力タイプ）
+3. label（表示ラベル）
+4. その他のプロパティ
+
+順序が異なると「variable is required」エラーが発生する場合があります。
+
+### 変数typeの許可値（重要）
+以下の値のみが有効です。それ以外はエラーになります：
+- "text-input": 単一行テキスト入力（推奨）
+- "paragraph": 複数行テキスト入力
+- "select": 選択肢から選択
+- "number": 数値入力
+- "external_data_tool": 外部データツール
+- "file": ファイルアップロード  
+- "file-list": 複数ファイルアップロード
+
+**エラーになる値**:
+- "text" → 使用不可。"text-input"を使用してください
+- その他の未定義の値
+
+### workflowモードでの変数定義例
+```yaml
+variables:
+  - variable: "user_input"    # 1. 必ず最初に記載
+    type: "text-input"       # 2. 入力タイプ（textではない！）
+    label: "質問内容"        # 3. 表示名
+    required: true           # 4. 必須フラグ
+    max_length: 2000         # 5. その他のオプション
+```
+
+■出力
+定義した変数がそのまま出力として利用可能
+
+■使用例（完全版）
+```yaml
+- data:
+    desc: "ユーザーからの入力を受け取る開始ノード"
+    selected: false
+    title: "開始"
+    type: start
+    variables:
+      - label: "お問い合わせ内容"
+        variable: "user_query"
+        type: "text-input"  # 推奨形式
+        required: true
+        max_length: 1000
+      - label: "詳細説明"
+        variable: "description"
+        type: "paragraph"   # 複数行入力
+        required: false
+        max_length: 5000
+      - label: "カテゴリー"
+        variable: "category"
+        type: "select"
+        required: true
+        options:
+          - value: "technical"
+            label: "技術的な質問"
+          - value: "billing"
+            label: "請求に関する質問"
+          - value: "other"
+            label: "その他"
+      - label: "添付ファイル"
+        variable: "attachment"
+        type: "file"
+        required: false
+        allowed_file_types:
+          - ".PDF"
+          - ".DOCX"
+          - ".TXT"
+        number_of_files: 3
+  height: 154  # 変数の数に応じて調整
+  id: start_node
+  position:
+    x: 50
+    y: 200
+  positionAbsolute:
+    x: 50
+    y: 200
+  selected: false
+  sourcePosition: right
+  targetPosition: left
+  type: custom  # 固定値
+  width: 244
+```
+
+■高さ（height）の目安
+- 変数1-2個: 116
+- 変数3-4個: 154
+- 変数5個以上: 190以上（変数数に応じて調整）
+
+■注意事項
+- startノードは各ワークフローに1つのみ
+- 変数名は必ずsnake_caseで定義
+- 日本語ラベルを使用する場合は適切にエンコーディング
+- type: "text"は使用せず、"text-input"を使用
+- ファイルタイプは大文字で指定（例: .PDF）
+- ファイルアップロードを使用する場合は、workflow.features.file_uploadの設定も必要
+- positionAbsoluteは必須（省略するとエラー）
+- 外側のtypeは"custom"固定（"start"にしない）
+
+■ベストプラクティス
+- ユーザーが理解しやすいラベルを使用
+- 必須項目と任意項目を明確に区別
+- 適切な入力制限（max_length等）を設定
+- ファイルアップロードは必要最小限に
+- 変数名は用途が明確に分かる名前を使用
+- suggested_questionsと連動した変数設計を心がける
+
+■よくある間違い
+1. type: "text"を使用する（正しくは"text-input"） **← 検証エラーの原因**
+2. advanced-chatモードでvariablesに変数を定義する **← 実行時エラーの原因**
+3. sys.queryをstartノードの変数として定義する **← "sys.query is required in input form"エラー**
+4. 変数定義のフィールド順序を間違える
+5. 変数名にキャメルケースやハイフンを使用
+6. positionAbsoluteを省略する
+7. 外側のtypeを"start"にする（正しくは"custom"）
+8. ファイル拡張子を小文字で指定（大文字推奨）
+9. max_lengthを設定し忘れる
+10. 必須/任意の設定を忘れる
+11. data.selectedを省略する

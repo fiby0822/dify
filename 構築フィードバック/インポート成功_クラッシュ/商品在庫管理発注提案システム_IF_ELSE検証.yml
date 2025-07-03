@@ -1,0 +1,298 @@
+app:
+  description: "商品の在庫数とカテゴリに基づいて発注提案を行うワークフロー。IF_ELSEノードの検証用システム。"
+  icon: "📦"
+  icon_background: "#4A90E2"
+  mode: "workflow"
+  name: "商品在庫管理発注提案システム"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: "app"
+
+version: "0.3.0"
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  edges:
+    - data:
+        isInLoop: false
+        sourceType: "start"
+        targetType: "if-else"
+      id: "edge_start_to_stock_check"
+      selected: false
+      source: "start"
+      sourceHandle: "source"
+      target: "stock_level_check"
+      targetHandle: "target"
+      type: "custom"
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: "if-else"
+        targetType: "if-else"
+      id: "edge_urgent_to_category"
+      selected: false
+      source: "stock_level_check"
+      sourceHandle: "urgent_order"
+      target: "category_check"
+      targetHandle: "target"
+      type: "custom"
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: "if-else"
+        targetType: "if-else"
+      id: "edge_normal_to_category"
+      selected: false
+      source: "stock_level_check"
+      sourceHandle: "normal_order"
+      target: "category_check"
+      targetHandle: "target"
+      type: "custom"
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: "if-else"
+        targetType: "answer"
+      id: "edge_sufficient_to_answer"
+      selected: false
+      source: "stock_level_check"
+      sourceHandle: "false"
+      target: "sufficient_stock_answer"
+      targetHandle: "target"
+      type: "custom"
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: "if-else"
+        targetType: "answer"
+      id: "edge_food_category_to_answer"
+      selected: false
+      source: "category_check"
+      sourceHandle: "food_category"
+      target: "food_order_answer"
+      targetHandle: "target"
+      type: "custom"
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: "if-else"
+        targetType: "answer"
+      id: "edge_general_category_to_answer"
+      selected: false
+      source: "category_check"
+      sourceHandle: "general_category"
+      target: "general_order_answer"
+      targetHandle: "target"
+      type: "custom"
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: "if-else"
+        targetType: "answer"
+      id: "edge_default_category_to_answer"
+      selected: false
+      source: "category_check"
+      sourceHandle: "false"
+      target: "default_order_answer"
+      targetHandle: "target"
+      type: "custom"
+      zIndex: 0
+  nodes:
+    - data:
+        desc: "ユーザーから商品情報を受け取る"
+        selected: false
+        title: "開始"
+        type: "start"
+        variables:
+        - label: "商品名"
+          max_length: 100
+          options: []
+          required: true
+          type: "text-input"
+          variable: "product_name"
+        - label: "現在の在庫数"
+          max_length: 10
+          options: []
+          required: true
+          type: "text-input"
+          variable: "stock_quantity"
+        - label: "商品カテゴリ"
+          max_length: 50
+          options: []
+          required: true
+          type: "text-input"
+          variable: "product_category"
+      height: 164
+      id: "start"
+      position:
+        x: 200
+        y: 300
+      positionAbsolute:
+        x: 200
+        y: 300
+      selected: false
+      sourcePosition: "right"
+      targetPosition: "left"
+      type: "custom"
+      width: 244
+    - data:
+        cases:
+        - case_id: "urgent_order"
+          conditions:
+          - comparison_operator: "<="
+            id: "condition_urgent"
+            value: 10
+            variable_selector:
+            - "start"
+            - "stock_quantity"
+          id: "urgent_order"
+          logical_operator: "and"
+        - case_id: "normal_order"
+          conditions:
+          - comparison_operator: "<="
+            id: "condition_normal"
+            value: 50
+            variable_selector:
+            - "start"
+            - "stock_quantity"
+          id: "normal_order"
+          logical_operator: "and"
+        desc: "在庫数に基づいて緊急度を判定"
+        selected: false
+        title: "在庫レベル判定"
+        type: "if-else"
+      height: 176
+      id: "stock_level_check"
+      position:
+        x: 500
+        y: 300
+      positionAbsolute:
+        x: 500
+        y: 300
+      selected: false
+      sourcePosition: "right"
+      targetPosition: "left"
+      type: "custom"
+      width: 244
+    - data:
+        cases:
+        - case_id: "food_category"
+          conditions:
+          - comparison_operator: "is"
+            id: "condition_food"
+            value: "食品"
+            variable_selector:
+            - "start"
+            - "product_category"
+          id: "food_category"
+          logical_operator: "and"
+        - case_id: "general_category"
+          conditions:
+          - comparison_operator: "is"
+            id: "condition_general"
+            value: "雑貨"
+            variable_selector:
+            - "start"
+            - "product_category"
+          id: "general_category"
+          logical_operator: "and"
+        desc: "商品カテゴリに応じて発注基準を調整"
+        selected: false
+        title: "カテゴリ判定"
+        type: "if-else"
+      height: 176
+      id: "category_check"
+      position:
+        x: 800
+        y: 250
+      positionAbsolute:
+        x: 800
+        y: 250
+      selected: false
+      sourcePosition: "right"
+      targetPosition: "left"
+      type: "custom"
+      width: 244
+    - data:
+        answer: "【発注提案】\n商品名：{{#start.product_name#}}\n現在の在庫数：{{#start.stock_quantity#}}個\n\n✅ 在庫は十分です。\n現在の在庫レベルは適正範囲内です。発注の必要はありません。"
+        desc: "在庫が十分な場合の回答"
+        selected: false
+        title: "在庫十分"
+        type: "answer"
+      height: 107
+      id: "sufficient_stock_answer"
+      position:
+        x: 800
+        y: 500
+      positionAbsolute:
+        x: 800
+        y: 500
+      selected: false
+      sourcePosition: "right"
+      targetPosition: "left"
+      type: "custom"
+      width: 244
+    - data:
+        answer: "【緊急発注提案】\n商品名：{{#start.product_name#}}\n現在の在庫数：{{#start.stock_quantity#}}個\nカテゴリ：食品\n\n⚠️ 食品カテゴリの在庫が危険水準です！\n賞味期限を考慮し、適正在庫数（30個）を確保するため、即座に20個以上の発注を推奨します。"
+        desc: "食品カテゴリの発注提案"
+        selected: false
+        title: "食品発注提案"
+        type: "answer"
+      height: 107
+      id: "food_order_answer"
+      position:
+        x: 1100
+        y: 150
+      positionAbsolute:
+        x: 1100
+        y: 150
+      selected: false
+      sourcePosition: "right"
+      targetPosition: "left"
+      type: "custom"
+      width: 244
+    - data:
+        answer: "【発注提案】\n商品名：{{#start.product_name#}}\n現在の在庫数：{{#start.stock_quantity#}}個\nカテゴリ：雑貨\n\n📦 雑貨カテゴリの標準発注を実施してください。\n推奨発注数：{{#start.stock_quantity#}}個以下の場合は30個、それ以上の場合は20個"
+        desc: "雑貨カテゴリの発注提案"
+        selected: false
+        title: "雑貨発注提案"
+        type: "answer"
+      height: 107
+      id: "general_order_answer"
+      position:
+        x: 1100
+        y: 300
+      positionAbsolute:
+        x: 1100
+        y: 300
+      selected: false
+      sourcePosition: "right"
+      targetPosition: "left"
+      type: "custom"
+      width: 244
+    - data:
+        answer: "【発注提案】\n商品名：{{#start.product_name#}}\n現在の在庫数：{{#start.stock_quantity#}}個\nカテゴリ：{{#start.product_category#}}\n\n📋 標準的な発注を推奨します。\n在庫レベルに応じて、適正在庫（50個）を維持するよう発注してください。"
+        desc: "デフォルトカテゴリの発注提案"
+        selected: false
+        title: "標準発注提案"
+        type: "answer"
+      height: 107
+      id: "default_order_answer"
+      position:
+        x: 1100
+        y: 450
+      positionAbsolute:
+        x: 1100
+        y: 450
+      selected: false
+      sourcePosition: "right"
+      targetPosition: "left"
+      type: "custom"
+      width: 244
+  viewport:
+    x: 0
+    y: 0
+    zoom: 0.8

@@ -1,0 +1,410 @@
+app:
+  description: ''
+  icon: 📊
+  icon_background: '#FFEAD5'
+  mode: advanced-chat
+  name: 営業データ分析ツール_5623
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        image_file_size_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: '営業データ分析ツールへようこそ。GoogleスプレッドシートのINPUTシートから営業データを取得し、分析結果をOUTPUTシートに書き込みます。'
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: start
+        targetType: tool
+      id: start-source-batch_get-target
+      source: start
+      sourceHandle: source
+      target: batch_get_1
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: template-transform
+      id: batch_get-source-transform_get-target
+      source: batch_get_1
+      sourceHandle: source
+      target: transform_get_data
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: template-transform
+        targetType: llm
+      id: transform_get-source-llm-target
+      source: transform_get_data
+      sourceHandle: source
+      target: llm_analyzer
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: template-transform
+      id: llm-source-transform_update-target
+      source: llm_analyzer
+      sourceHandle: source
+      target: transform_update_data
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: template-transform
+        targetType: tool
+      id: transform_update-source-batch_update-target
+      source: transform_update_data
+      sourceHandle: source
+      target: batch_update_1
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: template-transform
+      id: batch_update-source-transform_result-target
+      source: batch_update_1
+      sourceHandle: source
+      target: transform_result
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: template-transform
+        targetType: answer
+      id: transform_result-source-answer-target
+      source: transform_result
+      sourceHandle: source
+      target: answer
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: ''
+        selected: false
+        title: 開始
+        type: start
+        variables: []
+      height: 54
+      id: start
+      position:
+        x: 100
+        y: 300
+      positionAbsolute:
+        x: 100
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: ''
+        is_team_authorization: true
+        output_schema: null
+        provider_id: omluc/google_sheets/google_sheets
+        provider_name: omluc/google_sheets/google_sheets
+        provider_type: builtin
+        selected: false
+        title: 営業データの取得
+        tool_configurations:
+          date_time_render_option: FORMATTED_STRING
+          major_dimension: null
+          value_render_option: null
+        tool_description: Retrieve data from multiple ranges in a Google Sheet
+        tool_label: Batch Get
+        tool_name: batch_get
+        tool_parameters:
+          ranges:
+            type: mixed
+            value: '["INPUT!A1:C10"]'
+          spreadsheet_id:
+            type: mixed
+            value: "{{#sys.query#}}"
+        type: tool
+      height: 142
+      id: batch_get_1
+      position:
+        x: 400
+        y: 300
+      positionAbsolute:
+        x: 400
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: ''
+        selected: false
+        template: '営業データ取得結果:
+          {{sales_data}}'
+        title: 取得データの変換
+        type: template-transform
+        variables:
+        - value_selector:
+          - batch_get_1
+          - json
+          value_type: array[object]
+          variable: sales_data
+      height: 54
+      id: transform_get_data
+      position:
+        x: 700
+        y: 300
+      positionAbsolute:
+        x: 700
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: ''
+        model_config:
+          api_key: ''
+          model: gpt-4o
+          mode: chat
+          name: gpt-4o
+          provider: openai
+        prompt_template:
+        - id: system
+          role: system
+          text: 'あなたは営業データ分析の専門家です。'
+        - id: human
+          role: user
+          text: '以下の営業データを分析してください。
+            
+            {{sales_data}}
+            
+            データ形式:
+            - A列: 営業担当者名
+            - B列: 売上金額
+            - C列: 日付
+            
+            以下の項目について分析結果を提供してください:
+            1. 営業担当者別の売上合計
+            2. 売上トップ3の営業担当者
+            3. 全体的な分析コメント
+            
+            結果は以下のJSON形式で出力してください:
+            ```json
+            {
+              "analysis_results": [
+                {"項目": "営業担当者別売上合計", "値": "詳細な内訳"},
+                {"項目": "売上トップ1", "値": "担当者名と金額"},
+                {"項目": "売上トップ2", "値": "担当者名と金額"},
+                {"項目": "売上トップ3", "値": "担当者名と金額"},
+                {"項目": "分析コメント", "値": "全体的な分析結果"}
+              ]
+            }
+            ```'
+        selected: false
+        title: 営業データ分析
+        type: llm
+        variables:
+        - value_selector:
+          - transform_get_data
+          - output
+          value_type: string
+          variable: sales_data
+      height: 98
+      id: llm_analyzer
+      position:
+        x: 1000
+        y: 300
+      positionAbsolute:
+        x: 1000
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: ''
+        selected: false
+        template: '[
+          {
+            "range": "OUTPUT!A1:B5",
+            "values": [
+              ["項目", "値"],
+              ["売上合計", "{{ llm_output }}"],
+              ["トップ営業", "分析中"],
+              ["分析コメント", "詳細はLLM出力参照"],
+              ["更新日時", "{{ "now" | date("Y/m/d H:i") }}"]
+            ]
+          }
+        ]'
+        title: 書き込みデータの整形
+        type: template-transform
+        variables:
+        - value_selector:
+          - llm_analyzer
+          - text
+          value_type: string
+          variable: llm_output
+      height: 54
+      id: transform_update_data
+      position:
+        x: 1300
+        y: 300
+      positionAbsolute:
+        x: 1300
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: ''
+        is_team_authorization: true
+        output_schema: null
+        provider_id: omluc/google_sheets/google_sheets
+        provider_name: omluc/google_sheets/google_sheets
+        provider_type: builtin
+        selected: false
+        title: 分析結果の書き込み
+        tool_configurations:
+          include_values_in_response: null
+          response_date_time_render_option: null
+          response_value_render_option: null
+          value_input_option: USER_ENTERED
+        tool_description: Updates multiple ranges in a Google Sheet with specified values
+        tool_label: Batch Update
+        tool_name: batch_update
+        tool_parameters:
+          data:
+            type: mixed
+            value: '{{#transform_update_data.output#}}'
+          spreadsheet_id:
+            type: mixed
+            value: "{{#sys.query#}}"
+        type: tool
+      height: 168
+      id: batch_update_1
+      position:
+        x: 1600
+        y: 300
+      positionAbsolute:
+        x: 1600
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: ''
+        selected: false
+        template: '分析結果をGoogleスプレッドシートのOUTPUTシートに書き込みました。
+
+          書き込み結果:
+          {{update_result}}'
+        title: 結果の整形
+        type: template-transform
+        variables:
+        - value_selector:
+          - batch_update_1
+          - json
+          value_type: array[object]
+          variable: update_result
+      height: 54
+      id: transform_result
+      position:
+        x: 1900
+        y: 300
+      positionAbsolute:
+        x: 1900
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '{{#transform_result.output#}}'
+        desc: ''
+        selected: false
+        title: 回答
+        type: answer
+        variables: []
+      height: 174
+      id: answer
+      position:
+        x: 2200
+        y: 300
+      positionAbsolute:
+        x: 2200
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.5

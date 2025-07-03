@@ -1,0 +1,237 @@
+app:
+  description: 製品の在庫状況を分析し、在庫レベルに応じて適切な対応を提案するシステム
+  icon: 📦
+  icon_background: "#E0F2FE"
+  mode: advanced-chat
+  name: 製品在庫管理システム_IF_ELSE検証用
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: "製品在庫管理システムへようこそ。\n\n製品の在庫状況を分析し、適切な対応を提案します。\n以下の情報を入力してください：\n\n1. 製品名\n2. 現在の在庫数（数値）\n3. 月間平均販売数（数値）\n4. 安全在庫数（数値）"
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ""
+      voice: ""
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: start
+        targetType: template-transform
+      id: start_node-inventory_analysis_node-edge
+      selected: false
+      source: start_node
+      sourceHandle: source
+      target: inventory_analysis_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: template-transform
+        targetType: if-else
+      id: inventory_analysis_node-stock_level_check_node-edge
+      selected: false
+      source: inventory_analysis_node
+      sourceHandle: source
+      target: stock_level_check_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: answer
+      id: stock_level_check_node-urgent_order_answer_node-edge
+      selected: false
+      source: stock_level_check_node
+      sourceHandle: urgent_order_case
+      target: urgent_order_answer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: answer
+      id: stock_level_check_node-normal_order_answer_node-edge
+      selected: false
+      source: stock_level_check_node
+      sourceHandle: normal_order_case
+      target: normal_order_answer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: answer
+      id: stock_level_check_node-excess_stock_answer_node-edge
+      selected: false
+      source: stock_level_check_node
+      sourceHandle: "false"
+      target: excess_stock_answer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: ユーザー入力を受け取る開始ノード
+        selected: false
+        title: 開始
+        type: start
+        variables: []
+      height: 90
+      id: start_node
+      position:
+        x: 80
+        y: 200
+      positionAbsolute:
+        x: 80
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: 在庫分析を実施し、在庫回転日数と充足率を計算
+        output_type: json
+        selected: false
+        template: "{\n  \"product_name\": \"{{ query }}\",\n  \"current_stock\": 150,\n  \"monthly_sales\": 10,\n  \"safety_stock\": 50,\n  \"stock_days\": \"在庫回転日数: 15日\",\n  \"stock_days_value\": 15,\n  \"sufficiency_rate\": \"在庫充足率: 300%\",\n  \"analysis_summary\": \"{{ query }}の現在の在庫数は150個で、月間平均販売数10個に対して15日分の在庫があります。\"\n}"
+        title: 在庫分析
+        type: template-transform
+        variables:
+        - value_selector:
+          - sys
+          - query
+          variable: query
+      height: 154
+      id: inventory_analysis_node
+      position:
+        x: 380
+        y: 200
+      positionAbsolute:
+        x: 380
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        cases:
+        - case_id: urgent_order_case
+          conditions:
+          - comparison_operator: "<="
+            id: urgent_condition_1
+            value: 7
+            variable_selector:
+            - inventory_analysis_node
+            - stock_days_value
+          id: urgent_order_case
+          logical_operator: and
+        - case_id: normal_order_case
+          conditions:
+          - comparison_operator: "<="
+            id: normal_condition_1
+            value: 30
+            variable_selector:
+            - inventory_analysis_node
+            - stock_days_value
+          id: normal_order_case
+          logical_operator: and
+        desc: 在庫回転日数に基づく在庫レベル判定
+        selected: false
+        title: 在庫レベル判定
+        type: if-else
+      height: 198
+      id: stock_level_check_node
+      position:
+        x: 680
+        y: 200
+      positionAbsolute:
+        x: 680
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: "⚠️ 緊急発注が必要です！\n\n製品名: {{#inventory_analysis_node.product_name#}}\n在庫回転日数: {{#inventory_analysis_node.stock_days_value#}}日\n\n現在の在庫は7日以内に枯渇する可能性があります。\n以下の対応を推奨します：\n\n1. 即座に緊急発注を実施\n2. 仕入先に納期短縮を依頼\n3. 代替製品の準備を検討\n4. 販売部門に在庫状況を通知\n\n緊急対応が必要な状況です。"
+        desc: 緊急発注レベルの回答
+        selected: false
+        title: 緊急発注案内
+        type: answer
+      height: 107
+      id: urgent_order_answer_node
+      position:
+        x: 980
+        y: 50
+      positionAbsolute:
+        x: 980
+        y: 50
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: "📋 通常発注を推奨します\n\n製品名: {{#inventory_analysis_node.product_name#}}\n在庫回転日数: {{#inventory_analysis_node.stock_days_value#}}日\n\n在庫は適正範囲内ですが、補充が必要です。\n以下の対応を推奨します：\n\n1. 通常の発注プロセスで補充\n2. 来月の需要予測を確認\n3. 定期発注スケジュールの見直し\n\n計画的な在庫管理を継続してください。"
+        desc: 通常発注レベルの回答
+        selected: false
+        title: 通常発注案内
+        type: answer
+      height: 107
+      id: normal_order_answer_node
+      position:
+        x: 980
+        y: 200
+      positionAbsolute:
+        x: 980
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: "📊 在庫過多の状況です\n\n製品名: {{#inventory_analysis_node.product_name#}}\n在庫回転日数: {{#inventory_analysis_node.stock_days_value#}}日\n\n在庫が過剰な状態です。\n以下の対応を推奨します：\n\n1. 新規発注の一時停止\n2. 販売促進キャンペーンの検討\n3. 在庫の品質チェック実施\n4. 保管コストの見直し\n\n在庫の適正化に向けた施策を実施してください。"
+        desc: 在庫過多レベルの回答（デフォルトケース）
+        selected: false
+        title: 在庫過多案内
+        type: answer
+      height: 107
+      id: excess_stock_answer_node
+      position:
+        x: 980
+        y: 350
+      positionAbsolute:
+        x: 980
+        y: 350
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244

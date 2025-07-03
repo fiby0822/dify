@@ -1,0 +1,63 @@
+コンポーネント記述ルール: TEMPLATE-TRANSFORM
+
+■ブロック概要
+データ形式の変換やテンプレート処理を行うノード。Jinja2テンプレートエンジンを使用。
+主にGoogle Sheets操作時のデータ整形やLLM出力の形式変換に使用。
+
+■最重要ルール（これを守らないとクラッシュ）
+1. template内では必ず{{ 変数 }}記法を使用（{{#変数#}}は絶対禁止）
+2. 変数はvariablesセクションで事前定義が必須
+3. 外側のtype: "custom"、内側のdata.type: "template-transform"
+
+■必須パラメータ
+- id: ノードID
+- type: "custom"（外側）
+- data:
+  - type: "template-transform"（内側）
+  - template: Jinja2テンプレート文字列
+  - variables: 変数定義の配列
+  - selected: false
+  - title: ノードタイトル
+
+■変数定義の形式
+variables:
+  - value_selector: [参照元ノード, フィールド名]
+    value_type: string/array[object]/object等
+    variable: テンプレート内で使用する変数名
+
+■使用例（Google Sheets書き込み用）
+- data:
+    type: template-transform
+    template: |
+      [{
+        "range": "OUTPUT!A1:B2",
+        "values": [
+          ["タイトル", "内容"],
+          ["分析結果", {{ analysis_result | trim | tojson }}]
+        ]
+      }]
+    variables:
+      - value_selector:
+          - llm_node
+          - text
+        value_type: string
+        variable: analysis_result
+    selected: false
+    title: データ整形
+
+■よくあるエラーと対策
+1. {{#変数#}}記法の使用 → {{ 変数 }}に修正
+2. 変数未定義エラー → variablesセクションで定義
+3. インデックスエラー → 配列要素は[0]等で明示的に指定
+4. フィルターエラー → | tojson（jsonではない）を使用
+
+■推奨される使用場面
+- Google Sheetsへの書き込みデータ整形
+- CSV形式への変換
+- JSON配列の構築
+- 複数変数の結合
+
+■使用を避けるべき場面
+- 複雑なロジック処理（codeノードを使用）
+- 大量データの処理（メモリ制限あり）
+- 数値計算や条件分岐（codeノードを使用）

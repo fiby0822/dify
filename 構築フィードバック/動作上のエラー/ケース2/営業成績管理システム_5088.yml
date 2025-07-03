@@ -1,0 +1,380 @@
+app:
+  description: 'Google Spreadsheetsを使用した営業成績管理システム。月次営業データを取得・分析し、結果を自動的にシートに書き込みます。'
+  icon: 📊
+  icon_background: '#FFEAD5'
+  mode: advanced-chat
+  name: 営業成績管理システム
+  use_icon_as_answer_icon: false
+
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+
+kind: app
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: |
+      営業成績管理システムへようこそ！
+      
+      分析したい月を入力してください（例：2025年1月）。
+      INPUTシートから該当月のデータを取得し、分析結果をOUTPUTシートに書き込みます。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "2025年1月の営業成績を分析"
+      - "今月の営業データを確認"
+      - "前月の成績を分析してください"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: start
+        targetType: tool
+      id: start-batch_get-edge
+      source: start_node
+      sourceHandle: source
+      target: batch_get_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: template-transform
+      id: batch_get-transform_data-edge
+      source: batch_get_node
+      sourceHandle: source
+      target: transform_data_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: template-transform
+        targetType: llm
+      id: transform_data-llm-edge
+      source: transform_data_node
+      sourceHandle: source
+      target: llm_analyzer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: template-transform
+      id: llm-transform_result-edge
+      source: llm_analyzer_node
+      sourceHandle: source
+      target: transform_result_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: template-transform
+        targetType: tool
+      id: transform_result-batch_update-edge
+      source: transform_result_node
+      sourceHandle: source
+      target: batch_update_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: answer
+      id: batch_update-answer-edge
+      source: batch_update_node
+      sourceHandle: source
+      target: answer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: ''
+        selected: false
+        title: 開始
+        type: start
+        variables: []
+      height: 54
+      id: start_node
+      position:
+        x: 50
+        y: 300
+      positionAbsolute:
+        x: 50
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: 'INPUTシートから営業データを取得'
+        is_team_authorization: true
+        output_schema: null
+        provider_id: omluc/google_sheets/google_sheets
+        provider_name: omluc/google_sheets/google_sheets
+        provider_type: builtin
+        selected: false
+        title: 営業データ取得
+        tool_configurations:
+          date_time_render_option: FORMATTED_STRING
+          major_dimension: null
+          value_render_option: null
+        tool_description: Retrieve data from multiple ranges in a Google Sheet
+        tool_label: Batch Get
+        tool_name: batch_get
+        tool_parameters:
+          ranges:
+            type: mixed
+            value: '["INPUT!A1:E50"]'
+          spreadsheet_id:
+            type: mixed
+            value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+        type: tool
+      height: 142
+      id: batch_get_node
+      position:
+        x: 350
+        y: 300
+      positionAbsolute:
+        x: 350
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: '取得したデータを分析用に整形'
+        selected: false
+        template: |
+          分析対象月：{{ target_month }}
+          
+          取得した営業データ：
+          {% if sales_data and sales_data[0] and sales_data[0].values %}
+          {% for row in sales_data[0].values %}
+          {% if row[4] == target_month %}
+          営業担当者：{{ row[0] }}
+          売上金額：{{ row[1] }}
+          商談件数：{{ row[2] }}
+          成約率：{{ row[3] }}
+          -----------
+          {% endif %}
+          {% endfor %}
+          {% else %}
+          データが取得できませんでした。
+          {% endif %}
+        title: データ整形
+        type: template-transform
+        variables:
+        - value_selector:
+          - sys
+          - query
+          value_type: string
+          variable: target_month
+        - value_selector:
+          - batch_get_node
+          - json
+          value_type: array[object]
+          variable: sales_data
+      height: 80
+      id: transform_data_node
+      position:
+        x: 650
+        y: 300
+      positionAbsolute:
+        x: 650
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: ''
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: gpt-3.5-turbo
+          provider: openai
+        prompt_template:
+        - id: system_prompt
+          role: system
+          text: |
+            あなたは営業データ分析の専門家です。
+            提供された月次営業データを分析し、以下の観点でレポートを作成してください：
+            
+            1. トップセールスの特定（売上金額と成約率の両面から）
+            2. 全体的な営業傾向の分析
+            3. 改善が必要な担当者への具体的なアドバイス
+            4. 来月に向けた戦略的提案
+            
+            分析結果は簡潔かつ実践的な内容にしてください。
+        - id: user_prompt
+          role: user
+          text: |
+            以下の営業データを分析してください：
+            
+            {{#transform_data_node.output#}}
+        selected: false
+        title: 営業データ分析
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 98
+      id: llm_analyzer_node
+      position:
+        x: 950
+        y: 300
+      positionAbsolute:
+        x: 950
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: '分析結果を書き込み用に整形'
+        selected: false
+        template: |
+          [{
+            "range": "OUTPUT!A1:C6",
+            "values": [
+              ["分析項目", "分析内容", "更新日時"],
+              ["分析対象月", {{ target_month | tojson }}, "2025/01/14 10:00"],
+              ["トップセールス", "詳細は下記参照", "2025/01/14 10:00"],
+              ["営業傾向", "詳細は下記参照", "2025/01/14 10:00"],
+              ["改善提案", "詳細は下記参照", "2025/01/14 10:00"],
+              ["分析詳細", {{ analysis_result | trim | tojson }}, "2025/01/14 10:00"]
+            ]
+          }]
+        title: 結果整形
+        type: template-transform
+        variables:
+        - value_selector:
+          - sys
+          - query
+          value_type: string
+          variable: target_month
+        - value_selector:
+          - llm_analyzer_node
+          - text
+          value_type: string
+          variable: analysis_result
+      height: 80
+      id: transform_result_node
+      position:
+        x: 1250
+        y: 300
+      positionAbsolute:
+        x: 1250
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: 'OUTPUTシートに分析結果を書き込み'
+        is_team_authorization: true
+        output_schema: null
+        provider_id: omluc/google_sheets/google_sheets
+        provider_name: omluc/google_sheets/google_sheets
+        provider_type: builtin
+        selected: false
+        title: 分析結果書き込み
+        tool_configurations:
+          include_values_in_response: null
+          response_date_time_render_option: null
+          response_value_render_option: null
+          value_input_option: USER_ENTERED
+        tool_description: Updates multiple ranges in a Google Sheet with specified values
+        tool_label: Batch Update
+        tool_name: batch_update
+        tool_parameters:
+          data:
+            type: mixed
+            value: '{{#transform_result_node.output#}}'
+          spreadsheet_id:
+            type: mixed
+            value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+        type: tool
+      height: 168
+      id: batch_update_node
+      position:
+        x: 1550
+        y: 300
+      positionAbsolute:
+        x: 1550
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: |
+          ## 営業成績分析完了
+          
+          {{#sys.query#}}の営業データ分析が完了しました。
+          
+          ### 分析結果：
+          {{#llm_analyzer_node.text#}}
+          
+          ### 実行内容：
+          - INPUTシートから営業データを取得
+          - データの分析を実行
+          - OUTPUTシートに分析結果を書き込み
+          
+          分析結果はGoogle SpreadsheetsのOUTPUTシートで確認できます。
+        desc: ''
+        selected: false
+        title: 完了メッセージ
+        type: answer
+        variables: []
+      height: 174
+      id: answer_node
+      position:
+        x: 1850
+        y: 300
+      positionAbsolute:
+        x: 1850
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

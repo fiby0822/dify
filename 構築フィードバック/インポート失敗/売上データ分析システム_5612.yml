@@ -1,0 +1,407 @@
+app:
+  description: GoogleSpreadsheetから売上データを取得し、LLMで分析を行い、結果をSpreadsheetに書き込むワークフロー
+  icon: "📊"
+  icon_background: "#FFEAD5"
+  mode: advanced-chat
+  name: 売上データ分析システム
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+kind: app
+version: 0.3.0
+workflow:
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: start
+        targetType: tool
+      source: start_node
+      sourceHandle: source
+      target: get_sales_data
+      targetHandle: target
+      selected: false
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: template-transform
+      source: get_sales_data
+      sourceHandle: source
+      target: format_data_for_llm
+      targetHandle: target
+      selected: false
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: template-transform
+        targetType: llm
+      source: format_data_for_llm
+      sourceHandle: source
+      target: analyze_sales_data
+      targetHandle: target
+      selected: false
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: template-transform
+      source: analyze_sales_data
+      sourceHandle: source
+      target: format_analysis_for_sheets
+      targetHandle: target
+      selected: false
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: template-transform
+        targetType: tool
+      source: format_analysis_for_sheets
+      sourceHandle: source
+      target: write_analysis_results
+      targetHandle: target
+      selected: false
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: template-transform
+      source: write_analysis_results
+      sourceHandle: source
+      target: format_final_response
+      targetHandle: target
+      selected: false
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: template-transform
+        targetType: end
+      source: format_final_response
+      sourceHandle: source
+      target: end_node
+      targetHandle: target
+      selected: false
+      zIndex: 0
+    nodes:
+    - data:
+        type: start
+        variables: []
+      height: 54
+      id: start_node
+      position:
+        x: 30
+        y: 100
+      positionAbsolute:
+        x: 30
+        y: 100
+      selected: false
+      type: custom
+      width: 244
+    - data:
+        type: tool
+        provider_id: omluc/google_sheets/google_sheets
+        provider_name: omluc/google_sheets/google_sheets
+        provider_type: builtin
+        tool_label: Batch Get
+        tool_name: batch_get
+        tool_description: Retrieve data from multiple ranges in a Google Sheet
+        is_team_authorization: true
+        output_schema: null
+        tool_configurations:
+          date_time_render_option: FORMATTED_STRING
+          major_dimension: null
+          value_render_option: null
+        tool_parameters:
+          ranges:
+            type: mixed
+            value: '["売上データ!A1:E50"]'
+          spreadsheet_id:
+            type: mixed
+            value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+        selected: false
+        title: 売上データ取得
+        desc: ''
+      height: 154
+      id: get_sales_data
+      position:
+        x: 230
+        y: 100
+      positionAbsolute:
+        x: 230
+        y: 100
+      selected: false
+      type: custom
+      width: 244
+    - data:
+        type: template-transform
+        variables:
+        - value_selector:
+          - get_sales_data
+          - json
+          variable: get_sales_data
+        template: |
+          以下は売上データです（CSV形式）：
+          
+          {% if get_sales_data.json and get_sales_data.json[0] and get_sales_data.json[0].values %}
+          {% for row in get_sales_data.json[0].values %}
+          {{ row | join(',') }}
+          {% endfor %}
+          {% else %}
+          データが取得できませんでした。
+          {% endif %}
+          
+          このデータを分析してください。
+        selected: false
+        title: LLM用データ整形
+        desc: ''
+      height: 80
+      id: format_data_for_llm
+      position:
+        x: 430
+        y: 100
+      positionAbsolute:
+        x: 430
+        y: 100
+      selected: false
+      type: custom
+      width: 244
+    - data:
+        type: llm
+        prompt:
+          - role: system
+            text: あなたは売上データ分析の専門家です。与えられたデータを分析し、以下の観点で報告してください：
+              
+              1. 月別の売上推移分析
+              2. 商品カテゴリ別の売上構成比
+              3. トップ5売上商品の特定
+              4. 売上傾向に基づく改善提案
+              
+              回答は以下のJSON形式で出力してください：
+              ```json
+              {
+                "月別売上サマリー": "分析結果の文章",
+                "カテゴリ別分析": "分析結果の文章",
+                "トップ商品": ["商品1", "商品2", "商品3", "商品4", "商品5"],
+                "改善提案": "提案内容の文章"
+              }
+              ```
+          - role: user
+            text: '{{#format_data_for_llm.output#}}'
+        model:
+          provider: openai
+          name: gpt-4
+          mode: chat
+          completion_params:
+            temperature: 0.7
+        memory:
+          role_prefix:
+            user: ''
+            assistant: ''
+          window:
+            enabled: false
+            size: 10
+        context:
+          enabled: false
+          variable_selector: []
+        selected: false
+        title: 売上データ分析
+        desc: ''
+      height: 154
+      id: analyze_sales_data
+      position:
+        x: 630
+        y: 100
+      positionAbsolute:
+        x: 630
+        y: 100
+      selected: false
+      type: custom
+      width: 244
+    - data:
+        type: template-transform
+        variables:
+        - value_selector:
+          - analyze_sales_data
+          - text
+          variable: analyze_sales_data
+        template: |
+          [{
+            "range": "分析結果!A1:B5",
+            "values": [
+              ["項目", "内容"],
+              ["分析日時", "2025/01/14 15:30"],
+              ["月別売上サマリー", {{ analyze_sales_data.text | fromjson.月別売上サマリー | tojson }}],
+              ["カテゴリ別分析", {{ analyze_sales_data.text | fromjson.カテゴリ別分析 | tojson }}],
+              ["改善提案", {{ analyze_sales_data.text | fromjson.改善提案 | tojson }}]
+            ]
+          },
+          {
+            "range": "分析結果!D1:D6",
+            "values": [
+              ["トップ5商品"],
+              {% set top_products = analyze_sales_data.text | fromjson.トップ商品 %}
+              {% for product in top_products %}
+              [{{ product | tojson }}]{% if not loop.last %},{% endif %}
+              {% endfor %}
+            ]
+          }]
+        selected: false
+        title: GoogleSheets用データ整形
+        desc: ''
+      height: 80
+      id: format_analysis_for_sheets
+      position:
+        x: 830
+        y: 100
+      positionAbsolute:
+        x: 830
+        y: 100
+      selected: false
+      type: custom
+      width: 244
+    - data:
+        type: tool
+        provider_id: omluc/google_sheets/google_sheets
+        provider_name: omluc/google_sheets/google_sheets
+        provider_type: builtin
+        tool_label: Batch Update
+        tool_name: batch_update
+        tool_description: Updates multiple ranges in a Google Sheet with specified values
+        is_team_authorization: true
+        output_schema: null
+        tool_configurations:
+          include_values_in_response: null
+          response_date_time_render_option: null
+          response_value_render_option: null
+          value_input_option: USER_ENTERED
+        tool_parameters:
+          data:
+            type: mixed
+            value: '{{#format_analysis_for_sheets.output#}}'
+          spreadsheet_id:
+            type: mixed
+            value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+        selected: false
+        title: 分析結果書き込み
+        desc: ''
+      height: 154
+      id: write_analysis_results
+      position:
+        x: 1030
+        y: 100
+      positionAbsolute:
+        x: 1030
+        y: 100
+      selected: false
+      type: custom
+      width: 244
+    - data:
+        type: template-transform
+        variables:
+        - value_selector:
+          - analyze_sales_data
+          - text
+          variable: analyze_sales_data
+        template: |
+          売上データの分析が完了しました。
+          
+          📊 分析結果の概要：
+          {{ analyze_sales_data.text | fromjson.月別売上サマリー }}
+          
+          📈 カテゴリ別分析：
+          {{ analyze_sales_data.text | fromjson.カテゴリ別分析 }}
+          
+          🏆 トップ5商品：
+          {% set top_products = analyze_sales_data.text | fromjson.トップ商品 %}
+          {% for product in top_products %}
+          {{ loop.index }}. {{ product }}
+          {% endfor %}
+          
+          💡 改善提案：
+          {{ analyze_sales_data.text | fromjson.改善提案 }}
+          
+          分析結果はGoogleSpreadsheetの「分析結果」シートに保存されました。
+        selected: false
+        title: 最終応答生成
+        desc: ''
+      height: 80
+      id: format_final_response
+      position:
+        x: 1230
+        y: 100
+      positionAbsolute:
+        x: 1230
+        y: 100
+      selected: false
+      type: custom
+      width: 244
+    - data:
+        type: end
+        outputs:
+        - variable: analysis_response
+          value_selector: [format_final_response, output]
+          value_type: string
+      height: 90
+      id: end_node
+      position:
+        x: 1430
+        y: 100
+      positionAbsolute:
+        x: 1430
+        y: 100
+      selected: false
+      type: custom
+      width: 244
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .txt
+      - .csv
+      allowed_file_types:
+      - document
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      configs:
+        file_upload_limit: 1
+        files_config:
+        - allowed_file_extensions: [txt, csv]
+          allowed_file_types: [document]
+          allowed_file_upload_methods: [local_file, remote_url]
+          id: file_upload
+          label: アップロードファイル
+          number_limits: 1
+      enabled: false
+    opening_statement: |
+      売上データ分析システムへようこそ！
+      
+      このシステムは、GoogleSpreadsheetから売上データを取得し、AIによる詳細な分析を行います。
+      
+      分析したい内容をお知らせください。例えば：
+      - 「今月の売上を分析して」
+      - 「商品カテゴリ別の売上を教えて」
+      - 「売上改善の提案をして」
+      
+      どのような分析をご希望ですか？
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      configs: []
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+    - 売上データを分析してください
+    - カテゴリ別の売上状況を教えてください
+    - 売上改善の提案をお願いします
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''

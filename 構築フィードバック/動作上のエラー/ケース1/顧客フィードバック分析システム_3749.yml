@@ -1,0 +1,438 @@
+app:
+  description: 'Google Spreadsheetsから顧客フィードバックを取得し、AIで分析して結果を書き込むシステム'
+  icon: 📊
+  icon_background: '#E8F4F8'
+  mode: advanced-chat
+  name: 顧客フィードバック分析システム
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        image_file_size_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: |
+      顧客フィードバック分析システムへようこそ！
+      
+      このシステムは、Google Spreadsheetsの顧客フィードバックデータを分析し、
+      以下の情報を提供します：
+      - ポジティブ/ネガティブの分類
+      - 主要な要望・課題の抽出
+      - 改善提案の生成
+      
+      分析を開始するには「分析開始」と入力してください。
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - '分析開始'
+      - '今月のフィードバックを分析'
+      - '顧客満足度を確認'
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: start
+        targetType: tool
+      id: start-source-batch_get-target
+      selected: false
+      source: start_node
+      sourceHandle: source
+      target: batch_get_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: template-transform
+      id: batch_get-source-transform_data-target
+      selected: false
+      source: batch_get_node
+      sourceHandle: source
+      target: transform_data_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: template-transform
+        targetType: llm
+      id: transform_data-source-llm_analyzer-target
+      selected: false
+      source: transform_data_node
+      sourceHandle: source
+      target: llm_analyzer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: template-transform
+      id: llm_analyzer-source-transform_result-target
+      selected: false
+      source: llm_analyzer_node
+      sourceHandle: source
+      target: transform_result_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: template-transform
+        targetType: tool
+      id: transform_result-source-batch_update-target
+      selected: false
+      source: transform_result_node
+      sourceHandle: source
+      target: batch_update_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: template-transform
+      id: batch_update-source-transform_output-target
+      selected: false
+      source: batch_update_node
+      sourceHandle: source
+      target: transform_output_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: template-transform
+        targetType: answer
+      id: transform_output-source-answer-target
+      selected: false
+      source: transform_output_node
+      sourceHandle: source
+      target: answer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: ''
+        selected: false
+        title: 開始
+        type: start
+        variables: []
+      height: 54
+      id: start_node
+      position:
+        x: 50
+        y: 300
+      positionAbsolute:
+        x: 50
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: ''
+        is_team_authorization: true
+        output_schema: null
+        provider_id: omluc/google_sheets/google_sheets
+        provider_name: omluc/google_sheets/google_sheets
+        provider_type: builtin
+        selected: false
+        title: フィードバックデータ取得
+        tool_configurations:
+          date_time_render_option: FORMATTED_STRING
+          major_dimension: null
+          value_render_option: null
+        tool_description: Retrieve data from multiple ranges in a Google Sheet
+        tool_label: Batch Get
+        tool_name: batch_get
+        tool_parameters:
+          ranges:
+            type: mixed
+            value: '["INPUT!A1:D100"]'
+          spreadsheet_id:
+            type: mixed
+            value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+        type: tool
+      height: 142
+      id: batch_get_node
+      position:
+        x: 350
+        y: 300
+      positionAbsolute:
+        x: 350
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: ''
+        selected: false
+        template: |
+          取得した顧客フィードバックデータ：
+          {% if feedback_data and feedback_data[0] and feedback_data[0].values %}
+          {% for row in feedback_data[0].values %}
+          顧客名: {{ row[0] if row|length > 0 else "" }}
+          フィードバック: {{ row[1] if row|length > 1 else "" }}
+          評価: {{ row[2] if row|length > 2 else "" }}
+          日付: {{ row[3] if row|length > 3 else "" }}
+          ---
+          {% endfor %}
+          {% else %}
+          データが取得できませんでした
+          {% endif %}
+        title: データ整形
+        type: template-transform
+        variables:
+        - value_selector:
+          - batch_get_node
+          - json
+          value_type: array[object]
+          variable: feedback_data
+      height: 80
+      id: transform_data_node
+      position:
+        x: 650
+        y: 300
+      positionAbsolute:
+        x: 650
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: ''
+        model:
+          mode: chat
+          name: gpt-4o
+          provider: openai
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: |
+            あなたは顧客フィードバックの分析専門家です。
+            提供されたフィードバックデータを分析し、以下の項目を含む分析レポートを作成してください：
+            
+            1. 総フィードバック数
+            2. ポジティブなフィードバック数
+            3. ネガティブなフィードバック数
+            4. 平均評価（1-5の数値）
+            5. 主要な要望・課題（3つまで）
+            6. 改善提案（3つまで）
+            
+            分析結果は読みやすい形式で出力してください。
+        - id: user-prompt
+          role: user
+          text: |
+            以下の顧客フィードバックデータを分析してください：
+            
+            {{#transform_data_node.output#}}
+        completion_params:
+          temperature: 0.3
+          max_tokens: 1000
+        structured_output_enabled: false
+        vision:
+          enabled: false
+        variables: []
+        selected: false
+        title: フィードバック分析
+        type: llm
+      height: 98
+      id: llm_analyzer_node
+      position:
+        x: 950
+        y: 300
+      positionAbsolute:
+        x: 950
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: ''
+        selected: false
+        template: |
+          [{
+            "range": "OUTPUT!A2:B2",
+            "values": [[
+              "2025/01/14 15:00",
+              {{ analysis_result | trim | tojson }}
+            ]]
+          }]
+        title: 結果整形
+        type: template-transform
+        variables:
+        - value_selector:
+          - llm_analyzer_node
+          - text
+          value_type: string
+          variable: analysis_result
+      height: 80
+      id: transform_result_node
+      position:
+        x: 1250
+        y: 300
+      positionAbsolute:
+        x: 1250
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: ''
+        is_team_authorization: true
+        output_schema: null
+        provider_id: omluc/google_sheets/google_sheets
+        provider_name: omluc/google_sheets/google_sheets
+        provider_type: builtin
+        selected: false
+        title: 分析結果書き込み
+        tool_configurations:
+          include_values_in_response: null
+          response_date_time_render_option: null
+          response_value_render_option: null
+          value_input_option: USER_ENTERED
+        tool_description: Update data in multiple ranges in a Google Sheet
+        tool_label: Batch Update
+        tool_name: batch_update
+        tool_parameters:
+          data:
+            type: mixed
+            value: '{{#transform_result_node.output#}}'
+          spreadsheet_id:
+            type: mixed
+            value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+        type: tool
+      height: 168
+      id: batch_update_node
+      position:
+        x: 1550
+        y: 300
+      positionAbsolute:
+        x: 1550
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: ''
+        selected: false
+        template: |
+          分析完了しました！
+          
+          取得データ：
+          {{ feedback_data }}
+          
+          分析結果：
+          {{ analysis_result }}
+          
+          Google SpreadsheetsのOUTPUTシートに結果を保存しました。
+        title: 出力整形
+        type: template-transform
+        variables:
+        - value_selector:
+          - transform_data_node
+          - output
+          value_type: string
+          variable: feedback_data
+        - value_selector:
+          - llm_analyzer_node
+          - text
+          value_type: string
+          variable: analysis_result
+      height: 80
+      id: transform_output_node
+      position:
+        x: 1850
+        y: 300
+      positionAbsolute:
+        x: 1850
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '{{#transform_output_node.output#}}'
+        desc: ''
+        selected: false
+        title: 回答
+        type: answer
+        variables: []
+      height: 174
+      id: answer_node
+      position:
+        x: 2150
+        y: 300
+      positionAbsolute:
+        x: 2150
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

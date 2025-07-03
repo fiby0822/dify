@@ -1,0 +1,750 @@
+app:
+  description: 商品問い合わせの種類と緊急度を判定し、適切な回答を生成するシステム
+  icon: "\U0001F6D2"
+  icon_background: "#E1F5FE"
+  mode: advanced-chat
+  name: 商品問い合わせ対応システム_IF_ELSE検証用
+  use_icon_as_answer_icon: false
+dependencies: []
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: 商品についてのお問い合わせをお待ちしております。在庫確認、価格、納期などについてお答えします。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-analysis_node
+        selected: false
+        source: start
+        sourceHandle: source
+        target: analysis_node
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: if-else
+        id: analysis_node-inquiry_type_branch
+        selected: false
+        source: analysis_node
+        sourceHandle: source
+        target: inquiry_type_branch
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: inquiry_type_branch-stock_priority_branch
+        selected: false
+        source: inquiry_type_branch
+        sourceHandle: stock_check
+        target: stock_priority_branch
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: inquiry_type_branch-price_priority_branch
+        selected: false
+        source: inquiry_type_branch
+        sourceHandle: price_check
+        target: price_priority_branch
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: inquiry_type_branch-delivery_priority_branch
+        selected: false
+        source: inquiry_type_branch
+        sourceHandle: delivery_check
+        target: delivery_priority_branch
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: inquiry_type_branch-other_priority_branch
+        selected: false
+        source: inquiry_type_branch
+        sourceHandle: "false"
+        target: other_priority_branch
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: template-transform
+        id: stock_priority_branch-stock_urgent_response
+        selected: false
+        source: stock_priority_branch
+        sourceHandle: urgent_case
+        target: stock_urgent_response
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: template-transform
+        id: stock_priority_branch-stock_normal_response
+        selected: false
+        source: stock_priority_branch
+        sourceHandle: "false"
+        target: stock_normal_response
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: template-transform
+        id: price_priority_branch-price_urgent_response
+        selected: false
+        source: price_priority_branch
+        sourceHandle: urgent_case
+        target: price_urgent_response
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: template-transform
+        id: price_priority_branch-price_normal_response
+        selected: false
+        source: price_priority_branch
+        sourceHandle: "false"
+        target: price_normal_response
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: template-transform
+        id: delivery_priority_branch-delivery_urgent_response
+        selected: false
+        source: delivery_priority_branch
+        sourceHandle: urgent_case
+        target: delivery_urgent_response
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: template-transform
+        id: delivery_priority_branch-delivery_normal_response
+        selected: false
+        source: delivery_priority_branch
+        sourceHandle: "false"
+        target: delivery_normal_response
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: template-transform
+        id: other_priority_branch-other_urgent_response
+        selected: false
+        source: other_priority_branch
+        sourceHandle: urgent_case
+        target: other_urgent_response
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: template-transform
+        id: other_priority_branch-other_normal_response
+        selected: false
+        source: other_priority_branch
+        sourceHandle: "false"
+        target: other_normal_response
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: answer
+        id: stock_urgent_response-answer
+        selected: false
+        source: stock_urgent_response
+        sourceHandle: source
+        target: answer
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: answer
+        id: stock_normal_response-answer
+        selected: false
+        source: stock_normal_response
+        sourceHandle: source
+        target: answer
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: answer
+        id: price_urgent_response-answer
+        selected: false
+        source: price_urgent_response
+        sourceHandle: source
+        target: answer
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: answer
+        id: price_normal_response-answer
+        selected: false
+        source: price_normal_response
+        sourceHandle: source
+        target: answer
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: answer
+        id: delivery_urgent_response-answer
+        selected: false
+        source: delivery_urgent_response
+        sourceHandle: source
+        target: answer
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: answer
+        id: delivery_normal_response-answer
+        selected: false
+        source: delivery_normal_response
+        sourceHandle: source
+        target: answer
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: answer
+        id: other_urgent_response-answer
+        selected: false
+        source: other_urgent_response
+        sourceHandle: source
+        target: answer
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: answer
+        id: other_normal_response-answer
+        selected: false
+        source: other_normal_response
+        sourceHandle: source
+        target: answer
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: ユーザーからの問い合わせを受け付ける
+          selected: false
+          title: 開始
+          type: start
+          variables: []
+        height: 54
+        id: start
+        position:
+          x: 0
+          y: 200
+        positionAbsolute:
+          x: 0
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            completion_params:
+              temperature: 0.3
+            mode: chat
+            name: gpt-4o-mini
+            provider: openai
+          prompt_template:
+            - id: system_prompt_1
+              role: system
+              text: あなたは商品問い合わせを分析するAIアシスタントです。問い合わせ内容から以下を判定してください：
+                
+                1. 問い合わせ種類（inquiry_type）：
+                   - "stock"：在庫に関する問い合わせ
+                   - "price"：価格に関する問い合わせ
+                   - "delivery"：納期・配送に関する問い合わせ
+                   - "other"：その他の問い合わせ
+                
+                2. 緊急度（priority）：
+                   - "high"：緊急（今すぐ、至急、大至急などの言葉が含まれる）
+                   - "low"：通常
+                
+                必ず以下の形式で回答してください：
+                inquiry_type: [種類]
+                priority: [緊急度]
+            - id: user_prompt_1
+              role: user
+              text: '{{#sys.query#}}'
+          selected: false
+          structured_output_enabled: false
+          title: 問い合わせ分析
+          type: llm
+          vision:
+            enabled: false
+        height: 98
+        id: analysis_node
+        position:
+          x: 300
+          y: 200
+        positionAbsolute:
+          x: 300
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - case_id: stock_check
+              conditions:
+                - comparison_operator: contains
+                  id: stock_condition
+                  variable_selector:
+                    - analysis_node
+                    - text
+                  value: 'inquiry_type: stock'
+              id: stock_check
+              logical_operator: and
+            - case_id: price_check
+              conditions:
+                - comparison_operator: contains
+                  id: price_condition
+                  variable_selector:
+                    - analysis_node
+                    - text
+                  value: 'inquiry_type: price'
+              id: price_check
+              logical_operator: and
+            - case_id: delivery_check
+              conditions:
+                - comparison_operator: contains
+                  id: delivery_condition
+                  variable_selector:
+                    - analysis_node
+                    - text
+                  value: 'inquiry_type: delivery'
+              id: delivery_check
+              logical_operator: and
+          desc: 問い合わせ種類による分岐
+          selected: false
+          title: 問い合わせ種類分岐
+          type: if-else
+        height: 250
+        id: inquiry_type_branch
+        position:
+          x: 600
+          y: 200
+        positionAbsolute:
+          x: 600
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - case_id: urgent_case
+              conditions:
+                - comparison_operator: contains
+                  id: urgent_condition
+                  variable_selector:
+                    - analysis_node
+                    - text
+                  value: 'priority: high'
+              id: urgent_case
+              logical_operator: and
+          desc: 在庫問い合わせの緊急度判定
+          selected: false
+          title: 在庫_緊急度分岐
+          type: if-else
+        height: 154
+        id: stock_priority_branch
+        position:
+          x: 900
+          y: 0
+        positionAbsolute:
+          x: 900
+          y: 0
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - case_id: urgent_case
+              conditions:
+                - comparison_operator: contains
+                  id: urgent_condition
+                  variable_selector:
+                    - analysis_node
+                    - text
+                  value: 'priority: high'
+              id: urgent_case
+              logical_operator: and
+          desc: 価格問い合わせの緊急度判定
+          selected: false
+          title: 価格_緊急度分岐
+          type: if-else
+        height: 154
+        id: price_priority_branch
+        position:
+          x: 900
+          y: 200
+        positionAbsolute:
+          x: 900
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - case_id: urgent_case
+              conditions:
+                - comparison_operator: contains
+                  id: urgent_condition
+                  variable_selector:
+                    - analysis_node
+                    - text
+                  value: 'priority: high'
+              id: urgent_case
+              logical_operator: and
+          desc: 納期問い合わせの緊急度判定
+          selected: false
+          title: 納期_緊急度分岐
+          type: if-else
+        height: 154
+        id: delivery_priority_branch
+        position:
+          x: 900
+          y: 400
+        positionAbsolute:
+          x: 900
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - case_id: urgent_case
+              conditions:
+                - comparison_operator: contains
+                  id: urgent_condition
+                  variable_selector:
+                    - analysis_node
+                    - text
+                  value: 'priority: high'
+              id: urgent_case
+              logical_operator: and
+          desc: その他問い合わせの緊急度判定
+          selected: false
+          title: その他_緊急度分岐
+          type: if-else
+        height: 154
+        id: other_priority_branch
+        position:
+          x: 900
+          y: 600
+        positionAbsolute:
+          x: 900
+          y: 600
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          selected: false
+          template: |-
+            【至急対応】在庫確認のお問い合わせ
+
+            お問い合わせいただきありがとうございます。
+            在庫確認を至急行わせていただきます。
+
+            現在、担当部署にて在庫状況を確認中です。
+            15分以内に回答させていただきます。
+
+            お急ぎのところ恐れ入りますが、今しばらくお待ちください。
+          title: 在庫_緊急回答
+          type: template-transform
+          variables: []
+        height: 54
+        id: stock_urgent_response
+        position:
+          x: 1200
+          y: -50
+        positionAbsolute:
+          x: 1200
+          y: -50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          selected: false
+          template: |-
+            在庫確認のお問い合わせについて
+
+            お問い合わせいただきありがとうございます。
+            在庫確認を行わせていただきます。
+
+            通常、在庫確認には1-2営業日お時間をいただいております。
+            確認が完了次第、ご登録のメールアドレスにご連絡いたします。
+
+            よろしくお願いいたします。
+          title: 在庫_通常回答
+          type: template-transform
+          variables: []
+        height: 54
+        id: stock_normal_response
+        position:
+          x: 1200
+          y: 50
+        positionAbsolute:
+          x: 1200
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          selected: false
+          template: |-
+            【至急対応】価格確認のお問い合わせ
+
+            お問い合わせいただきありがとうございます。
+            価格について至急確認させていただきます。
+
+            現在、最新の価格情報を確認中です。
+            30分以内に回答させていただきます。
+
+            お急ぎのところ恐れ入りますが、今しばらくお待ちください。
+          title: 価格_緊急回答
+          type: template-transform
+          variables: []
+        height: 54
+        id: price_urgent_response
+        position:
+          x: 1200
+          y: 150
+        positionAbsolute:
+          x: 1200
+          y: 150
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          selected: false
+          template: |-
+            価格確認のお問い合わせについて
+
+            お問い合わせいただきありがとうございます。
+            商品の価格を確認させていただきます。
+
+            価格確認には通常1営業日お時間をいただいております。
+            特別価格やキャンペーン情報も含めてご案内いたします。
+
+            確認が完了次第、ご連絡いたします。
+          title: 価格_通常回答
+          type: template-transform
+          variables: []
+        height: 54
+        id: price_normal_response
+        position:
+          x: 1200
+          y: 250
+        positionAbsolute:
+          x: 1200
+          y: 250
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          selected: false
+          template: |-
+            【至急対応】納期確認のお問い合わせ
+
+            お問い合わせいただきありがとうございます。
+            納期について至急確認させていただきます。
+
+            現在、最短納期を確認中です。
+            1時間以内に回答させていただきます。
+
+            お急ぎの納品をご希望の場合は、特急対応も検討いたします。
+          title: 納期_緊急回答
+          type: template-transform
+          variables: []
+        height: 54
+        id: delivery_urgent_response
+        position:
+          x: 1200
+          y: 350
+        positionAbsolute:
+          x: 1200
+          y: 350
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          selected: false
+          template: |-
+            納期確認のお問い合わせについて
+
+            お問い合わせいただきありがとうございます。
+            納期について確認させていただきます。
+
+            通常の納期確認には1営業日お時間をいただいております。
+            配送方法や地域により納期が異なる場合がございます。
+
+            詳細を確認の上、ご連絡いたします。
+          title: 納期_通常回答
+          type: template-transform
+          variables: []
+        height: 54
+        id: delivery_normal_response
+        position:
+          x: 1200
+          y: 450
+        positionAbsolute:
+          x: 1200
+          y: 450
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          selected: false
+          template: |-
+            【至急対応】お問い合わせについて
+
+            お問い合わせいただきありがとうございます。
+            内容を確認し、至急対応させていただきます。
+
+            担当部署にて確認を行っております。
+            2時間以内に回答させていただきます。
+
+            お急ぎのところ恐れ入りますが、今しばらくお待ちください。
+          title: その他_緊急回答
+          type: template-transform
+          variables: []
+        height: 54
+        id: other_urgent_response
+        position:
+          x: 1200
+          y: 550
+        positionAbsolute:
+          x: 1200
+          y: 550
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          selected: false
+          template: |-
+            お問い合わせについて
+
+            お問い合わせいただきありがとうございます。
+            内容を確認の上、回答させていただきます。
+
+            通常2-3営業日以内にご連絡いたします。
+            お問い合わせ内容により、専門スタッフから回答させていただく場合がございます。
+
+            よろしくお願いいたします。
+          title: その他_通常回答
+          type: template-transform
+          variables: []
+        height: 54
+        id: other_normal_response
+        position:
+          x: 1200
+          y: 650
+        positionAbsolute:
+          x: 1200
+          y: 650
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: '{{#stock_urgent_response.output#}}{{#stock_normal_response.output#}}{{#price_urgent_response.output#}}{{#price_normal_response.output#}}{{#delivery_urgent_response.output#}}{{#delivery_normal_response.output#}}{{#other_urgent_response.output#}}{{#other_normal_response.output#}}'
+          desc: ''
+          selected: false
+          title: 回答
+          type: answer
+          variables: []
+        height: 78
+        id: answer
+        position:
+          x: 1500
+          y: 300
+        positionAbsolute:
+          x: 1500
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244

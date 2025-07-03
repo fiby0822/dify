@@ -1,2 +1,9 @@
-Run failed: 2 validation errors for ToolNodeData provider_type Input should be 'plugin', 'builtin', 'workflow', 'api', 'app' or 'dataset-retrieval' [type=enum, input_value='marketplace', input_type=str] For further information visit https://errors.pydantic.dev/2.11/v/enum tool_configurations Field required [type=missing, input_value={'desc': '入力シート...TqSQ'}}, 'type': 'tool'}, input_type=dict] For further information visit https://errors.pydantic.dev/2.11/v/missing
-GoogleShpredSheetの呼び出し用コンポーネントが使用されていません。
+Run failed: Traceback (most recent call last):
+File "/var/sandbox/sandbox-python/tmp/9bf18f50_9fed_4f13_b16d_9fa2c69a2686.py", line 48, in
+File "", line 27, in
+File "", line 18, in main
+File "/usr/local/lib/python3.10/site-packages/jinja2/environment.py", line 1291, in render
+self.environment.handle_exception()
+File "/usr/local/lib/python3.10/site-packages/jinja2/environment.py", line 925, in handle_exception
+raise rewrite_traceback_stack(source=source)
+File "

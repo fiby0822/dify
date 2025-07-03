@@ -1,0 +1,490 @@
+app:
+  name: 商品在庫管理システム
+  description: 商品の在庫数に応じて適切な発注提案を行います
+  icon: 📦
+  icon_background: "#E1D7FF"
+  mode: advanced-chat
+  use_icon_as_answer_icon: false
+dependencies: []
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: "商品在庫管理システムへようこそ！\n\n商品名と現在の在庫数を入力してください。在庫状況に応じて適切な発注提案をいたします。"
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ""
+      voice: ""
+  graph:
+    nodes:
+      - data:
+          desc: ワークフローの開始地点
+          selected: false
+          title: 開始
+          type: start
+          variables: []
+        height: 53
+        id: start_node
+        position:
+          x: 50
+          y: 300
+        positionAbsolute:
+          x: 50
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: ユーザー入力から商品名と在庫数を抽出
+          jinja2_variables: []
+          llm:
+            context:
+              enabled: false
+              variable_selector: []
+            max_tokens: 512
+            model:
+              completion_params:
+                temperature: 0.3
+              mode: chat
+              name: claude-3-5-sonnet-20241022
+              provider: anthropic
+            prompt_template:
+              - id: 5f47f3d3-af67-4846-9fa6-a3bb9b77523e
+                role: system
+                text: |
+                  ユーザーの入力から商品名と在庫数を抽出してください。
+                  必ず以下の形式で出力してください：
+                  商品名：[商品名]
+                  在庫数：[数値のみ]
+              - id: 0f973c24-41ac-48b9-bc7e-05962ab09010
+                role: user
+                text: "{{#sys.query#}}"
+            tools: []
+            vision:
+              enabled: false
+          memory:
+            role_prefix:
+              assistant: ""
+              user: ""
+            window:
+              enabled: false
+              size: 50
+          selected: false
+          title: 入力解析
+          type: llm
+        height: 97
+        id: input_analysis_node
+        position:
+          x: 350
+          y: 300
+        positionAbsolute:
+          x: 350
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          code: |
+            import re
+            
+            text = input_analysis
+            
+            product_match = re.search(r'商品名：(.+)', text)
+            stock_match = re.search(r'在庫数：(\d+)', text)
+            
+            product_name = product_match.group(1).strip() if product_match else "不明"
+            stock_quantity = int(stock_match.group(1)) if stock_match else 0
+            
+            return {
+                "product_name": product_name,
+                "stock_quantity": stock_quantity
+            }
+          desc: 入力から商品名と在庫数を抽出
+          selected: false
+          title: データ抽出
+          type: code
+          variables:
+            - value_selector:
+                - input_analysis_node
+                - text
+              variable: input_analysis
+        height: 131
+        id: variable_assignment_node
+        position:
+          x: 650
+          y: 300
+        positionAbsolute:
+          x: 650
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - case_id: urgent_order
+              conditions:
+                - comparison_operator: "<="
+                  id: stock_check_urgent
+                  variable_selector:
+                    - variable_assignment_node
+                    - stock_quantity
+                  value: 10
+              id: urgent_order
+              logical_operator: and
+            - case_id: normal_order
+              conditions:
+                - comparison_operator: "<="
+                  id: stock_check_normal
+                  variable_selector:
+                    - variable_assignment_node
+                    - stock_quantity
+                  value: 50
+              id: normal_order
+              logical_operator: and
+          desc: 在庫数に応じて処理を分岐
+          selected: false
+          title: 在庫判定
+          type: if-else
+        height: 176
+        id: stock_check_node
+        position:
+          x: 950
+          y: 300
+        positionAbsolute:
+          x: 950
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: 緊急発注が必要な場合の対応案を生成
+          jinja2_variables: []
+          llm:
+            context:
+              enabled: false
+              variable_selector: []
+            max_tokens: 1024
+            model:
+              completion_params:
+                temperature: 0.7
+              mode: chat
+              name: claude-3-5-sonnet-20241022
+              provider: anthropic
+            prompt_template:
+              - id: e8f47f3d-af67-4846-9fa6-a3bb9b77523f
+                role: system
+                text: あなたは在庫管理の専門家です。緊急発注が必要な状況について、具体的な対応案を提案してください。
+              - id: f0f973c24-41ac-48b9-bc7e-05962ab09011
+                role: user
+                text: "商品「{{#variable_assignment_node.product_name#}}」の在庫が{{#variable_assignment_node.stock_quantity#}}個しかありません。緊急発注が必要です。推奨発注数と理由を説明してください。"
+            tools: []
+            vision:
+              enabled: false
+          memory:
+            role_prefix:
+              assistant: ""
+              user: ""
+            window:
+              enabled: false
+              size: 50
+          selected: false
+          title: 緊急発注提案
+          type: llm
+        height: 97
+        id: urgent_order_llm_node
+        position:
+          x: 1250
+          y: 100
+        positionAbsolute:
+          x: 1250
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: 通常発注を検討すべき場合の対応案を生成
+          jinja2_variables: []
+          llm:
+            context:
+              enabled: false
+              variable_selector: []
+            max_tokens: 1024
+            model:
+              completion_params:
+                temperature: 0.7
+              mode: chat
+              name: claude-3-5-sonnet-20241022
+              provider: anthropic
+            prompt_template:
+              - id: a8f47f3d-af67-4846-9fa6-a3bb9b77523g
+                role: system
+                text: あなたは在庫管理の専門家です。通常発注のタイミングと数量について、適切なアドバイスを提供してください。
+              - id: b0f973c24-41ac-48b9-bc7e-05962ab09012
+                role: user
+                text: "商品「{{#variable_assignment_node.product_name#}}」の在庫が{{#variable_assignment_node.stock_quantity#}}個です。通常発注を検討すべき状況です。適切な発注タイミングと推奨数量を提案してください。"
+            tools: []
+            vision:
+              enabled: false
+          memory:
+            role_prefix:
+              assistant: ""
+              user: ""
+            window:
+              enabled: false
+              size: 50
+          selected: false
+          title: 通常発注提案
+          type: llm
+        height: 97
+        id: normal_order_llm_node
+        position:
+          x: 1250
+          y: 300
+        positionAbsolute:
+          x: 1250
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: 在庫が十分な場合のアドバイスを生成
+          jinja2_variables: []
+          llm:
+            context:
+              enabled: false
+              variable_selector: []
+            max_tokens: 1024
+            model:
+              completion_params:
+                temperature: 0.7
+              mode: chat
+              name: claude-3-5-sonnet-20241022
+              provider: anthropic
+            prompt_template:
+              - id: c8f47f3d-af67-4846-9fa6-a3bb9b77523h
+                role: system
+                text: あなたは在庫管理の専門家です。在庫が十分にある場合の管理アドバイスを提供してください。
+              - id: d0f973c24-41ac-48b9-bc7e-05962ab09013
+                role: user
+                text: "商品「{{#variable_assignment_node.product_name#}}」の在庫が{{#variable_assignment_node.stock_quantity#}}個あります。在庫は十分です。効率的な在庫管理のためのアドバイスをお願いします。"
+            tools: []
+            vision:
+              enabled: false
+          memory:
+            role_prefix:
+              assistant: ""
+              user: ""
+            window:
+              enabled: false
+              size: 50
+          selected: false
+          title: 在庫管理アドバイス
+          type: llm
+        height: 97
+        id: sufficient_stock_llm_node
+        position:
+          x: 1250
+          y: 500
+        positionAbsolute:
+          x: 1250
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#urgent_order_llm_node.text#}}"
+          desc: 緊急発注の提案を表示
+          selected: false
+          title: 緊急発注結果
+          type: answer
+        height: 64
+        id: urgent_answer_node
+        position:
+          x: 1550
+          y: 100
+        positionAbsolute:
+          x: 1550
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#normal_order_llm_node.text#}}"
+          desc: 通常発注の提案を表示
+          selected: false
+          title: 通常発注結果
+          type: answer
+        height: 64
+        id: normal_answer_node
+        position:
+          x: 1550
+          y: 300
+        positionAbsolute:
+          x: 1550
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#sufficient_stock_llm_node.text#}}"
+          desc: 在庫管理アドバイスを表示
+          selected: false
+          title: 在庫十分結果
+          type: answer
+        height: 64
+        id: sufficient_answer_node
+        position:
+          x: 1550
+          y: 500
+        positionAbsolute:
+          x: 1550
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: edge_1
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: input_analysis_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: code
+        id: edge_2
+        selected: false
+        source: input_analysis_node
+        sourceHandle: source
+        target: variable_assignment_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: code
+          targetType: if-else
+        id: edge_3
+        selected: false
+        source: variable_assignment_node
+        sourceHandle: source
+        target: stock_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: edge_urgent
+        selected: false
+        source: stock_check_node
+        sourceHandle: urgent_order
+        target: urgent_order_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: edge_normal
+        selected: false
+        source: stock_check_node
+        sourceHandle: normal_order
+        target: normal_order_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: llm
+        id: edge_sufficient
+        selected: false
+        source: stock_check_node
+        sourceHandle: "false"
+        target: sufficient_stock_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: edge_urgent_answer
+        selected: false
+        source: urgent_order_llm_node
+        sourceHandle: source
+        target: urgent_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: edge_normal_answer
+        selected: false
+        source: normal_order_llm_node
+        sourceHandle: source
+        target: normal_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: answer
+        id: edge_sufficient_answer
+        selected: false
+        source: sufficient_stock_llm_node
+        sourceHandle: source
+        target: sufficient_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

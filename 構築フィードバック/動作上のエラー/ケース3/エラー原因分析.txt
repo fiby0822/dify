@@ -1,0 +1,80 @@
+## ケース3 エラー原因分析
+
+### システム名
+営業データ分析ツール（7456.yml）
+
+### エラーの概要
+Jinja2テンプレートシンタックスエラー："unexpected char '#' at 7"
+Jinja2テンプレートエンジンがDify独自の変数参照記法を認識できず、エラーが発生。
+
+### 具体的なエラー原因
+
+1. **変数参照記法の誤用**
+   Dify独自の`{{#variable#}}`記法がJinja2テンプレート内で使用されている
+
+2. **誤った記法が使用されている箇所**
+
+   a) **transform_node_1**（行197）
+   ```yaml
+   template: "分析対象：{{#sys.query#}}\n\n取得データ：\n{{#batch_get_data#}}"
+   ```
+   誤：`{{#sys.query#}}`、`{{#batch_get_data#}}`
+   正：`{{ sys.query }}`、`{{ batch_get_data }}`
+
+   b) **transform_node_2**（行273）
+   ```yaml
+   ["主要な傾向", {{#analysis_result | trim | tojson#}}],
+   ```
+   誤：`{{#analysis_result | trim | tojson#}}`
+   正：`{{ analysis_result | trim | tojson }}`
+   ※フィルターも含めた誤用
+
+   c) **batch_update_node**（行348）
+   ```yaml
+   value: "{{#transform_node_2.output#}}"
+   ```
+   誤：`{{#transform_node_2.output#}}`
+   正：`{{ transform_node_2.output }}`
+
+   d) **answerノード**（行366）
+   ```yaml
+   answer: "## 分析完了しました！\n\n### 📊 取得データ\n{{#transform_node_1.output#}}\n\n### 📈 分析結果\n{{#llm_analyzer.text#}}\n\n### ✅ スプレッドシート更新\nOUTPUTシートに分析結果を書き込みました。\n\n更新内容：\n{{#transform_node_2.output#}}"
+   ```
+   誤：`{{#transform_node_1.output#}}`、`{{#llm_analyzer.text#}}`、`{{#transform_node_2.output#}}`
+   正：`{{ transform_node_1.output }}`、`{{ llm_analyzer.text }}`、`{{ transform_node_2.output }}`
+
+3. **記法の混在による一貫性の欠如**
+   - 同じYMLファイル内で、Difyの変数参照記法とJinja2テンプレート記法が混在
+   - テンプレートノード内ではJinja2記法を使用すべきだが、Dify記法が使用されている
+
+### 正常動作ファイルとの比較
+
+**正常動作ファイル**：
+- Jinja2テンプレート内では`{{ variable }}`形式を使用
+- Difyの変数参照（ノード間のデータ受け渡し）では`{{#variable#}}`形式を使用
+- 両者を適切に使い分けている
+
+**エラーケース（本ファイル）**：
+- Jinja2テンプレート内でDify記法`{{#variable#}}`を使用
+- コンテキストに応じた記法の使い分けができていない
+
+### 推奨される修正方法
+
+1. **テンプレートノード内の変数参照を修正**
+   - すべての`{{#variable#}}`を`{{ variable }}`に変更
+   - フィルターを使用する場合も正しいJinja2記法を使用
+
+2. **記法の使い分けルールの明確化**
+   - template-transformノード内：Jinja2記法`{{ }}`
+   - ノード間のデータ参照：Dify記法`{{##}}`
+
+3. **テンプレートの検証**
+   - テンプレート内のすべての変数参照がJinja2記法になっていることを確認
+
+4. **注意点**
+   - tool_parametersの値（`'{{#変数名#}}'`）はDifyのツール設定の記法であり、そのまま維持する必要がある
+
+### 関連するコーディングルール違反
+- 変数参照記法の不適切な使用
+- テンプレートノードと通常ノードでの記法の混同
+- コンテキストに応じた適切な記法選択の失敗

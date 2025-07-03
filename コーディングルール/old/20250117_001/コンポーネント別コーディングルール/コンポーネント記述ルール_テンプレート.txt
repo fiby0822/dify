@@ -1,0 +1,210 @@
+コンポーネント記述ルール: テンプレート変換（template-transform）
+
+■ブロック概要
+Jinja2テンプレートエンジンを使用して、変数をテンプレートに埋め込み、文字列を生成・変換するノード。データの整形、JSON生成、動的な文字列作成などに使用される。
+
+■必須パラメータ
+- id: 意味のある名前（例: "format_data", "json_converter"）
+- type: "custom"（外側のtype属性。固定値）
+- data.type: "template-transform"（データ内のtype属性。固定値）
+- position: x, y座標
+- positionAbsolute: positionと同じ値を設定
+- selected: false（固定値）
+- sourcePosition: "right"（推奨）
+- targetPosition: "left"（推奨）
+- height: 数値（通常54）
+- width: 数値（通常244）
+- data:
+  - template: テンプレート文字列（Jinja2形式）
+  - variables: 使用する変数の配列
+  - title: ノードタイトル
+  - type: "template-transform"（固定値）
+
+■オプションパラメータ
+- desc: ノードの説明
+
+■入力
+- variables配列で定義した変数を通じて、他ノードからのデータを受け取る
+- 各変数には以下を指定：
+  - variable: 変数名（テンプレート内で使用）
+  - value_selector: 参照元の配列（例: ['node_id', 'output_var']）
+  - value_type: データ型（string, array[object]など）
+
+■出力
+- output: テンプレート処理後の文字列
+
+■Jinja2フィルター
+よく使用されるフィルター：
+- {{ variable | trim }}: 前後の空白を削除
+- {{ variable | tojson }}: JSON形式に変換
+- {{ variable | upper }}: 大文字に変換
+- {{ variable | lower }}: 小文字に変換
+- {{ variable | replace("old", "new") }}: 文字列置換
+- {{ variable | default("デフォルト値") }}: デフォルト値設定
+
+■使用例
+
+### 基本的な変数埋め込み
+```yaml
+- data:
+    template: "こんにちは、{{ user_name }}さん！"
+    variables:
+      - variable: user_name
+        value_selector: [start_node, name]
+        value_type: string
+    title: "挨拶メッセージ生成"
+    type: template-transform
+```
+
+### JSON生成（Google Sheets更新用）
+```yaml
+- data:
+    template: |
+      [
+        {
+          "range": "OUTPUT!A1:B1",
+          "values": [["text", {{ input_value | trim | tojson }}]]
+        }
+      ]
+    variables:
+      - variable: input_value
+        value_selector: [sys, query]
+        value_type: string
+    title: "JSON形式への変換"
+    type: template-transform
+```
+
+### 複数変数の使用
+```yaml
+- data:
+    template: |
+      ユーザー: {{ user_input }}
+      処理結果: {{ result }}
+      タイムスタンプ: {{ timestamp }}
+    variables:
+      - variable: user_input
+        value_selector: [sys, query]
+        value_type: string
+      - variable: result
+        value_selector: [processing_node, output]
+        value_type: string
+      - variable: timestamp
+        value_selector: [time_node, current_time]
+        value_type: string
+    title: "結果レポート生成"
+    type: template-transform
+```
+
+■Google Sheets連携での使用
+1. **データ取得後の整形**
+   - batch_getの結果をテンプレートで処理
+   - JSONデータの特定要素を抽出
+
+2. **データ更新用JSON作成**
+   ```yaml
+   template: |
+     [
+       {
+         "range": "OUTPUT!A1:B1",
+         "values": [["text", {{ variable | trim | tojson }}]]
+       }
+     ]
+   ```
+
+3. **フィルター関数の活用**
+   - trim: 空白除去
+   - tojson: JSON形式への変換
+   - その他Jinja2フィルターが使用可能
+
+■重要：変数参照記法の使い分け（最優先事項）
+
+### 1. Jinja2テンプレート内での変数参照
+template-transformノードのtemplateフィールド内では、標準的なJinja2記法を使用します：
+
+✅ 正しい記法：
+- 変数出力：{{ 変数名 }}
+- フィルタ付き：{{ 変数名 | trim | tojson }}
+- 条件文：{% if 変数名 %}
+
+❌ 誤った記法：
+- {{#変数名#}}  ← Difyの記法をテンプレート内で使用（エラー）
+- {{#変数名 | trim | tojson#}}  ← エラー
+
+### 2. その他の場所での変数参照
+YAMLの他の場所（例：tool_parametersのvalue）では、Difyの記法を使用：
+- {{#node_id.output#}}
+- {{#sys.query#}}
+
+### 3. 具体例
+```yaml
+# template-transformノード内（Jinja2記法）
+template: |
+  ユーザー入力：{{ sys.query }}
+  データ：{{ batch_get_data }}
+  
+# tool_parametersなど（Dify記法）
+tool_parameters:
+  data:
+    type: mixed
+    value: '{{#transform_node.output#}}'
+```
+
+■注意事項
+1. **テンプレート構文**
+   - 変数参照は{{ }}で囲む（#記号は使用しない）
+   - 制御構造は{% %}を使用（if、for文など）
+   - コメントは{# #}を使用
+
+2. **JSON生成時の注意**
+   - tojsonフィルターでエスケープ処理を行う（jsonではなくtojson）
+   - 手動でのエスケープは避ける
+
+3. **パフォーマンス**
+   - 複雑な処理はcodeノードの使用を検討
+   - 大量データの処理には不向き
+
+4. **制限事項**
+   - 一部の環境でtemplate-transformノードに制限がある場合がある
+   - 複雑な変換はcodeノードを推奨
+   - date関数の使用は環境により制限される場合がある
+
+5. **日付処理に関する注意事項**
+   template-transformノード内でdate関数の使用は環境により制限される場合があります。
+   
+   ❌ 避けるべき記法：
+   ```yaml
+   template: |
+     ["更新日時", "{{ 'now' | date('Y/m/d H:i') }}"]
+   ```
+   
+   ✅ 推奨される代替案：
+   1. codeノードで日付を生成
+   2. 固定値として設定
+   3. LLMノードで日付を含めた出力を生成
+   
+   例：
+   ```yaml
+   # codeノードで日付生成
+   code: |
+     from datetime import datetime
+     current_time = datetime.now().strftime("%Y/%m/%d %H:%M")
+     return {"timestamp": current_time}
+   ```
+
+■ベストプラクティス
+1. **可読性を重視**
+   - 複数行テンプレートは|を使用してインデント
+   - 適切な改行とインデントを使用
+
+2. **エラーハンドリング**
+   - defaultフィルターで未定義変数に対応
+   - 変数の存在確認を事前に実施
+
+3. **再利用性**
+   - 汎用的なテンプレートを作成
+   - 変数名を明確にする
+
+4. **Google Sheets連携**
+   - batch_get → template-transform → 表示
+   - 入力 → template-transform → batch_update
+   - JSON形式の正確性を確保

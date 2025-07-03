@@ -1,1 +1,15 @@
-Run failed: 8 validation errors for ToolNodeData provider_name Field required [type=missing, input_value={'provider_id': 'langgeni...title': 'Tavily Search'}, input_type=dict] For further information visit https://errors.pydantic.dev/2.11/v/missing tool_label Field required [type=missing, input_value={'provider_id': 'langgeni...title': 'Tavily Search'}, input_type=dict] For further information visit https://errors.pydantic.dev/2.11/v/missing tool_parameters.search_depth Input should be a valid dictionary or instance of ToolInput [type=model_type, input_value='advanced', input_type=str] For further information visit https://errors.pydantic.dev/2.11/v/model_type tool_parameters.topic Input should be a valid dictionary or instance of ToolInput [type=model_type, input_value='news', input_type=str] For further information visit https://errors.pydantic.dev/2.11/v/model_type tool_parameters.days Input should be a valid dictionary or instance of ToolInput [type=model_type, input_value=7, input_type=int] For further information visit https://errors.pydantic.dev/2.11/v/model_type tool_parameters.max_results Input should be a valid dictionary or instance of ToolInput [type=model_type, input_value=5, input_type=int] For further information visit https://errors.pydantic.dev/2.11/v/model_type tool_parameters.include_answer Input should be a valid dictionary or instance of ToolInput [type=model_type, input_value=True, input_type=bool] For further information visit https://errors.pydantic.dev/2.11/v/model_type tool_parameters.include_raw_content Input should be a valid dictionary or instance of ToolInput [type=model_type, input_value=False, input_type=bool] For further information visit https://errors.pydantic.dev/2.11/v/model_type
+Run failed: Traceback (most recent call last):
+File "/var/sandbox/sandbox-python/tmp/dd076840_5f74_4cc5_badc_33ccf481baae.py", line 48, in
+File "", line 18, in
+File "", line 5, in main
+File "/usr/local/lib/python3.10/site-packages/jinja2/environment.py", line 1195, in new
+return env.from_string(source, template_class=cls)
+File "/usr/local/lib/python3.10/site-packages/jinja2/environment.py", line 1092, in from_string
+return cls.from_code(self, self.compile(source), gs, None)
+File "/usr/local/lib/python3.10/site-packages/jinja2/environment.py", line 757, in compile
+self.handle_exception(source=source_hint)
+File "/usr/local/lib/python3.10/site-packages/jinja2/environment.py", line 925, in handle_exception
+raise rewrite_traceback_stack(source=source)
+File "", line 1, in template
+jinja2.exceptions.TemplateSyntaxError: unexpected char '#' at 7
+error: exit status 255

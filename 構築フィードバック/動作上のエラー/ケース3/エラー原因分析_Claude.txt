@@ -1,0 +1,38 @@
+エラー原因分析レポート - ケース3
+================================
+
+■ エラー内容
+jinja2.exceptions.TemplateSyntaxError: unexpected char '#' at 7
+
+■ エラー発生箇所
+ファイル: 営業データ分析ツール_7456.yml
+ノード: transform_node_1（取得データ整形）およびtransform_node_2（書き込みデータ整形）
+
+■ 問題のコード
+
+1. transform_node_1（197行目）:
+"分析対象：{{#sys.query#}}\n\n取得データ：\n{{#batch_get_data#}}"
+
+2. transform_node_2（273行目）:
+["主要な傾向", {{#analysis_result | trim | tojson#}}],
+
+■ エラー原因
+両方のtemplate-transformノードで、変数参照の記法が誤っています。
+`{{#変数名#}}`という記法は誤りで、正しくは`{{変数名}}`とすべきです。
+
+■ 正しい記法
+
+1. transform_node_1:
+"分析対象：{{sys.query}}\n\n取得データ：\n{{batch_get_data}}"
+
+2. transform_node_2:
+["主要な傾向", {{analysis_result | trim | tojson}}],
+
+■ 特記事項
+- 変数セレクターでは正しく変数を定義しているにも関わらず、テンプレート内での参照が誤っている
+- 同じファイル内で複数箇所に同じ誤りがある
+
+■ 根本原因
+template-transformノード内でのJinja2テンプレート変数参照記法の誤解。
+`#`記号を含む記法は、Difyの別の文脈（例：他のノードでの変数参照）では使用される可能性があるが、
+Jinja2テンプレート内では標準的な`{{ }}`記法を使用する必要がある。

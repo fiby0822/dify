@@ -1,0 +1,66 @@
+# エラー原因分析（追加） - ケース2: 営業成績管理システム
+
+## 既存分析への追加事項
+
+### 1. 変数記法の混在問題（重要）
+template-transformノード内での変数参照に関する重大な問題：
+- **問題**: `{{ target_month }}` のような標準Jinja2記法を使用
+- **正しい記法**: template-transform内では標準Jinja2記法（`{{ }}`）が正しい
+- **混乱の原因**: 他のノードでは`{{#変数#}}`形式を使用するため、使い分けが必要
+
+### 2. sys.queryの直接参照
+```yaml
+- value_selector:
+  - sys
+  - query
+  value_type: string
+  variable: target_month
+```
+- advanced-chatモードでsys.queryを変数として定義するのは適切
+- ただし、テンプレート内での使用方法に注意が必要
+
+### 3. 配列アクセスの安全性
+```yaml
+{% if row[4] == target_month %}
+```
+- row配列の長さが5未満の場合、インデックスエラーが発生
+- 事前の長さチェックが必須
+
+### 4. データ型の不一致
+- `row[4]`（Google Sheetsから取得）と`target_month`（ユーザー入力）の型が一致しない可能性
+- 文字列比較を行う前に、明示的な型変換が必要
+
+## 推奨される修正方法
+
+### 1. template-transform内での正しい記法
+```yaml
+template: |
+  分析対象月：{{ target_month }}  # これは正しい
+  
+  {% if sales_data %}
+    {% for item in sales_data %}
+      {% if item.get('values') %}
+        {% for row in item.values %}
+          {% if row|length > 4 and row[4]|string == target_month|string %}
+            # 処理
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+```
+
+### 2. エラーハンドリングの強化
+- `default`フィルタの活用
+- 配列長チェック
+- 型変換の明示化
+
+## コーディングルールへの影響
+1. **変数参照記法の明確化**
+   - template-transform内: `{{ variable }}`
+   - その他のノード: `{{#node.field#}}`
+   
+2. **Google Sheetsデータ処理のベストプラクティス**
+   - 配列要素へのアクセス前の長さチェック
+   - 型変換の明示化
+   - エラーハンドリングの実装必須
