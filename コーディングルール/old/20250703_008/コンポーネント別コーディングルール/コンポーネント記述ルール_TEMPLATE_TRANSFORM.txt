@@ -8,9 +8,6 @@
 1. template内では必ず{{ 変数 }}記法を使用（{{#変数#}}は絶対禁止）
 2. 変数はvariablesセクションで事前定義が必須
 3. 外側のtype: "custom"、内側のdata.type: "template-transform"
-4. **Jinja2フィルターのパイプ記号（|）とフィルター名の間にスペースを入れない**
-   - ❌ NG: `{{ variable | filter }}`
-   - ✅ OK: `{{ variable|filter }}`
 
 ■必須パラメータ
 - id: ノードID（意味のある名前。例: "format_data", "json_converter"）
@@ -42,15 +39,13 @@ variables:
 - 出力: output（テンプレート処理後の文字列）
 
 ■Jinja2フィルター
-よく使用されるフィルター（重要：スペースなし）：
-- {{ variable|trim }}: 前後の空白を削除
-- {{ variable|tojson }}: JSON形式に変換（jsonではなくtojson）
-- {{ variable|upper }}: 大文字に変換
-- {{ variable|lower }}: 小文字に変換
-- {{ variable|replace("old", "new") }}: 文字列置換
-- {{ variable|default("デフォルト値") }}: デフォルト値設定
-- {{ variable|join(',') }}: 配列を文字列に結合
-- {{ variable|length }}: 長さを取得
+よく使用されるフィルター：
+- {{ variable | trim }}: 前後の空白を削除
+- {{ variable | tojson }}: JSON形式に変換（jsonではなくtojson）
+- {{ variable | upper }}: 大文字に変換
+- {{ variable | lower }}: 小文字に変換
+- {{ variable | replace("old", "new") }}: 文字列置換
+- {{ variable | default("デフォルト値") }}: デフォルト値設定
 
 ■使用例
 
@@ -76,7 +71,7 @@ variables:
         "range": "OUTPUT!A1:B2",
         "values": [
           ["タイトル", "内容"],
-          ["分析結果", {{ analysis_result|trim|tojson }}]
+          ["分析結果", {{ analysis_result | trim | tojson }}]
         ]
       }]
     variables:
@@ -118,14 +113,13 @@ template-transformノードのtemplateフィールド内では、標準的なJin
 
 ✅ 正しい記法：
 - 変数出力：{{ 変数名 }}
-- フィルタ付き：{{ 変数名|trim|tojson }}
+- フィルタ付き：{{ 変数名 | trim | tojson }}
 - 条件文：{% if 変数名 %}
 - コメント：{# コメント内容 #}
 
 ❌ 誤った記法：
 - {{#変数名#}}  ← Difyの記法をテンプレート内で使用（エラー）
-- {{#変数名|trim|tojson#}}  ← エラー
-- {{ 変数名 | trim | tojson }}  ← スペースが原因でエラー
+- {{#変数名 | trim | tojson#}}  ← エラー
 
 ### 2. その他の場所での変数参照
 YAMLの他の場所（例：tool_parametersのvalue）では、Difyの記法を使用：
@@ -150,65 +144,8 @@ tool_parameters:
 1. {{#変数#}}記法の使用 → {{ 変数 }}に修正
 2. 変数未定義エラー → variablesセクションで定義
 3. インデックスエラー → 配列要素は[0]等で明示的に指定
-4. フィルターエラー → |tojson（スペースなし、jsonではない）を使用
+4. フィルターエラー → | tojson（jsonではない）を使用
 5. date関数の使用 → codeノードで日付生成を推奨
-6. **フィルターのスペース** → {{ variable | filter }}を{{ variable|filter }}に修正
-7. **変数名の不一致** → variablesで定義した名前とtemplate内の名前を完全一致させる
-
-■変数マッピングの詳細ルール
-1. **variablesで定義した変数名は、template内でも必ず同じ名前で参照する**
-2. **variablesのvalue_selectorまたはvariableで指定した内容は、必ずtemplate内の変数名と一致させる**
-
-例：
-```yaml
-variables:
-  - value_selector:
-      - llm_node
-      - text
-    variable: analysis_result  # この名前がtemplate内での参照名
-
-template: |
-  {{ analysis_result }}  # variablesで定義した名前を使用
-```
-
-よくある間違い：
-```yaml
-# ❌ 間違い
-variables:
-  - variable: "{{#llm_node.text#}}"  # ここで{{#}}を使うのは間違い
-    
-# ❌ 間違い
-variables:
-  - value_selector: [llm_node, text]
-    variable: result
-template: |
-  {{ analysis }}  # 変数名が一致していない
-```
-
-■エラーハンドリングパターン
-
-### Google Sheetsデータ参照時
-```yaml
-template: |
-  {% if sheet_data and sheet_data[0] and sheet_data[0].values %}
-    {% for row in sheet_data[0].values %}
-      {{ row|join(',') }}
-    {% endfor %}
-  {% else %}
-    データが見つかりません
-  {% endif %}
-```
-
-### LLM出力の参照時
-```yaml
-template: |
-  {% set result = analysis_result|default('') %}
-  {% if result %}
-    {{ result|trim }}
-  {% else %}
-    分析結果が取得できませんでした
-  {% endif %}
-```
 
 ■制限事項と注意点
 
@@ -262,7 +199,7 @@ code: |
      [
        {
          "range": "OUTPUT!A1:B1",
-         "values": [["text", {{ variable|trim|tojson }}]]
+         "values": [["text", {{ variable | trim | tojson }}]]
        }
      ]
    ```

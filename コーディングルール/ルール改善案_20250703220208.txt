@@ -1,0 +1,152 @@
+# Dify YMLコーディングルール改善案
+作成日: 2025年1月3日
+作成者: Claude
+
+## 1. エラー分析結果のまとめ
+
+### 1.1 インポート成功_クラッシュの原因
+- 変数参照の記法誤り（`{{...}}` vs `{{#...#}}`）
+- IF_ELSEノードのcase_idが空文字列
+- エッジのsourceHandleが文字列型（"true"/"false"）
+
+### 1.2 動作エラーの共通原因
+- Google Sheets APIレスポンスへのアクセス方法誤り（`.values` vs `['values']`）
+- Jinja2フィルターのスペース問題（`| join` vs `|join`）
+- エラーハンドリングの不足
+
+## 2. 現行ルールの問題点
+
+### 2.1 変数参照記法の説明不足
+現行ルールでは、template-transformノード内での変数参照について説明はあるものの、以下の点が不明確：
+- Google Sheets APIレスポンスの具体的な参照方法
+- ドット記法とブラケット記法の使い分け
+- Jinja2フィルターのスペースに関する注意
+
+### 2.2 エラーハンドリングの具体例不足
+- Google Sheetsデータが空の場合の対処法
+- JSONパース失敗時の対処法
+- 配列アクセス時の境界チェック方法
+
+### 2.3 IF_ELSEノードの設定詳細不足
+- case_idの設定が必須であることの強調不足
+- エッジのsourceHandleの型に関する説明不足
+
+## 3. ルール改善提案
+
+### 3.1 変数参照記法の明確化
+
+#### 改善案1: Google Sheets API参照の具体例追加
+```yaml
+# 現行ルール（不明確）
+「Google Sheetsデータを参照する際は適切な形式で」
+
+# 改善案（具体的）
+「Google Sheets batch_getの出力を参照する際の注意事項：
+1. 必ずブラケット記法を使用: sheet_data[0]['values']
+2. ドット記法は使用禁止: sheet_data[0].values（エラーになる）
+3. 存在チェックを必ず実施:
+   {% if sheet_data and sheet_data[0] and 'values' in sheet_data[0] %}」
+```
+
+#### 改善案2: Jinja2フィルターのスペースルール追加
+```yaml
+# 新規追加ルール
+「Jinja2フィルター使用時の厳格なルール：
+1. パイプ記号とフィルター名の間にスペースを入れない
+   ✅ 正: {{ variable|join(',') }}
+   ❌ 誤: {{ variable | join(',') }}
+2. 複数フィルターのチェーン時も同様:
+   ✅ 正: {{ variable|trim|upper|default('N/A') }}
+   ❌ 誤: {{ variable | trim | upper | default('N/A') }}」
+```
+
+### 3.2 エラーハンドリングのベストプラクティス追加
+
+#### 改善案3: template-transformノードのエラーハンドリングテンプレート
+```jinja2
+# 推奨テンプレート
+{% if sheet_data and sheet_data[0] and 'values' in sheet_data[0] %}
+  {% if sheet_data[0]['values']|length > 0 %}
+    {% for row in sheet_data[0]['values'] %}
+      {{ row|join(',') }}
+    {% endfor %}
+  {% else %}
+    データが空です
+  {% endif %}
+{% else %}
+  データ取得エラー: 期待される形式でデータが取得できませんでした
+{% endif %}
+```
+
+#### 改善案4: JSON処理のエラーハンドリング
+```jinja2
+# LLM出力のJSON処理
+{% set parsed_result = None %}
+{% if analysis_result %}
+  {% try %}
+    {% set parsed_result = analysis_result|from_json %}
+  {% except %}
+    {% set parsed_result = {"error": "JSON解析エラー"} %}
+  {% endtry %}
+{% endif %}
+```
+
+### 3.3 IF_ELSEノード設定の明確化
+
+#### 改善案5: IF_ELSEノード必須項目チェックリスト
+```yaml
+# IF_ELSEノード設定時の必須チェック項目
+□ 各caseにidとcase_idが設定されている（同じ値）
+□ case_idが空文字列になっていない
+□ logical_operatorが設定されている（条件が1つでも必須）
+□ エッジのsourceHandleがcase_id値と完全一致
+□ デフォルトケースのsourceHandleが文字列の"false"
+```
+
+### 3.4 品質チェックリストの強化
+
+#### 改善案6: 自動チェック可能な項目の追加
+```python
+# 検証ツールに追加すべきチェック項目
+1. template-transform内での{{#...#}}使用検出
+2. Jinja2フィルターのスペース検出（正規表現: r'\|\s+\w+' ）
+3. Google Sheets参照での.values使用検出
+4. IF_ELSEのcase_id空文字列検出
+5. エッジのsourceHandle型チェック（真偽値 vs 文字列）
+```
+
+### 3.5 コーディングルールファイルの再構成
+
+#### 改善案7: よくあるエラーと対策セクションの追加
+```markdown
+## よくあるエラーと対策
+
+### エラー1: TypeError: 'builtin_function_or_method' object is not iterable
+原因: Google Sheets APIレスポンスへのドット記法アクセス
+対策: sheet_data[0]['values'] を使用
+
+### エラー2: Jinja2 TemplateRuntimeError
+原因: フィルターのスペース問題
+対策: {{ variable|filter }} 形式を使用
+
+### エラー3: YMLインポート時のクラッシュ
+原因: IF_ELSEのcase_id未設定
+対策: 各caseにidとcase_idを同じ値で設定
+```
+
+## 4. 実装優先順位
+
+1. **最優先**: Jinja2フィルターのスペースルール追加（全ケースで発生）
+2. **高優先**: Google Sheets APIアクセス方法の明確化
+3. **中優先**: IF_ELSEノード設定の詳細化
+4. **低優先**: エラーハンドリングテンプレートの追加
+
+## 5. 検証ツールへの反映提案
+
+validate_dify.pyに以下のチェック機能を追加：
+1. template-transform内の変数参照形式チェック
+2. Jinja2フィルターのスペースチェック
+3. Google Sheets API参照パターンチェック
+4. IF_ELSEノードの必須フィールドチェック
+
+これらの改善により、今回発生したエラーの大部分を事前に防ぐことができると考えられます。

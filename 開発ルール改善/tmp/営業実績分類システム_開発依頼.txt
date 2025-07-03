@@ -1,0 +1,100 @@
+# Dify YMLファイル作成依頼プロンプト
+
+## 要件
+営業実績分類システムを作成してください。
+
+### 機能要件
+1. Google Sheetsから営業データ（営業担当者名と売上金額）を読み込む
+2. 売上金額に基づいて営業実績を3段階に分類：
+   - 高売上：100万円以上
+   - 中売上：50万円以上100万円未満
+   - 低売上：50万円未満
+3. 分類結果をGoogle Sheetsの別シートに書き込む
+4. ユーザーフレンドリーな対話型インターフェース
+
+### 技術要件
+- version: 0.3.0を必ず使用
+- advanced-chatモードで実装
+- Codeノードは使用禁止
+- IF_ELSEコンポーネントで売上分類を実装
+- Google Sheets操作（batch_getとbatch_update）を使用
+- template-transformノードでデータ整形を行う
+
+### Google Sheetsの想定構造
+入力シート（INPUT）：
+- A列：営業担当者名
+- B列：売上金額（数値）
+
+出力シート（OUTPUT）：
+- A列：営業担当者名
+- B列：売上金額
+- C列：分類結果（高売上/中売上/低売上）
+- D列：更新日時
+
+## アウトプットフォルダパス
+/Users/tatsuya/Documents/01_fiby/09_ゼット/Dev/
+
+## 参考資料フォルダパス（あれば）
+特になし
+
+## コーディングルール
+Dify YMLファイルの作成にあたっては、以下のコーディングルールに従ってください：
+
+### 1. 全体コーディングルール
+/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/全体コーディングルール/ 
+の全てのルールを参照してください。
+
+### 2. コンポーネント別コーディングルール
+各コンポーネントを使用する際は、/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/コンポーネント別コーディングルール
+フォルダ内の使用するコンポーネントについてのtxtファイルを必ず参照してください。
+特に以下のファイルを重点的に確認：
+- コンポーネント記述ルール_IF_ELSE.txt
+- コンポーネント記述ルール_GoogleShpredSheet操作.txt
+
+### 3. 品質チェック
+YMLファイル作成後は
+/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/品質チェック/品質チェックリスト.md
+/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/品質チェック/クラッシュ事項チェックリスト.md
+を参照し、必ずセルフレビューを実施してください。チェックに引っかかった場合は、ymlファイルを改修すること。
+
+### template-transformノードに関する重要な注意事項
+
+template-transformノードを使用する場合、以下の記法ルールを必ず守ってください：
+
+1. **変数参照は{{ 変数名 }}形式のみ使用**
+   - ❌ 間違い: {{#変数名#}}
+   - ✅ 正解: {{ 変数名 }}
+
+2. **フィルター使用時も同様**
+   - ❌ 間違い: {{#変数 | trim | tojson#}}
+   - ✅ 正解: {{ 変数 | trim | tojson }}
+
+3. **Google Sheetsデータの参照**
+   - batch_get出力は配列形式
+   - 必ず[0]でアクセス: sheet_data[0].values
+
+これらのルールを守らないと、実行時にクラッシュします。
+
+### 追加の実装上の注意事項
+
+1. **IF_ELSEノード**
+   - 各ケースに必ずlogical_operator: "and"または"or"を設定
+   - case_idとidを同じ値に設定
+   - 比較演算子はASCII文字（">=", "<=", "!="）のみ使用
+   - 売上金額の比較は文字列として扱い、containsで判定することを検討
+
+2. **Google Sheets操作**
+   - dependenciesセクションに許可されたプラグインを定義
+   - omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+   - provider_typeは"builtin"を使用（"marketplace"ではない）
+   - tool_configurationsセクションは必須
+   - rangesパラメータは引用符で囲む：'["INPUT!A1:B100"]'
+
+3. **データフロー**
+   - Google Sheets読み込み → template-transformでCSV形式に変換 → LLMで処理
+   - LLM出力 → template-transformでJSON配列に整形 → Google Sheets書き込み
+
+4. **エラー防止**
+   - YAMLファイル内にコメント（#）を一切含めない
+   - 各エッジにisInLoop: false、selected: false、zIndex: 0を設定
+   - app.use_icon_as_answer_icon: falseを必ず設定

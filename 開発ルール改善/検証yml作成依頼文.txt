@@ -1,4 +1,6 @@
 /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/コンポーネント別コーディングルール/コンポーネント記述ルール_IF_ELSE.txt
+or
+/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/コンポーネント別コーディングルール/コンポーネント記述ルール_GoogleShpredSheet操作.txt
 のルール通りに作成したymlが動作するのかのチェックをお願いしたいです。
 
 まずは、依頼プロンプトを作成して下さい

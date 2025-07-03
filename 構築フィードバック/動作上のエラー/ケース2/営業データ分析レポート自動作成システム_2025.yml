@@ -1,0 +1,364 @@
+app:
+  description: "Google Sheetsに保存された営業データを読み取り、自動的に分析を行い、分析結果をレポート形式でGoogle Sheetsに書き戻すワークフロー"
+  icon: "📊"
+  icon_background: "#E4F2FE"
+  mode: advanced-chat
+  name: "営業データ分析レポート自動作成システム"
+  use_icon_as_answer_icon: false
+
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+
+kind: app
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: tool
+        id: start-sheet-read-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: sheet_read_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: tool
+          targetType: template-transform
+        id: sheet-read-transform-edge
+        selected: false
+        source: sheet_read_node
+        sourceHandle: source
+        target: data_transform_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: llm
+        id: transform-llm-edge
+        selected: false
+        source: data_transform_node
+        sourceHandle: source
+        target: analysis_llm_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: template-transform
+        id: llm-format-edge
+        selected: false
+        source: analysis_llm_node
+        sourceHandle: source
+        target: format_result_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: tool
+        id: format-sheet-write-edge
+        selected: false
+        source: format_result_node
+        sourceHandle: source
+        target: sheet_write_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: tool
+          targetType: answer
+        id: sheet-write-answer-edge
+        selected: false
+        source: sheet_write_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "ワークフロー開始"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: tool
+          provider_id: omluc/google_sheets/google_sheets
+          provider_name: omluc/google_sheets/google_sheets
+          provider_type: builtin
+          tool_label: Batch Get
+          tool_name: batch_get
+          tool_description: Retrieve data from multiple ranges in a Google Sheet
+          is_team_authorization: true
+          output_schema: null
+          tool_configurations:
+            date_time_render_option: FORMATTED_STRING
+            major_dimension: null
+            value_render_option: null
+          tool_parameters:
+            ranges:
+              type: mixed
+              value: '["INPUT!A1:D10"]'
+            spreadsheet_id:
+              type: mixed
+              value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+          selected: false
+          title: "営業データ取得"
+          desc: "Google Sheetsから売上データを読み取る"
+        height: 86
+        id: sheet_read_node
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: template-transform
+          template: |
+            取得した営業データ（CSV形式）：
+            {% for row in sheet_data[0].values %}
+            {{ row | join(',') }}
+            {% endfor %}
+          variables:
+            - value_selector:
+                - sheet_read_node
+                - json
+              value_type: array[object]
+              variable: sheet_data
+          selected: false
+          title: "データ整形"
+          desc: "シートデータをLLM用に整形"
+        height: 54
+        id: data_transform_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+          prompt_template:
+            - id: system-prompt-1
+              role: system
+              text: |
+                あなたは優秀な営業データアナリストです。
+                提供された営業データを分析し、以下の観点で詳細なレポートを作成してください：
+                1. 売上トレンド分析
+                2. 顧客別売上ランキング（上位3社）
+                3. 商品カテゴリ別パフォーマンス
+                4. 改善提案（3つ以上）
+                
+                レポートは構造化された形式で、数値を含めて具体的に記載してください。
+            - id: user-prompt-1
+              role: user
+              text: |
+                以下の営業データを分析してレポートを作成してください：
+                
+                {{#data_transform_node.output#}}
+                
+                レポートは以下の形式で作成してください：
+                ## 営業データ分析レポート
+                
+                ### 1. 売上トレンド分析
+                [分析内容]
+                
+                ### 2. 顧客別売上ランキング
+                [ランキング内容]
+                
+                ### 3. 商品カテゴリ別パフォーマンス
+                [分析内容]
+                
+                ### 4. 改善提案
+                [提案内容]
+          completion_params:
+            temperature: 0.3
+            max_tokens: 2000
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "営業データを分析してレポートを生成"
+          selected: false
+          title: "営業データ分析"
+          type: llm
+        height: 98
+        id: analysis_llm_node
+        position:
+          x: 950
+          y: 200
+        positionAbsolute:
+          x: 950
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: template-transform
+          template: |
+            [{
+              "range": "OUTPUT!A1:B5",
+              "values": [
+                ["営業データ分析レポート", "2025年1月"],
+                ["", ""],
+                ["分析結果", "以下に詳細を記載"],
+                ["", {{ analysis_result | trim | tojson }}]
+              ]
+            }]
+          variables:
+            - value_selector:
+                - analysis_llm_node
+                - text
+              value_type: string
+              variable: analysis_result
+          selected: false
+          title: "結果整形"
+          desc: "分析結果をGoogle Sheets形式に整形"
+        height: 54
+        id: format_result_node
+        position:
+          x: 1250
+          y: 200
+        positionAbsolute:
+          x: 1250
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: tool
+          provider_id: omluc/google_sheets/google_sheets
+          provider_name: omluc/google_sheets/google_sheets
+          provider_type: builtin
+          tool_label: Batch Update
+          tool_name: batch_update
+          tool_description: Updates multiple ranges in a Google Sheet with specified values
+          is_team_authorization: true
+          output_schema: null
+          tool_configurations:
+            include_values_in_response: null
+            response_date_time_render_option: null
+            response_value_render_option: null
+            value_input_option: USER_ENTERED
+          tool_parameters:
+            data:
+              type: mixed
+              value: '{{#format_result_node.output#}}'
+            spreadsheet_id:
+              type: mixed
+              value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+          selected: false
+          title: "レポート書き込み"
+          desc: "分析結果をGoogle Sheetsに書き込む"
+        height: 86
+        id: sheet_write_node
+        position:
+          x: 1550
+          y: 200
+        positionAbsolute:
+          x: 1550
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            営業データ分析が完了しました！
+            
+            Google SheetsのOUTPUTシートに分析レポートを書き込みました。
+            以下の内容が含まれています：
+            - 売上トレンド分析
+            - 顧客別売上ランキング
+            - 商品カテゴリ別パフォーマンス
+            - 改善提案
+            
+            詳細はGoogle Sheetsをご確認ください。
+          desc: "完了メッセージ"
+          selected: false
+          title: "完了"
+          type: answer
+          variables: []
+        height: 107
+        id: answer_node
+        position:
+          x: 1850
+          y: 200
+        positionAbsolute:
+          x: 1850
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

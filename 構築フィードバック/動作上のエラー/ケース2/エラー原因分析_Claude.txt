@@ -1,0 +1,78 @@
+# ケース2: 営業成績管理システム_5088.yml エラー原因分析
+
+## エラー概要
+- **エラータイプ**: TypeError: 'builtin_function_or_method' object is not iterable
+- **発生箇所**: Template-transformノード（data_transform_node）の169-171行目
+
+## 主要なエラー原因
+
+### 1. data_transform_nodeでの問題
+```jinja2
+{% for row in sheet_data[0].values %}
+{{ row | join(',') }}
+{% endfor %}
+```
+
+**問題点**:
+- `sheet_data[0].values`の`values`が関数として扱われている
+- Google Sheets APIからのレスポンスデータ構造の不一致
+- ドット記法でのアクセスが不適切
+- Jinja2フィルターのスペース問題（`| join` → `|join`）
+
+### 2. 変数参照の問題
+- ワークフロー全体で`{{...}}`記法を使用（`#`記号なし）
+- 例：`{{start_node.user_input}}`, `{{sales_data_analyzer.text}}`
+- 正しい記法は`{{#...#}}`
+
+### 3. IF_ELSEノードの問題
+```yaml
+cases:
+  - case_id: ''  # case_idが空文字列
+```
+- case_idが空文字列に設定されている
+- idプロパティも未設定
+
+### 4. エッジの問題
+- IF_ELSEノードからの分岐でsourceHandleが文字列型
+- `"true"`、`"false"` → 正しくは`true`、`false`（真偽値）
+
+## 根本原因
+
+1. **Google Sheets APIレスポンス構造の理解不足**
+   - APIレスポンスのデータ構造が想定と異なる
+   - プロパティとメソッドの混同
+
+2. **変数参照記法の一貫性の欠如**
+   - Dify特有の`{{#...#}}`記法が使用されていない
+   - 標準のJinja2記法との混同
+
+3. **コンポーネント設定の不備**
+   - IF_ELSEノードの必須属性が欠落
+   - エッジのデータ型が不正確
+
+## 修正提案
+
+1. **データアクセスの修正**:
+```jinja2
+{% if sheet_data and sheet_data[0] and 'values' in sheet_data[0] %}
+  {% for row in sheet_data[0]['values'] %}
+    {{ row|join(',') }}
+  {% endfor %}
+{% else %}
+  エラー: データが取得できませんでした
+{% endif %}
+```
+
+2. **変数参照の統一**:
+   - 全ての`{{...}}`を`{{#...#}}`に置換
+
+3. **IF_ELSEノードの修正**:
+```yaml
+cases:
+  - id: 'excellent_case'
+    case_id: 'excellent_case'
+    conditions: ...
+```
+
+4. **エッジの修正**:
+   - sourceHandle: `true` (真偽値として)

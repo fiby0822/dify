@@ -1,0 +1,841 @@
+app:
+  name: 在庫管理判定システム
+  description: Google Sheetsから在庫データを読み取り、在庫状況を判定して発注推奨を行うシステム
+  icon: 📦
+  icon_background: "#E6F3FF"
+  mode: advanced-chat
+  use_icon_as_answer_icon: false
+
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+
+kind: app
+
+version: "0.3.0"
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      image:
+        enabled: false
+        number_limits: 1
+        transfer_methods:
+        - local_file
+        - remote_url
+    opening_statement: "在庫管理判定システムへようこそ。分析を開始するには「在庫チェック」と入力してください。"
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ""
+      voice: ""
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: start
+        targetType: template-transform
+      id: start-check_trigger-edge
+      selected: false
+      source: start_node
+      sourceHandle: source
+      target: check_trigger_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: template-transform
+        targetType: if-else
+      id: check_trigger-condition_check-edge
+      selected: false
+      source: check_trigger_node
+      sourceHandle: source
+      target: condition_check_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: tool
+      id: condition-sheets_read-edge
+      selected: false
+      source: condition_check_node
+      sourceHandle: "true"
+      target: sheets_read_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: answer
+      id: condition-invalid_input-edge
+      selected: false
+      source: condition_check_node
+      sourceHandle: "false"
+      target: invalid_input_answer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: template-transform
+      id: sheets_read-data_transform-edge
+      selected: false
+      source: sheets_read_node
+      sourceHandle: source
+      target: data_transform_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: template-transform
+        targetType: if-else
+      id: data_transform-stock_check-edge
+      selected: false
+      source: data_transform_node
+      sourceHandle: source
+      target: stock_check_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: template-transform
+      id: stock_check-urgent_order-edge
+      selected: false
+      source: stock_check_node
+      sourceHandle: urgent_order_case
+      target: urgent_order_transform_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: template-transform
+      id: stock_check-normal_order-edge
+      selected: false
+      source: stock_check_node
+      sourceHandle: normal_order_case
+      target: normal_order_transform_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: template-transform
+      id: stock_check-sufficient_stock-edge
+      selected: false
+      source: stock_check_node
+      sourceHandle: "false"
+      target: sufficient_stock_transform_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: template-transform
+        targetType: tool
+      id: urgent_transform-sheets_write-edge
+      selected: false
+      source: urgent_order_transform_node
+      sourceHandle: source
+      target: sheets_write_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: template-transform
+        targetType: tool
+      id: normal_transform-sheets_write2-edge
+      selected: false
+      source: normal_order_transform_node
+      sourceHandle: source
+      target: sheets_write_node2
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: template-transform
+        targetType: tool
+      id: sufficient_transform-sheets_write3-edge
+      selected: false
+      source: sufficient_stock_transform_node
+      sourceHandle: source
+      target: sheets_write_node3
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: answer
+      id: sheets_write-final_answer-edge
+      selected: false
+      source: sheets_write_node
+      sourceHandle: source
+      target: final_answer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: answer
+      id: sheets_write2-final_answer2-edge
+      selected: false
+      source: sheets_write_node2
+      sourceHandle: source
+      target: final_answer_node2
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: answer
+      id: sheets_write3-final_answer3-edge
+      selected: false
+      source: sheets_write_node3
+      sourceHandle: source
+      target: final_answer_node3
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: "開始ノード"
+        selected: false
+        title: "開始"
+        type: start
+        variables: []
+      height: 98
+      id: start_node
+      position:
+        x: 50
+        y: 200
+      positionAbsolute:
+        x: 50
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: "ユーザー入力をチェック"
+        selected: false
+        template: "{{ sys.query | lower | trim }}"
+        title: "入力チェック変換"
+        type: template-transform
+        variables: []
+      height: 82
+      id: check_trigger_node
+      position:
+        x: 350
+        y: 200
+      positionAbsolute:
+        x: 350
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        cases:
+        - case_id: "true"
+          conditions:
+          - comparison_operator: contains
+            id: trigger_check_condition
+            variable_selector:
+            - check_trigger_node
+            - output
+            value: "在庫チェック"
+          id: "true"
+          logical_operator: and
+        desc: "在庫チェックコマンドの判定"
+        selected: false
+        title: "コマンド判定"
+        type: if-else
+      height: 154
+      id: condition_check_node
+      position:
+        x: 650
+        y: 200
+      positionAbsolute:
+        x: 650
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: "無効な入力の応答"
+        response_mode: end
+        selected: false
+        text: "在庫管理判定システムです。\n在庫チェックを開始するには「在庫チェック」と入力してください。"
+        title: "無効入力応答"
+        type: answer
+      height: 106
+      id: invalid_input_answer_node
+      position:
+        x: 950
+        y: 400
+      positionAbsolute:
+        x: 950
+        y: 400
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: "Google Sheetsから在庫データを読み取る"
+        is_team_authorization: true
+        output_schema: null
+        paramSchemas:
+        - human_description:
+            en_US: The ID of the Google Sheet (found in the URL)
+            ja_JP: The ID of the Google Sheet (found in the URL)
+          label:
+            en_US: Spreadsheet ID
+            ja_JP: Spreadsheet ID
+          llm_description: The ID of the Google Sheet, which can be found in the sheet's URL
+          name: spreadsheet_id
+          required: true
+          type: string
+        - human_description:
+            en_US: The ranges to retrieve data from
+            ja_JP: The ranges to retrieve data from
+          label:
+            en_US: Ranges
+            ja_JP: Ranges
+          llm_description: The ranges to retrieve data from
+          name: ranges
+          required: true
+          type: mixed
+        params:
+          ranges: ''
+          spreadsheet_id: ''
+        provider_id: omluc/google_sheets/google_sheets
+        provider_name: omluc/google_sheets/google_sheets
+        provider_type: builtin
+        selected: false
+        title: "在庫データ読み取り"
+        tool_configurations:
+          date_time_render_option: FORMATTED_STRING
+          major_dimension: null
+          value_render_option: null
+        tool_description: Retrieve data from multiple ranges in a Google Sheet
+        tool_label: Batch Get
+        tool_name: batch_get
+        tool_parameters:
+          ranges:
+            type: mixed
+            value: '["在庫管理!A1:C10"]'
+          spreadsheet_id:
+            type: mixed
+            value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+        type: tool
+      height: 346
+      id: sheets_read_node
+      position:
+        x: 950
+        y: 50
+      positionAbsolute:
+        x: 950
+        y: 50
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: "在庫データを解析用に変換"
+        selected: false
+        template: |
+          {% set data = sheet_data[0].values %}
+          {% if data and data|length > 1 %}
+            {% set header = data[0] %}
+            {% set first_row = data[1] %}
+            {% set current = first_row[1] | default(0) | int %}
+            {% set safety = first_row[2] | default(0) | int %}
+            {% set safety_50 = (safety * 0.5) | int %}
+            {% set order_flag = '' %}
+            {% if current <= safety_50 %}
+              {% set order_flag = '緊急発注フラグ' %}
+            {% elif current <= safety %}
+              {% set order_flag = '通常発注フラグ' %}
+            {% else %}
+              {% set order_flag = '在庫十分フラグ' %}
+            {% endif %}
+            {
+              "product_name": "{{ first_row[0] | default('') }}",
+              "current_stock": {{ current }},
+              "safety_stock": {{ safety }},
+              "safety_50_percent": {{ safety_50 }},
+              "order_flag": "{{ order_flag }}"
+            }
+          {% else %}
+            {
+              "product_name": "データなし",
+              "current_stock": 0,
+              "safety_stock": 0,
+              "safety_50_percent": 0,
+              "order_flag": "データなし"
+            }
+          {% endif %}
+        title: "データ変換"
+        type: template-transform
+        variables:
+        - value_selector:
+          - sheets_read_node
+          - json
+          variable: sheet_data
+      height: 82
+      id: data_transform_node
+      position:
+        x: 1250
+        y: 200
+      positionAbsolute:
+        x: 1250
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        cases:
+        - case_id: urgent_order_case
+          conditions:
+          - comparison_operator: contains
+            id: urgent_check_condition
+            variable_selector:
+            - data_transform_node
+            - output
+            value: "緊急発注"
+          id: urgent_order_case
+          logical_operator: and
+        - case_id: normal_order_case
+          conditions:
+          - comparison_operator: contains
+            id: normal_check_condition
+            variable_selector:
+            - data_transform_node
+            - output
+            value: "通常発注"
+          id: normal_order_case
+          logical_operator: and
+        desc: "在庫状況による条件分岐"
+        selected: false
+        title: "在庫状況判定"
+        type: if-else
+      height: 202
+      id: stock_check_node
+      position:
+        x: 1550
+        y: 200
+      positionAbsolute:
+        x: 1550
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: "緊急発注用データ作成"
+        selected: false
+        template: |
+          {% set product_data = transform_data | from_json %}
+          [{
+            "range": "結果!A2:D2",
+            "values": [
+              ["{{ product_data.product_name }}", "{{ product_data.current_stock }}", "緊急発注", "在庫が安全在庫の50%以下です。至急発注してください。"]
+            ]
+          }]
+        title: "緊急発注データ作成"
+        type: template-transform
+        variables:
+        - value_selector:
+          - data_transform_node
+          - output
+          variable: transform_data
+      height: 82
+      id: urgent_order_transform_node
+      position:
+        x: 1850
+        y: 50
+      positionAbsolute:
+        x: 1850
+        y: 50
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: "通常発注用データ作成"
+        selected: false
+        template: |
+          {% set product_data = transform_data | from_json %}
+          [{
+            "range": "結果!A2:D2",
+            "values": [
+              ["{{ product_data.product_name }}", "{{ product_data.current_stock }}", "通常発注", "在庫が安全在庫以下です。発注を検討してください。"]
+            ]
+          }]
+        title: "通常発注データ作成"
+        type: template-transform
+        variables:
+        - value_selector:
+          - data_transform_node
+          - output
+          variable: transform_data
+      height: 82
+      id: normal_order_transform_node
+      position:
+        x: 1850
+        y: 200
+      positionAbsolute:
+        x: 1850
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: "在庫十分用データ作成"
+        selected: false
+        template: |
+          {% set product_data = transform_data | from_json %}
+          [{
+            "range": "結果!A2:D2",
+            "values": [
+              ["{{ product_data.product_name }}", "{{ product_data.current_stock }}", "在庫十分", "現在の在庫は十分です。"]
+            ]
+          }]
+        title: "在庫十分データ作成"
+        type: template-transform
+        variables:
+        - value_selector:
+          - data_transform_node
+          - output
+          variable: transform_data
+      height: 82
+      id: sufficient_stock_transform_node
+      position:
+        x: 1850
+        y: 350
+      positionAbsolute:
+        x: 1850
+        y: 350
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: "緊急発注結果をシートに書き込み"
+        is_team_authorization: true
+        output_schema: null
+        paramSchemas:
+        - human_description:
+            en_US: The ID of the Google Sheet (found in the URL)
+            ja_JP: The ID of the Google Sheet (found in the URL)
+          label:
+            en_US: Spreadsheet ID
+            ja_JP: Spreadsheet ID
+          llm_description: The ID of the Google Sheet, which can be found in the sheet's URL
+          name: spreadsheet_id
+          required: true
+          type: string
+        - human_description:
+            en_US: List of value ranges to update
+            ja_JP: List of value ranges to update
+          label:
+            en_US: Data
+            ja_JP: Data
+          llm_description: A list of value ranges to update. Each value range should contain a 'range' and 'values' field.
+          name: data
+          required: true
+          type: mixed
+        params:
+          data: ''
+          spreadsheet_id: ''
+        provider_id: omluc/google_sheets/google_sheets
+        provider_name: omluc/google_sheets/google_sheets
+        provider_type: builtin
+        selected: false
+        title: "緊急発注結果書き込み"
+        tool_configurations:
+          include_values_in_response: null
+          response_date_time_render_option: null
+          response_value_render_option: null
+          value_input_option: USER_ENTERED
+        tool_description: Updates multiple ranges in a Google Sheet with specified values
+        tool_label: Batch Update
+        tool_name: batch_update
+        tool_parameters:
+          data:
+            type: mixed
+            value: '{{#urgent_order_transform_node.output#}}'
+          spreadsheet_id:
+            type: mixed
+            value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+        type: tool
+      height: 346
+      id: sheets_write_node
+      position:
+        x: 2150
+        y: 50
+      positionAbsolute:
+        x: 2150
+        y: 50
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: "通常発注結果をシートに書き込み"
+        is_team_authorization: true
+        output_schema: null
+        paramSchemas:
+        - human_description:
+            en_US: The ID of the Google Sheet (found in the URL)
+            ja_JP: The ID of the Google Sheet (found in the URL)
+          label:
+            en_US: Spreadsheet ID
+            ja_JP: Spreadsheet ID
+          llm_description: The ID of the Google Sheet, which can be found in the sheet's URL
+          name: spreadsheet_id
+          required: true
+          type: string
+        - human_description:
+            en_US: List of value ranges to update
+            ja_JP: List of value ranges to update
+          label:
+            en_US: Data
+            ja_JP: Data
+          llm_description: A list of value ranges to update. Each value range should contain a 'range' and 'values' field.
+          name: data
+          required: true
+          type: mixed
+        params:
+          data: ''
+          spreadsheet_id: ''
+        provider_id: omluc/google_sheets/google_sheets
+        provider_name: omluc/google_sheets/google_sheets
+        provider_type: builtin
+        selected: false
+        title: "通常発注結果書き込み"
+        tool_configurations:
+          include_values_in_response: null
+          response_date_time_render_option: null
+          response_value_render_option: null
+          value_input_option: USER_ENTERED
+        tool_description: Updates multiple ranges in a Google Sheet with specified values
+        tool_label: Batch Update
+        tool_name: batch_update
+        tool_parameters:
+          data:
+            type: mixed
+            value: '{{#normal_order_transform_node.output#}}'
+          spreadsheet_id:
+            type: mixed
+            value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+        type: tool
+      height: 346
+      id: sheets_write_node2
+      position:
+        x: 2150
+        y: 200
+      positionAbsolute:
+        x: 2150
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: "在庫十分結果をシートに書き込み"
+        is_team_authorization: true
+        output_schema: null
+        paramSchemas:
+        - human_description:
+            en_US: The ID of the Google Sheet (found in the URL)
+            ja_JP: The ID of the Google Sheet (found in the URL)
+          label:
+            en_US: Spreadsheet ID
+            ja_JP: Spreadsheet ID
+          llm_description: The ID of the Google Sheet, which can be found in the sheet's URL
+          name: spreadsheet_id
+          required: true
+          type: string
+        - human_description:
+            en_US: List of value ranges to update
+            ja_JP: List of value ranges to update
+          label:
+            en_US: Data
+            ja_JP: Data
+          llm_description: A list of value ranges to update. Each value range should contain a 'range' and 'values' field.
+          name: data
+          required: true
+          type: mixed
+        params:
+          data: ''
+          spreadsheet_id: ''
+        provider_id: omluc/google_sheets/google_sheets
+        provider_name: omluc/google_sheets/google_sheets
+        provider_type: builtin
+        selected: false
+        title: "在庫十分結果書き込み"
+        tool_configurations:
+          include_values_in_response: null
+          response_date_time_render_option: null
+          response_value_render_option: null
+          value_input_option: USER_ENTERED
+        tool_description: Updates multiple ranges in a Google Sheet with specified values
+        tool_label: Batch Update
+        tool_name: batch_update
+        tool_parameters:
+          data:
+            type: mixed
+            value: '{{#sufficient_stock_transform_node.output#}}'
+          spreadsheet_id:
+            type: mixed
+            value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+        type: tool
+      height: 346
+      id: sheets_write_node3
+      position:
+        x: 2150
+        y: 350
+      positionAbsolute:
+        x: 2150
+        y: 350
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: "緊急発注完了メッセージ"
+        response_mode: end
+        selected: false
+        text: |
+          🚨 **緊急発注が必要です！**
+          
+          商品名: {{#data_transform_node.output.product_name#}}
+          現在庫: {{#data_transform_node.output.current_stock#}}個
+          安全在庫: {{#data_transform_node.output.safety_stock#}}個
+          
+          在庫が安全在庫の50%以下になっています。
+          至急発注手続きを行ってください。
+          
+          判定結果をGoogle Sheetsに記録しました。
+        title: "緊急発注完了"
+        type: answer
+      height: 106
+      id: final_answer_node
+      position:
+        x: 2450
+        y: 50
+      positionAbsolute:
+        x: 2450
+        y: 50
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: "通常発注完了メッセージ"
+        response_mode: end
+        selected: false
+        text: |
+          ⚠️ **通常発注を検討してください**
+          
+          商品名: {{#data_transform_node.output.product_name#}}
+          現在庫: {{#data_transform_node.output.current_stock#}}個
+          安全在庫: {{#data_transform_node.output.safety_stock#}}個
+          
+          在庫が安全在庫以下になっています。
+          発注の検討をお願いします。
+          
+          判定結果をGoogle Sheetsに記録しました。
+        title: "通常発注完了"
+        type: answer
+      height: 106
+      id: final_answer_node2
+      position:
+        x: 2450
+        y: 200
+      positionAbsolute:
+        x: 2450
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: "在庫十分完了メッセージ"
+        response_mode: end
+        selected: false
+        text: |
+          ✅ **在庫は十分です**
+          
+          商品名: {{#data_transform_node.output.product_name#}}
+          現在庫: {{#data_transform_node.output.current_stock#}}個
+          安全在庫: {{#data_transform_node.output.safety_stock#}}個
+          
+          現在の在庫は十分にあります。
+          
+          判定結果をGoogle Sheetsに記録しました。
+        title: "在庫十分完了"
+        type: answer
+      height: 106
+      id: final_answer_node3
+      position:
+        x: 2450
+        y: 350
+      positionAbsolute:
+        x: 2450
+        y: 350
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

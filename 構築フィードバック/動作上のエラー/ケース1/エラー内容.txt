@@ -1,7 +1,7 @@
 Run failed: Traceback (most recent call last):
-File "/var/sandbox/sandbox-python/tmp/9bf18f50_9fed_4f13_b16d_9fa2c69a2686.py", line 48, in
-File "", line 27, in
-File "", line 18, in main
+File "/var/sandbox/sandbox-python/tmp/983a7464_c420_4627_84a6_11bd4b1eb919.py", line 48, in
+File "", line 19, in
+File "", line 10, in main
 File "/usr/local/lib/python3.10/site-packages/jinja2/environment.py", line 1291, in render
 self.environment.handle_exception()
 File "/usr/local/lib/python3.10/site-packages/jinja2/environment.py", line 925, in handle_exception

@@ -1,0 +1,91 @@
+# Dify YMLファイル作成依頼プロンプト
+
+## 要件
+営業日報の自動集計システムを作成してください。
+Google Sheetsから営業データを読み取り、分析結果を別のシートに書き込みます。
+
+処理内容：
+1. INPUT!A1:D10から営業日報データを読み取る（担当者名、日付、売上金額、商品カテゴリー）
+2. データを分析して以下を算出：
+   - 担当者別の売上合計
+   - カテゴリー別の売上合計
+   - 全体の売上総額
+3. 分析結果をOUTPUT!A1:C10に書き込む
+
+使用するスプレッドシートID（テスト用）：1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ
+
+## アウトプットフォルダパス
+/Users/tatsuya/Documents/01_fiby/09_ゼット/Dev/
+
+## 参考資料フォルダパス（あれば）
+なし
+
+## コーディングルール
+Dify YMLファイルの作成にあたっては、以下のコーディングルールに従ってください：
+
+### 1. 全体コーディングルール
+/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/全体コーディングルール/ 
+の全てのルールを参照してください。
+
+### 2. コンポーネント別コーディングルール
+各コンポーネントを使用する際は、/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/コンポーネント別コーディングルール
+フォルダ内の使用するコンポーネントについてのtxtファイルを必ず参照してください。
+特に「コンポーネント記述ルール_GoogleShpredSheet操作.txt」を重点的に参照してください。
+
+### 3. 品質チェック
+YMLファイル作成後は
+/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/品質チェック/品質チェックリスト.md
+/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/品質チェック/クラッシュ事項チェックリスト.md
+を参照し、必ずセルフレビューを実施してください。チェックに引っかかった場合は、ymlファイルを改修すること。
+
+### template-transformノードに関する重要な注意事項
+
+template-transformノードを使用する場合、以下の記法ルールを必ず守ってください：
+
+1. **変数参照は{{ 変数名 }}形式のみ使用**
+   - ❌ 間違い: {{#変数名#}}
+   - ✅ 正解: {{ 変数名 }}
+
+2. **フィルター使用時も同様**
+   - ❌ 間違い: {{#変数 | trim | tojson#}}
+   - ✅ 正解: {{ 変数 | trim | tojson }}
+
+3. **Google Sheetsデータの参照**
+   - batch_get出力は配列形式
+   - 必ず[0]でアクセス: sheet_data[0].values
+
+これらのルールを守らないと、実行時にクラッシュします。
+
+### 重要な注意事項（必ず確認）
+作成するYMLファイルでは以下を必ず守ってください：
+
+1. app.use_icon_as_answer_icon: false（または true）を必ず設定
+2. エッジのdata.isInLoop: falseが必須
+3. version: 0.3.0を使用
+4. advanced-chatモードではstartノードのvariablesを空配列[]に
+5. すべてのエッジにselected: falseとzIndex: 0を設定
+6. Google Sheets操作では以下に特に注意：
+   - 必ずdependenciesセクションにomluc/google_sheets:0.0.2を定義
+   - provider_typeは'builtin'を使用（'marketplace'は無効）
+   - tool_configurationsセクションを必ず含める
+   - rangesパラメータは引用符で囲んだ文字列形式
+   - LLM出力を直接batch_updateのdataに使用しない
+   - template-transformノードでデータ整形を行う
+
+### YAMLコメントについて
+- **絶対に禁止**：YAMLファイル内にコメント（#で始まる行）を含めないでください
+
+### 構造について（advanced-chatモードの場合）
+- 必ずworkflow.graphセクションを作成し、その中にedgesとnodesを配置してください
+- workflow.featuresセクションは必須です
+
+### 検証ポイント（特に確認してほしい内容）
+1. Google Sheetsツールの依存関係が正しく設定されているか
+2. batch_getとbatch_updateが正しく動作するか
+3. template-transformノードでのデータ整形が適切か
+4. エラーが発生しやすい以下のポイントを確認：
+   - provider_typeが'builtin'になっているか
+   - tool_configurationsが設定されているか
+   - rangesパラメータの形式が正しいか
+   - template-transform内で{{ 変数 }}形式を使用しているか
+   - Google Sheetsデータ参照時に[0]インデックスを使用しているか

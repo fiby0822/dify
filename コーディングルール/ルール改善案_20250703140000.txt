@@ -1,0 +1,225 @@
+# Dify YML開発ルール改善案
+作成日: 2025年1月3日
+
+## 1. エラー分析結果の概要
+
+### 1.1 インポート成功_クラッシュの原因
+- Pythonコード（codeノード）の使用がDifyでサポートされていない
+- エッジのsourceHandle属性が文字列（"false"）として記述されている（ブール値が正しい）
+- 変数参照記法の不統一（{{#node_id.output#}}形式と{{ variable }}形式の混在）
+
+### 1.2 動作エラーの共通原因
+- Jinja2フィルター記法のエラー：`{{ row | join(',') }}`（スペースが原因）
+- 正しい記法：`{{ row|join(',') }}`（スペースなし）
+- Google Sheets APIレスポンスへの不適切なアクセス
+- エラーハンドリングの不足
+
+## 2. 具体的な改善提案
+
+### 2.1 【新規追加】05_トラブルシューティング.mdへの追加事項
+
+```markdown
+### 23. Jinja2フィルター記法の注意事項
+
+#### 問題
+```yaml
+# エラーを引き起こす記法
+{{ variable | filter }}  # パイプとフィルター名の間にスペースがある
+```
+
+#### 解決方法
+```yaml
+# 正しい記法
+{{ variable|filter }}    # スペースなし
+{{ variable|filter1|filter2 }}  # 複数フィルターの連結
+```
+
+#### よく使用されるフィルター
+- `|join(',')` - 配列を文字列に結合
+- `|trim` - 前後の空白を削除
+- `|tojson` - JSON形式に変換
+- `|default('')` - デフォルト値の設定
+- `|from_json` - JSON文字列をオブジェクトに変換（使用注意）
+
+### 24. Google Sheets APIレスポンスの安全なアクセス方法
+
+#### 問題のあるコード
+```jinja2
+{{ sheet_data[0].values }}  # エラーが発生する可能性
+```
+
+#### 推奨される安全なアクセス方法
+```jinja2
+{% if sheet_data and sheet_data|length > 0 and sheet_data[0].values %}
+  {% for row in sheet_data[0].values %}
+    {{ row|join(',') }}
+  {% endfor %}
+{% else %}
+  データが見つかりません
+{% endif %}
+```
+```
+
+### 2.2 【更新】03_変数とデータ管理.mdへの追加事項
+
+```markdown
+### 1.4 変数参照記法の完全対応表
+
+| ノードタイプ | 使用場所 | 正しい記法 | 誤った記法 |
+|------------|---------|-----------|-----------|
+| answerノード | answer | {{#node_id.output#}} | {{ node_id.output }} |
+| LLMノード | prompt | {{#node_id.text#}} | {{ node_id.text }} |
+| toolノード | input | {{#node_id.output#}} | {{ node_id.output }} |
+| template-transform | template内 | {{ variable }} | {{#variable#}} |
+| IF_ELSEノード | conditions.value | {{#node_id.output#}} | {{ node_id.output }} |
+
+### 1.5 Google Sheets特有の変数アクセス
+
+Google Sheetsからのデータアクセス時は、以下の構造を理解する：
+```
+sheet_data = [
+  {
+    "range": "A1:Z100",
+    "values": [
+      ["行1列1", "行1列2", ...],
+      ["行2列1", "行2列2", ...],
+      ...
+    ]
+  }
+]
+```
+
+安全なアクセス例：
+```jinja2
+{% if sheet_data and sheet_data[0] and sheet_data[0].values %}
+  {{ sheet_data[0].values }}
+{% endif %}
+```
+```
+
+### 2.3 【更新】コンポーネント記述ルール_IF_ELSE.txtへの追加
+
+```
+## 7. sourceHandleの型に関する重要な注意
+
+- sourceHandleはブール値として記述すること
+- 正しい: sourceHandle: false
+- 誤り: sourceHandle: "false"
+
+例：
+edges:
+  - id: edge_1
+    source: if_else_node
+    sourceHandle: true   # 文字列ではなくブール値
+    target: next_node
+    
+  - id: edge_2
+    source: if_else_node
+    sourceHandle: false  # 文字列ではなくブール値
+    target: else_node
+```
+
+### 2.4 【新規追加】品質チェックリスト.mdへの追加項目
+
+```markdown
+### 4.5 template-transformノードのチェックリスト
+
+- [ ] Jinja2フィルターにスペースが含まれていないか確認
+  - NG: `{{ var | filter }}`
+  - OK: `{{ var|filter }}`
+- [ ] 配列アクセス前に存在チェックを実施しているか
+- [ ] from_jsonフィルターの使用を避けているか（Difyでの動作が不安定）
+- [ ] エラー時のデフォルト値が設定されているか
+```
+
+### 2.5 【新規作成】Google Sheets操作専用ガイドライン
+
+新規ファイル：06_外部連携とツール.mdに以下のセクションを追加
+
+```markdown
+### 3. Google Sheets連携の詳細ガイド
+
+#### 3.1 基本的なデータ構造
+Google Sheets APIからの応答は以下の構造：
+```json
+{
+  "data": [
+    {
+      "range": "シート名!A1:Z100",
+      "values": [
+        ["セルA1", "セルB1", "セルC1"],
+        ["セルA2", "セルB2", "セルC2"]
+      ]
+    }
+  ]
+}
+```
+
+#### 3.2 安全なデータアクセスパターン
+
+1. **単一セルの取得**
+```jinja2
+{% if sheet_data and sheet_data[0] and sheet_data[0].values and sheet_data[0].values[0] %}
+  {{ sheet_data[0].values[0][0] }}
+{% else %}
+  データなし
+{% endif %}
+```
+
+2. **行データの処理**
+```jinja2
+{% if sheet_data and sheet_data[0] and sheet_data[0].values %}
+  {% for row in sheet_data[0].values %}
+    {{ row|join(',') }}
+  {% endfor %}
+{% endif %}
+```
+
+3. **列データの抽出**
+```jinja2
+{% if sheet_data and sheet_data[0] and sheet_data[0].values %}
+  {% set column_index = 2 %}
+  {% for row in sheet_data[0].values %}
+    {% if row|length > column_index %}
+      {{ row[column_index] }}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+```
+```
+
+## 3. コーディングルール改善の優先度
+
+### 高優先度
+1. Jinja2フィルター記法の明確化（05_トラブルシューティング.md）
+2. 変数参照記法の完全対応表（03_変数とデータ管理.md）
+3. Google Sheets操作ガイドライン（新規追加）
+
+### 中優先度
+1. IF_ELSEノードのsourceHandle型指定（コンポーネント記述ルール_IF_ELSE.txt）
+2. template-transformノードのチェックリスト（品質チェックリスト.md）
+
+### 低優先度
+1. エラー事例集の追加（05_トラブルシューティング.md）
+
+## 4. 実装推奨事項
+
+### 4.1 開発プロセスの改善
+1. YML生成後の自動検証ツールでJinja2フィルターのスペースをチェック
+2. Google Sheets連携を含むワークフローには専用のテンプレートを用意
+3. 変数参照記法の自動変換ツールの開発
+
+### 4.2 ドキュメントの改善
+1. よくあるエラーとその解決方法のクイックリファレンス作成
+2. ノードタイプ別の変数参照記法の視覚的なチャートの作成
+3. Google Sheets操作のベストプラクティス集の作成
+
+## 5. まとめ
+
+今回の分析で判明した主な問題は：
+1. Jinja2フィルター記法のスペース問題
+2. 変数参照記法の不統一
+3. Google Sheets APIレスポンスへの不適切なアクセス
+4. エラーハンドリングの不足
+
+これらの問題は、既存のコーディングルールでカバーされていない部分が多く、ルールの拡充と明確化が必要です。特にJinja2テンプレート記法とGoogle Sheets操作に関する詳細なガイドラインの追加が急務です。

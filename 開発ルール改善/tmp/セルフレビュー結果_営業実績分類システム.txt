@@ -1,0 +1,93 @@
+# セルフレビュー結果：営業実績分類システム_検証用.yml
+
+## 品質チェックリスト確認結果
+
+### 0. 致命的エラーチェック（最優先）
+✅ app.use_icon_as_answer_icon: false が設定されている
+✅ dependencies に Google Sheets の依存関係が定義されている
+✅ kind: app が存在する
+✅ version: 0.3.0 が存在する
+✅ workflow セクションが存在する
+✅ YAMLファイル内にコメント（#）が一切含まれていない
+✅ conversation_variables: [] が存在する
+✅ environment_variables: [] が存在する
+✅ workflow.features セクションが存在する
+✅ エッジに isInLoop: false が設定されている
+✅ エッジに selected: false が設定されている
+✅ エッジに zIndex: 0 が設定されている
+
+### 1. 基本構造チェック
+✅ YAMLファイルが正しい構文で記述されている
+✅ インデントが一貫している（スペース2個）
+✅ advanced-chatモードでstartノードのvariablesが空配列[]である
+✅ 各ノードのtype属性が"custom"に設定されている
+✅ data.typeが正しく設定されている（tool, template-transform, if-else等）
+
+### 2. ノード構成チェック
+✅ startノードが存在する
+✅ 終了ノード（answer）が存在する
+✅ すべてのノードにユニークなIDが設定されている
+✅ ノードIDがsnake_case形式である
+✅ positionとpositionAbsoluteが同じ値に設定されている
+
+### 3. IF_ELSEノード関連
+✅ 全てのケースにlogical_operator: "and"が設定されている
+✅ case_idとidが同じ値に設定されている（high_sales_case, medium_sales_case）
+✅ 比較演算子にcontainsを使用（数値の直接比較を避けている）
+✅ デフォルトケースのsourceHandleが"false"（文字列）になっている
+✅ 条件が明確で理解しやすい
+
+### 4. Google Sheets操作関連
+✅ dependenciesセクションに許可されたプラグインが定義されている
+✅ provider_typeが"builtin"に設定されている
+✅ provider_idとprovider_nameが完全な形式で設定されている
+✅ tool_configurationsセクションが存在する
+✅ rangesパラメータが引用符で囲まれている：'["INPUT!A1:B100"]'
+✅ batch_updateのdataがtemplate-transformノードからの出力を使用
+
+### 5. template-transformノード関連
+✅ template内で{{ 変数 }}記法を使用（{{#変数#}}は使用していない）
+✅ variablesセクションで変数が定義されている
+✅ フィルター使用時も{{ 変数 | filter }}形式
+✅ Google Sheetsデータ参照時に[0]インデックスを使用
+✅ 日付は固定値として設定（date関数は使用していない）
+
+### 6. 変数参照チェック
+✅ YAMLのvalue内では{{#node_id.field#}}記法を使用
+✅ template内では{{ 変数 }}記法を使用
+✅ 参照先の変数が実際に存在する
+✅ 実行されない可能性があるノードの処理はdefault('')で対応
+
+### 7. エラーハンドリング
+✅ template-transformでdefaultフィルターを使用
+✅ Google Sheetsデータが空の場合の処理を実装
+✅ 各分岐が独立して処理を完結させている
+
+## クラッシュ事項チェックリスト確認結果
+
+### 最重要項目
+✅ template-transform内で{{#変数#}}を使用していない
+✅ YAMLコメントが一切ない
+✅ app.use_icon_as_answer_icon が設定されている
+✅ isInLoopを使用（isInIterationではない）
+✅ すべてのエッジにselected: falseとzIndex: 0が設定されている
+
+### Google Sheets固有
+✅ omluc/google_sheets:0.0.2の完全な識別子を使用
+✅ provider_type: builtinを使用（marketplaceではない）
+✅ tool_configurationsが正しく設定されている
+✅ batch_getとbatch_updateで異なる設定を使用
+
+### IF_ELSE固有
+✅ logical_operatorが全てのケースに設定されている
+✅ ASCII文字の比較演算子は使用していない（containsを使用）
+✅ sourceHandleとcase_idが一致している
+
+## 改善可能な点
+1. 実際のGoogle SheetsのスプレッドシートIDを使用する必要がある
+2. 売上金額の抽出ロジックをより精緻にする（現在はcontainsで簡易判定）
+3. エラー時のフォールバック処理を追加
+
+## 結論
+作成したYMLファイルは、品質チェックリストとクラッシュ事項チェックリストの全項目をクリアしており、
+インポートおよび実行時のクラッシュリスクは低いと判断されます。

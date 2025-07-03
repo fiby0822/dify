@@ -1,0 +1,581 @@
+app:
+  description: "商品在庫管理の自動判定システム。商品名、在庫数、カテゴリーに基づいて発注の必要性を判定します。"
+  icon: "📦"
+  icon_background: "#FFEAD5"
+  mode: advanced-chat
+  name: "在庫管理判定システム"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: "商品名、在庫数、カテゴリーを入力してください。\n例：トマト 5個 生鮮食品"
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "りんご 8個 生鮮食品"
+      - "ノート 25冊 文具"
+      - "牛乳 3本 生鮮食品"
+      - "ペン 60本 文具"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ""
+      voice: ""
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: code
+        id: start-parse-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: parse_input_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: code
+          targetType: if-else
+        id: parse-category-edge
+        selected: false
+        source: parse_input_node
+        sourceHandle: source
+        target: category_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: code
+        id: category-fresh-edge
+        selected: false
+        source: category_check_node
+        sourceHandle: fresh_food_case
+        target: fresh_food_calculation_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: if-else
+        id: category-other-edge
+        selected: false
+        source: category_check_node
+        sourceHandle: "false"
+        target: stock_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: code
+          targetType: if-else
+        id: fresh-check-edge
+        selected: false
+        source: fresh_food_calculation_node
+        sourceHandle: source
+        target: fresh_stock_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: stock-urgent-edge
+        selected: false
+        source: stock_check_node
+        sourceHandle: urgent_order_case
+        target: urgent_order_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: stock-normal-edge
+        selected: false
+        source: stock_check_node
+        sourceHandle: normal_order_case
+        target: normal_order_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: stock-consider-edge
+        selected: false
+        source: stock_check_node
+        sourceHandle: consider_order_case
+        target: consider_order_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: stock-sufficient-edge
+        selected: false
+        source: stock_check_node
+        sourceHandle: "false"
+        target: sufficient_stock_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: fresh-urgent-edge
+        selected: false
+        source: fresh_stock_check_node
+        sourceHandle: fresh_urgent_case
+        target: fresh_urgent_order_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: fresh-normal-edge
+        selected: false
+        source: fresh_stock_check_node
+        sourceHandle: fresh_normal_case
+        target: fresh_normal_order_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: fresh-consider-edge
+        selected: false
+        source: fresh_stock_check_node
+        sourceHandle: fresh_consider_case
+        target: fresh_consider_order_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: fresh-sufficient-edge
+        selected: false
+        source: fresh_stock_check_node
+        sourceHandle: "false"
+        target: fresh_sufficient_stock_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "開始ノード"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 300
+        positionAbsolute:
+          x: 50
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          code: |
+            import sys
+            import re
+            
+            user_input = sys.query
+            
+            pattern = r'(\S+)\s+(\d+)個?\s+(\S+)'
+            match = re.search(pattern, user_input)
+            
+            if match:
+                product_name = match.group(1)
+                stock_count = int(match.group(2))
+                category = match.group(3)
+            else:
+                product_name = "不明"
+                stock_count = 0
+                category = "その他"
+            
+            return {
+                "product_name": product_name,
+                "stock_count": stock_count,
+                "category": category
+            }
+          desc: "ユーザー入力を解析して商品名、在庫数、カテゴリーを抽出"
+          selected: false
+          title: "入力解析"
+          type: code
+          variables: []
+        height: 154
+        id: parse_input_node
+        position:
+          x: 350
+          y: 300
+        positionAbsolute:
+          x: 350
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - case_id: fresh_food_case
+              conditions:
+                - comparison_operator: is
+                  id: fresh_food_condition
+                  value: "生鮮食品"
+                  variable_selector:
+                    - parse_input_node
+                    - category
+              id: fresh_food_case
+              logical_operator: and
+          desc: "カテゴリーが生鮮食品かどうかを判定"
+          selected: false
+          title: "カテゴリー判定"
+          type: if-else
+        height: 154
+        id: category_check_node
+        position:
+          x: 650
+          y: 300
+        positionAbsolute:
+          x: 650
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          code: |
+            stock_count = parse_input_node['stock_count']
+            adjusted_stock = stock_count * 2
+            
+            return {
+                "adjusted_stock": adjusted_stock,
+                "original_stock": stock_count
+            }
+          desc: "生鮮食品の在庫数を2倍に調整（基準値を半分にするため）"
+          selected: false
+          title: "生鮮食品在庫調整"
+          type: code
+          variables:
+            - value_selector:
+                - parse_input_node
+                - stock_count
+              variable: parse_input_node
+              value_type: object
+        height: 154
+        id: fresh_food_calculation_node
+        position:
+          x: 950
+          y: 100
+        positionAbsolute:
+          x: 950
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - case_id: urgent_order_case
+              conditions:
+                - comparison_operator: "<="
+                  id: urgent_condition
+                  value: 10
+                  variable_selector:
+                    - parse_input_node
+                    - stock_count
+              id: urgent_order_case
+              logical_operator: and
+            - case_id: normal_order_case
+              conditions:
+                - comparison_operator: "<="
+                  id: normal_condition
+                  value: 30
+                  variable_selector:
+                    - parse_input_node
+                    - stock_count
+              id: normal_order_case
+              logical_operator: and
+            - case_id: consider_order_case
+              conditions:
+                - comparison_operator: "<="
+                  id: consider_condition
+                  value: 50
+                  variable_selector:
+                    - parse_input_node
+                    - stock_count
+              id: consider_order_case
+              logical_operator: and
+          desc: "通常商品の在庫数に基づく発注判定"
+          selected: false
+          title: "在庫数判定（通常）"
+          type: if-else
+        height: 198
+        id: stock_check_node
+        position:
+          x: 950
+          y: 500
+        positionAbsolute:
+          x: 950
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - case_id: fresh_urgent_case
+              conditions:
+                - comparison_operator: "<="
+                  id: fresh_urgent_condition
+                  value: 20
+                  variable_selector:
+                    - fresh_food_calculation_node
+                    - adjusted_stock
+              id: fresh_urgent_case
+              logical_operator: and
+            - case_id: fresh_normal_case
+              conditions:
+                - comparison_operator: "<="
+                  id: fresh_normal_condition
+                  value: 60
+                  variable_selector:
+                    - fresh_food_calculation_node
+                    - adjusted_stock
+              id: fresh_normal_case
+              logical_operator: and
+            - case_id: fresh_consider_case
+              conditions:
+                - comparison_operator: "<="
+                  id: fresh_consider_condition
+                  value: 100
+                  variable_selector:
+                    - fresh_food_calculation_node
+                    - adjusted_stock
+              id: fresh_consider_case
+              logical_operator: and
+          desc: "生鮮食品の調整済み在庫数に基づく発注判定"
+          selected: false
+          title: "在庫数判定（生鮮）"
+          type: if-else
+        height: 198
+        id: fresh_stock_check_node
+        position:
+          x: 1250
+          y: 100
+        positionAbsolute:
+          x: 1250
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【緊急発注】\n商品名：{{#parse_input_node.product_name#}}\n在庫数：{{#parse_input_node.stock_count#}}個\nカテゴリー：{{#parse_input_node.category#}}\n\n判定結果：在庫が10個以下のため、3日以内に発注が必要です。"
+          desc: "緊急発注が必要な場合の回答"
+          selected: false
+          title: "緊急発注回答"
+          type: answer
+          variables: []
+        height: 107
+        id: urgent_order_answer_node
+        position:
+          x: 1250
+          y: 400
+        positionAbsolute:
+          x: 1250
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【通常発注】\n商品名：{{#parse_input_node.product_name#}}\n在庫数：{{#parse_input_node.stock_count#}}個\nカテゴリー：{{#parse_input_node.category#}}\n\n判定結果：在庫が11～30個のため、1週間以内の発注を推奨します。"
+          desc: "通常発注が必要な場合の回答"
+          selected: false
+          title: "通常発注回答"
+          type: answer
+          variables: []
+        height: 107
+        id: normal_order_answer_node
+        position:
+          x: 1250
+          y: 520
+        positionAbsolute:
+          x: 1250
+          y: 520
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【発注検討】\n商品名：{{#parse_input_node.product_name#}}\n在庫数：{{#parse_input_node.stock_count#}}個\nカテゴリー：{{#parse_input_node.category#}}\n\n判定結果：在庫が31～50個のため、2週間以内に発注を検討してください。"
+          desc: "発注検討が必要な場合の回答"
+          selected: false
+          title: "発注検討回答"
+          type: answer
+          variables: []
+        height: 107
+        id: consider_order_answer_node
+        position:
+          x: 1250
+          y: 640
+        positionAbsolute:
+          x: 1250
+          y: 640
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【在庫十分】\n商品名：{{#parse_input_node.product_name#}}\n在庫数：{{#parse_input_node.stock_count#}}個\nカテゴリー：{{#parse_input_node.category#}}\n\n判定結果：在庫が51個以上あるため、現時点での発注は不要です。"
+          desc: "在庫が十分な場合の回答"
+          selected: false
+          title: "在庫十分回答"
+          type: answer
+          variables: []
+        height: 107
+        id: sufficient_stock_answer_node
+        position:
+          x: 1250
+          y: 760
+        positionAbsolute:
+          x: 1250
+          y: 760
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【生鮮食品：緊急発注】\n商品名：{{#parse_input_node.product_name#}}\n在庫数：{{#parse_input_node.stock_count#}}個\nカテゴリー：{{#parse_input_node.category#}}\n\n判定結果：生鮮食品で在庫が5個以下のため、3日以内に発注が必要です。"
+          desc: "生鮮食品の緊急発注が必要な場合の回答"
+          selected: false
+          title: "生鮮緊急発注回答"
+          type: answer
+          variables: []
+        height: 107
+        id: fresh_urgent_order_answer_node
+        position:
+          x: 1550
+          y: 20
+        positionAbsolute:
+          x: 1550
+          y: 20
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【生鮮食品：通常発注】\n商品名：{{#parse_input_node.product_name#}}\n在庫数：{{#parse_input_node.stock_count#}}個\nカテゴリー：{{#parse_input_node.category#}}\n\n判定結果：生鮮食品で在庫が6～15個のため、1週間以内の発注を推奨します。"
+          desc: "生鮮食品の通常発注が必要な場合の回答"
+          selected: false
+          title: "生鮮通常発注回答"
+          type: answer
+          variables: []
+        height: 107
+        id: fresh_normal_order_answer_node
+        position:
+          x: 1550
+          y: 140
+        positionAbsolute:
+          x: 1550
+          y: 140
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【生鮮食品：発注検討】\n商品名：{{#parse_input_node.product_name#}}\n在庫数：{{#parse_input_node.stock_count#}}個\nカテゴリー：{{#parse_input_node.category#}}\n\n判定結果：生鮮食品で在庫が16～25個のため、2週間以内に発注を検討してください。"
+          desc: "生鮮食品の発注検討が必要な場合の回答"
+          selected: false
+          title: "生鮮発注検討回答"
+          type: answer
+          variables: []
+        height: 107
+        id: fresh_consider_order_answer_node
+        position:
+          x: 1550
+          y: 260
+        positionAbsolute:
+          x: 1550
+          y: 260
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【生鮮食品：在庫十分】\n商品名：{{#parse_input_node.product_name#}}\n在庫数：{{#parse_input_node.stock_count#}}個\nカテゴリー：{{#parse_input_node.category#}}\n\n判定結果：生鮮食品で在庫が26個以上あるため、現時点での発注は不要です。"
+          desc: "生鮮食品の在庫が十分な場合の回答"
+          selected: false
+          title: "生鮮在庫十分回答"
+          type: answer
+          variables: []
+        height: 107
+        id: fresh_sufficient_stock_answer_node
+        position:
+          x: 1550
+          y: 380
+        positionAbsolute:
+          x: 1550
+          y: 380
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

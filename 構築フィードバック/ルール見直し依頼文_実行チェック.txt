@@ -10,14 +10,14 @@
 
 内容：インポート成功_クラッシュ
 対象：
-/Users/tatsuya/Documents/01_fiby/09_ゼット/構築フィードバック/インポート成功_クラッシュ/商品在庫管理システム_検証用.yml
-/Users/tatsuya/Documents/01_fiby/09_ゼット/構築フィードバック/インポート成功_クラッシュ/商品問い合わせ対応システム_IF_ELSE検証用.yml
-/Users/tatsuya/Documents/01_fiby/09_ゼット/構築フィードバック/インポート成功_クラッシュ/製品在庫管理システム_IF_ELSE検証用.yml
+/Users/tatsuya/Documents/01_fiby/09_ゼット/構築フィードバック/インポート成功_クラッシュ/在庫管理判定システム_IF_ELSE検証用.yml
+/Users/tatsuya/Documents/01_fiby/09_ゼット/構築フィードバック/インポート成功_クラッシュ/在庫管理判定システム_検証用.yml
 
 内容：インポート成功_動作エラー
 対象：
 /Users/tatsuya/Documents/01_fiby/09_ゼット/構築フィードバック/動作上のエラー/ケース1
 /Users/tatsuya/Documents/01_fiby/09_ゼット/構築フィードバック/動作上のエラー/ケース2
+/Users/tatsuya/Documents/01_fiby/09_ゼット/構築フィードバック/動作上のエラー/ケース3
 
 内容：インポート成功_正常実行可能
 対象：
