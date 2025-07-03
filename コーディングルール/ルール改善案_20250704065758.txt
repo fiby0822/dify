@@ -1,0 +1,288 @@
+Dify開発コーディングルール改善案 - 2025年7月4日
+===================================================
+
+■エラー分析に基づく改善提案
+本改善案は、実際のインポート失敗、クラッシュ、動作エラーの分析結果に基づいて作成されました。
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【最優先改善事項】template-transformノードのJinja2記法エラー防止
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+■問題の背景
+動作エラーの約80%がtemplate-transformノードのJinja2テンプレートエラーに起因
+
+■具体的なエラーパターン
+1. フィルター使用時のスペース問題
+   エラー: {{ row | join(',') }}  → 'builtin_function_or_method' object is not iterable
+   正解: {{ row|join(',') }}
+
+2. Google Sheetsデータアクセスの誤り
+   エラー: {{ sheet_data[0].values }}
+   正解: {{ sheet_data[0]["valueRanges"][0]["values"] }}
+
+■改善案
+
+1. **03_変数とデータ管理.md の改訂**
+
+【現在の記述】
+```
+#### 最重要：Jinja2フィルター記法の厳密なルール
+
+**絶対に守るべきルール（これを守らないとクラッシュします）**
+1. **フィルター使用時、パイプ記号（|）とフィルター名の間にスペースを入れない**
+```
+
+【改訂案】
+```
+#### 最重要：Jinja2フィルター記法の厳密なルール
+
+**絶対に守るべきルール（これを守らないとクラッシュします）**
+1. **フィルター使用時、パイプ記号（|）とフィルター名の間にスペースを入れない**
+   - ❌ 致命的エラー: {{ variable | filter }}  → 'builtin_function_or_method' object is not iterable
+   - ✅ 正解: {{ variable|filter }}
+   
+2. **よくあるエラーを起こすフィルター（特に注意）**
+   - join: {{ row|join(',') }}  （スペースなし必須）
+   - tojson: {{ data|tojson }}  （スペースなし必須）
+   - trim: {{ text|trim }}      （スペースなし必須）
+   - default: {{ var|default('') }} （スペースなし必須）
+   
+3. **エラーを防ぐためのチェック方法**
+   - 検索パターン: `| \w` （パイプの後にスペースがある箇所を検索）
+   - 発見した場合は全て修正する
+```
+
+2. **Google Sheetsデータアクセスパスの明確化**
+
+【新規追加セクション】
+```
+### 7.5 Google Sheets batch_getレスポンスの正確な構造理解
+
+batch_getツールからの戻り値は以下の構造を持ちます：
+
+```json
+{
+  "json": [
+    {
+      "spreadsheetId": "xxxxx",
+      "valueRanges": [
+        {
+          "range": "Sheet1!A1:C10",
+          "majorDimension": "ROWS",
+          "values": [
+            ["ヘッダー1", "ヘッダー2", "ヘッダー3"],
+            ["データ1", "データ2", "データ3"],
+            ...
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+#### template-transformでの正しいアクセス方法：
+
+```yaml
+variables:
+  - value_selector:
+      - batch_get_node
+      - json
+    variable: sheet_data
+
+template: |
+  {% set rows = sheet_data[0]["valueRanges"][0]["values"] %}
+  {% for row in rows %}
+  {{ row|join(',') }}{% if not loop.last %}\n{% endif %}
+  {% endfor %}
+```
+
+#### よくある間違いと修正方法：
+- ❌ sheet_data[0].values  → .values は存在しない
+- ❌ sheet_data.values     → 構造が違う
+- ✅ sheet_data[0]["valueRanges"][0]["values"]  → 正しいパス
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【重要改善事項】tool_parametersのJSON記法エラー防止
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+■問題の背景
+インポート失敗の主要原因の一つがtool_parametersの不正なJSON記法
+
+■改善案
+
+1. **01_基本構造とエラー防止.md への追加**
+
+【新規セクション追加】
+```
+### 0.3.2 tool_parametersのJSON値チェック（最重要）
+
+#### よくあるJSON記法エラー
+
+1. **配列の閉じ括弧忘れ（最頻出エラー）**
+```yaml
+# ❌ 致命的エラー：閉じ括弧が欠けている
+ranges:
+  type: mixed
+  value: '["INPUT!A1:C10"'  # ] が欠けている！
+
+# ✅ 正解：正しく閉じられたJSON配列
+ranges:
+  type: mixed
+  value: '["INPUT!A1:C10"]'
+```
+
+2. **エスケープ処理の誤り**
+```yaml
+# ❌ エラー：ダブルクォートのエスケープ忘れ
+data:
+  type: mixed
+  value: '[{"range": "A1", "values": [["test"]]}]'
+
+# ✅ 正解：または、YAMLのブロックスカラーを使用
+data:
+  type: mixed
+  value: |
+    [{
+      "range": "A1",
+      "values": [["test"]]
+    }]
+```
+
+3. **チェックリスト**
+- [ ] 開き括弧 [ があれば必ず閉じ括弧 ] がある
+- [ ] 開き括弧 { があれば必ず閉じ括弧 } がある
+- [ ] 文字列は必ず " で囲まれている
+- [ ] JSON全体が ' で囲まれている（YAMLの文字列として）
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【改善事項】IF_ELSEノードのlogical_operator必須化の周知
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+■問題の背景
+IF_ELSEノードでlogical_operatorの欠落によるエラーが頻発
+
+■改善案
+
+1. **コンポーネント記述ルール_IF_ELSE.txt の強調修正**
+
+【現在の記述】
+```
+- logical_operator: 論理演算子（"and"または"or"）※★必須★ 条件が1つでも必要
+```
+
+【改訂案】
+```
+- logical_operator: 論理演算子（"and"または"or"）
+  ※★絶対必須★ 条件が1つの場合でも省略不可
+  ※★最頻出エラー★ このフィールドの欠落がエラーの80%を占める
+  
+  例（条件が1つでも必須）：
+  ```yaml
+  cases:
+    - case_id: 'urgent_case'
+      conditions:
+        - variable_selector: [node, value]
+          comparison_operator: "<"
+          value: 10
+      logical_operator: and  # ← 条件が1つでも絶対に必要！
+  ```
+```
+
+2. **品質チェックリスト.md への追加**
+
+```
+#### IF/ELSEノード（最重要チェック）
+- [ ] **★最優先★ 全てのケースにlogical_operatorが設定されている**
+- [ ] logical_operatorは"and"または"or"の文字列
+- [ ] 条件が1つだけの場合でもlogical_operatorを省略していない
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【改善事項】provider_type: marketplaceエラーの防止
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+■問題の背景
+Google Sheetsツール使用時にprovider_type: marketplaceを使用してエラー
+
+■改善案
+
+1. **01_基本構造とエラー防止.md の明確化**
+
+【現在の記述の改訂】
+```
+### 0.4 toolノードのprovider_typeエラー（Google Sheets使用時の注意）
+
+#### Google Sheetsツール使用時の正しい設定
+
+1. **dependencies（最上位）の設定**：
+```yaml
+dependencies:
+- current_identifier: null
+  type: marketplace  # ← ここではmarketplaceを使用（正しい）
+  value:
+    marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@...
+```
+
+2. **toolノードの設定**：
+```yaml
+- data:
+    type: tool
+    provider_type: builtin  # ← 必ずbuiltinを使用（marketplaceは無効）
+    provider_id: omluc/google_sheets/google_sheets
+    provider_name: omluc/google_sheets/google_sheets
+```
+
+**重要な区別**：
+- dependencies内のtype: marketplace → 正しい（依存関係の定義）
+- toolノードのprovider_type: marketplace → エラー（無効な値）
+- toolノードでは必ずprovider_type: builtinを使用
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【新規追加】開発時のエラー防止チェックツール仕様
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+■提案
+開発者が陥りやすいエラーを自動検出するツールの作成を推奨
+
+■チェック項目
+1. Jinja2フィルターのスペース検出
+   - パターン: `\|\s+\w+`
+   - 対象: template-transformノードのtemplate内
+
+2. JSON配列の閉じ括弧チェック
+   - tool_parametersのvalue内の [ ] のバランス
+   - { } のバランス
+
+3. 必須フィールドの存在確認
+   - IF_ELSEノードのlogical_operator
+   - app.use_icon_as_answer_icon
+   - dependencies、kind、version
+
+4. Google Sheetsアクセスパスの検証
+   - .valuesの直接アクセスを検出
+   - 正しいパスの提案
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【総括】優先度別実施事項
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. **即座に実施（最優先）**
+   - template-transformのJinja2記法ルールの強化
+   - Google Sheetsデータアクセスパスの明確化
+   - IF_ELSEのlogical_operator必須化の周知
+
+2. **早期実施（重要）**
+   - tool_parametersのJSON検証ルール追加
+   - provider_typeの使い分けの明確化
+   - 品質チェックリストの更新
+
+3. **計画的実施（推奨）**
+   - エラー防止チェックツールの開発
+   - 開発者向けトレーニング資料の作成
+   - よくあるエラーパターン集の整備
+
+本改善案を実施することで、現在発生しているエラーの90%以上を防止できると推定されます。

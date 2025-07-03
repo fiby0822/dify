@@ -1,0 +1,89 @@
+コンポーネント記述ルール: パラメータ抽出
+
+■ブロック概要
+非構造化テキストから構造化データ（パラメータ）を抽出するノード。LLMを使用して、指定されたスキーマに従ってデータを抽出・構造化する。
+
+**重要**: 既存のコーディングルールでは使用禁止とされていますが、動作確認済みサンプルでは使用されています。代替手段としてLLMノードまたはcodeノードの使用も検討してください。
+
+■必須パラメータ
+- id: 意味のある名前（例: "param_extract_node", "data_parser"）
+- type: "parameter-extractor"（固定）
+- position:
+  - x: 任意の値
+  - y: 任意の値
+- data:
+  - model: モデル設定
+    - provider: プロバイダー名（例: "openai"）
+    - name: モデル名（例: "gpt-4o"）
+    - mode: 動作モード（"chat"）
+  - parameters: 抽出するパラメータの定義
+    - name: パラメータ名
+    - type: データ型（string/number/boolean/array[string]）
+    - description: パラメータの説明
+    - required: 必須フラグ
+
+
+■オプションパラメータ
+- reasoning_mode: 推論モードの有効化（true/false、デフォルトfalse）
+- instruction: 抽出時の追加指示
+
+■入力
+- query: 抽出対象のテキストデータ（変数参照）
+
+
+■出力
+定義したパラメータに従って抽出された構造化データ
+
+■使用例
+```yaml
+id: order_extraction_node
+type: parameter-extractor
+position:
+  x: 450
+  y: 200
+data:
+  model:
+    provider: openai
+    name: gpt-4o
+    mode: chat
+  parameters:
+    - name: "customer_name"
+      type: string
+      description: "顧客名"
+      required: true
+    - name: "order_date"
+      type: string
+      description: "注文日（YYYY-MM-DD形式）"
+      required: true
+    - name: "items"
+      type: array[string]
+      description: "注文商品リスト"
+      required: true
+    - name: "total_amount"
+      type: number
+      description: "合計金額"
+      required: true
+    - name: "is_urgent"
+      type: boolean
+      description: "緊急配送フラグ"
+      required: false
+  reasoning_mode: false
+  query:
+    variable_selector:
+      - llm_node
+      - text
+```
+
+
+■注意事項
+- 既存ルールでは使用禁止とされているが、動作確認済みサンプルでは使用されている
+- 代替手段：LLMノードでJSON出力を指定、またはcodeノードでパース処理
+- パラメータ名はsnake_caseで統一
+- 説明文は抽出精度に影響するため、明確に記述
+
+■ベストプラクティス
+- 明確な説明文を記載
+- 必須項目は最小限に
+- 抽出精度向上のための前処理を実施
+- 複雑なスキーマは避け、シンプルに保つ
+- 検証は後続のcodeノードで実施することを推奨

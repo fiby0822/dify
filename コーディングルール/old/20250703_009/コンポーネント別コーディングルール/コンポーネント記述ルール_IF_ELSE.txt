@@ -24,9 +24,7 @@
       - comparison_operator: 比較演算子
       - value: 比較値
       - varType: 変数タイプ（オプション、例: "file"）
-    - logical_operator: 論理演算子（"and"または"or"）
-      ※★絶対必須★ 条件が1つの場合でも省略不可
-      ※★最頻出エラー★ このフィールドの欠落がエラーの80%を占める
+    - logical_operator: 論理演算子（"and"または"or"）※★必須★ 条件が1つでも必要
   - selected: false（必須）
   - title: ノードタイトル（必須）
   - desc: ノードの説明（推奨）
@@ -353,25 +351,21 @@ IF-ELSEノードからのエッジでは、sourceHandleに以下の値を設定�
    - 症状: "logical_operator Field required"エラー
    - 原因: casesの各要素にlogical_operatorを忘れる
    - 対策: 必ずlogical_operator: "and"または"or"を設定
-   - 例（条件が1つでも必須）：
+   - 例：
    ```yaml
    # ❌ 間違い
    cases:
-     - case_id: 'urgent_case'
+     - case_id: 'true'
        conditions:
-         - variable_selector: [node, value]
-           comparison_operator: "<"
-           value: 10
-           # logical_operatorがない！エラーになる！
+         - comparison_operator: contains
+           # logical_operatorがない！
    
    # ✅ 正解
    cases:
-     - case_id: 'urgent_case'
+     - case_id: 'true'
        conditions:
-         - variable_selector: [node, value]
-           comparison_operator: "<"
-           value: 10
-       logical_operator: and  # ← 条件が1つでも絶対に必要！
+         - comparison_operator: contains
+       logical_operator: and  # 必須！
    ```
 2. ★頻出エラー★ 条件IDの欠落（※注：idフィールドはオプションであることが判明）
    - 症状: conditionsの各要素にidフィールドがない

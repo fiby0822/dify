@@ -1,0 +1,223 @@
+# Difyコーディングルール改善案
+作成日: 2025年7月3日
+分析基準: インポート失敗・クラッシュ・動作エラーの原因分析結果
+
+## 1. Google Sheets APIレスポンス構造の明確化（最重要）
+
+### 問題点
+- 全ケースでGoogle Sheetsデータアクセスのパス誤りが発生
+- `sheet_data[0].values` → エラー（'builtin_function_or_method' object is not iterable）
+- 正しくは `sheet_data[0]["valueRanges"][0]["values"]`
+
+### 改善案
+#### 01_基本構造とエラー防止.md に追加
+```markdown
+### Google Sheets batch_get APIレスポンス構造
+**重要**: Google Sheetsからのレスポンスは以下の階層構造を持つ
+
+```json
+{
+  "json": [
+    {
+      "spreadsheetId": "xxxxx",
+      "valueRanges": [
+        {
+          "range": "Sheet1!A1:C10",
+          "majorDimension": "ROWS",
+          "values": [
+            ["ヘッダー1", "ヘッダー2", "ヘッダー3"],
+            ["データ1", "データ2", "データ3"],
+            ...
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+**正しいアクセス方法**:
+```jinja2
+{# 成功例 - 必ずこの形式を使用 #}
+{% set rows = sheet_data[0]["valueRanges"][0]["values"] %}
+
+{# 失敗例 - 絶対に使用禁止 #}
+{% set rows = sheet_data[0].values %}  {# エラー: valuesプロパティは存在しない #}
+```
+```
+
+## 2. テンプレート記法のトラブルシューティング強化
+
+### 問題点
+- ピリオド記法（`object.property`）使用によるエラー多発
+- エラーハンドリングの具体例が不足
+
+### 改善案
+#### 03_変数とデータ管理.md に追加
+```markdown
+### テンプレート内でのアクセス記法（重要度：最高）
+
+**ブラケット記法のみを使用する**
+```jinja2
+{# 正しい - ブラケット記法 #}
+{{ data[0]["valueRanges"][0]["values"] }}
+
+{# 間違い - ピリオド記法（エラーの原因） #}
+{{ data[0].valueRanges[0].values }}
+```
+
+**エラーハンドリングの実装例**
+```jinja2
+{# 完全なエラーハンドリング例 #}
+{% if sheet_data and sheet_data|length > 0 %}
+  {% if sheet_data[0]["valueRanges"] is defined and sheet_data[0]["valueRanges"]|length > 0 %}
+    {% if sheet_data[0]["valueRanges"][0]["values"] is defined %}
+      {% set rows = sheet_data[0]["valueRanges"][0]["values"] %}
+      {% for row in rows %}
+        {{ row|join(',') }}
+      {% endfor %}
+    {% else %}
+      データが見つかりません
+    {% endif %}
+  {% else %}
+    valueRangesが見つかりません
+  {% endif %}
+{% else %}
+  sheet_dataが空です
+{% endif %}
+```
+```
+
+## 3. tool_parametersの型定義ルール明確化
+
+### 問題点
+- ケース4でPydantic検証エラー発生
+- tool_parametersの値を文字列で直接指定
+
+### 改善案
+#### 06_外部連携とツール.md に追加
+```markdown
+### Google Sheets tool_parameters設定（必須形式）
+
+**すべてのパラメータはtype/value構造で定義**
+```yaml
+# 正しい形式
+tool_parameters:
+  ranges:
+    type: mixed
+    value: '["シート名!A1:C10"]'  # 配列は文字列化されたJSON
+  spreadsheet_id:
+    type: mixed
+    value: "スプレッドシートID"
+  renderOption:
+    type: mixed
+    value: "FORMATTED_VALUE"
+
+# 間違った形式（エラー）
+tool_parameters:
+  ranges: "シート名!A1:C10"  # 直接文字列はNG
+  renderOption: FORMATTED_VALUE  # 型定義なしはNG
+```
+
+**provider_idとtool_nameの正しい組み合わせ**
+```yaml
+provider_type: marketplace_plugin
+provider_id: omluc/google_sheets/google_sheets  # 完全パス形式
+tool_name: batch_get  # 正しいツール名
+```
+```
+
+## 4. インポート時エラーチェックリストの追加
+
+### 問題点
+- インポート失敗の原因が多岐にわたる
+- 事前チェックリストが不足
+
+### 改善案
+#### 品質チェックリスト.md に追加
+```markdown
+## インポート前チェックリスト
+
+### 1. 変数参照記法の統一確認
+- [ ] template-transform内: `{{ 変数名 }}`形式のみ
+- [ ] その他のノード: `{{#ノードID.output#}}`形式のみ
+- [ ] 混在していないか確認
+
+### 2. Google Sheets関連
+- [ ] データアクセスパス: `[0]["valueRanges"][0]["values"]`
+- [ ] tool_parameters: すべてtype/value構造
+- [ ] provider_id: `omluc/google_sheets/google_sheets`
+
+### 3. dependencies記述
+- [ ] marketplace_plugin_unique_identifier使用
+- [ ] 古い形式（id/type個別記述）を使用していない
+
+### 4. テンプレート内記法
+- [ ] ブラケット記法のみ使用（ピリオド記法禁止）
+- [ ] Jinja2フィルター: スペースなし `|filter`
+```
+
+## 5. エラー事例集の新規作成
+
+### 改善案
+#### 新規ファイル: エラー事例と解決策.md
+```markdown
+# よくあるエラーと解決策
+
+## 1. TypeError: 'builtin_function_or_method' object is not iterable
+
+### 原因
+Google Sheetsデータアクセスパスの誤り
+
+### 解決策
+```jinja2
+{# 誤り #}
+{% for row in sheet_data[0].values %}
+
+{# 正解 #}
+{% set rows = sheet_data[0]["valueRanges"][0]["values"] %}
+{% for row in rows %}
+```
+
+## 2. Pydantic validation error for ToolNodeData
+
+### 原因
+tool_parametersの型定義不足
+
+### 解決策
+```yaml
+# すべてのパラメータにtype/valueを追加
+ranges:
+  type: mixed
+  value: '["シート名!A1:C10"]'
+```
+```
+
+## 6. 開発時の必須参照順序の明確化
+
+### 改善案
+#### 00_index.md に追加
+```markdown
+## 開発時の必須参照順序
+
+1. **エラー事例と解決策.md** - まず過去のエラーを確認
+2. **クラッシュ事項チェックリスト.md** - 致命的エラーを回避
+3. **該当コンポーネントのルール** - 具体的な実装方法
+4. **品質チェックリスト.md** - 最終確認
+
+この順序での確認により、エラー発生率を大幅に削減できます。
+```
+
+## まとめ
+
+### 優先度高の改善項目
+1. Google Sheets APIレスポンス構造の明確な文書化
+2. エラー事例集の作成と継続的な更新
+3. tool_parametersの型定義ルールの強化
+
+### 中期的改善項目
+1. 自動検証ツールの改良（validate_dify.py）
+2. テンプレートライブラリの作成
+3. 開発者向けトレーニング資料の整備
+
+これらの改善により、今回発見されたエラーパターンの再発を防ぎ、より安定したワークフロー開発が可能になります。

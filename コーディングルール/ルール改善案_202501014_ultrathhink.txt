@@ -1,0 +1,278 @@
+# Difyコーディングルール改善案
+作成日: 2025年1月14日
+分析対象: インポート失敗/動作エラー事例の分析結果に基づく
+
+## 1. 最優先改善事項（クラッシュ防止）
+
+### 1.1 Jinja2テンプレートのフィルター記法ルールの徹底
+
+#### 現状の問題
+- コーディングルールに記載はあるが、エラーが頻発している
+- ケース1〜3すべてで `{{ row | join(',') }}` のスペースエラーが発生
+
+#### 改善案
+**「03_変数とデータ管理.md」に以下を追加：**
+
+```markdown
+### 1.2.1 Jinja2フィルターの絶対禁止事項（違反するとクラッシュ）
+
+**パイプ記号（|）とフィルター名の間にスペースを入れることは絶対禁止**
+
+❌ 絶対にやってはいけない例（必ずクラッシュ）:
+- `{{ variable | join(',') }}`  → TypeError: 'builtin_function_or_method' object is not iterable
+- `{{ data | tojson }}`         → 同上
+- `{{ text | trim | upper }}`   → 同上
+
+✅ 正しい例（スペースなし）:
+- `{{ variable|join(',') }}`
+- `{{ data|tojson }}`
+- `{{ text|trim|upper }}`
+
+**自動チェック方法:**
+正規表現パターン `\|\s+\w` で検索し、該当箇所がないことを確認
+```
+
+**「クラッシュ事項チェックリスト.md」の最頻出TOP1として掲載**
+
+
+### 1.2 Google Sheets batch_get APIレスポンス構造の明文化
+
+#### 現状の問題
+- 4つの動作エラーケースのうち3つが同じ原因
+- `sheet_data[0].values` という誤った参照方法
+- 成功例では正しい参照方法が使われているが、ルールに記載なし
+
+#### 改善案
+**「06_外部連携とツール.md」に新セクション追加：**
+
+```markdown
+## 6.5 Google Sheets batch_get APIのレスポンス構造
+
+### 6.5.1 基本構造
+batch_getノードの出力（json）は以下の構造を持ちます：
+
+```json
+{
+  "json": [
+    {
+      "spreadsheetId": "xxxxx",
+      "valueRanges": [
+        {
+          "range": "Sheet1!A1:C10",
+          "majorDimension": "ROWS",
+          "values": [
+            ["ヘッダー1", "ヘッダー2", "ヘッダー3"],
+            ["データ1", "データ2", "データ3"],
+            ...
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+### 6.5.2 正しいデータアクセス方法
+
+**template-transformノードでの参照:**
+```yaml
+variables:
+  - value_selector:
+      - batch_get_node
+      - json
+    variable: sheet_data
+
+template: |
+  {% set rows = sheet_data[0]["valueRanges"][0]["values"] %}
+  {% for row in rows %}
+  {{ row|join(',') }}
+  {% endfor %}
+```
+
+**重要な注意点:**
+1. 必ず `[0]["valueRanges"][0]["values"]` のパスでアクセス
+2. ピリオド記法（.values）は使用不可
+3. ブラケット記法（["values"]）を使用
+4. フィルター使用時はスペースなし
+
+### 6.5.3 エラーハンドリング付きテンプレート
+```yaml
+template: |
+  {% if sheet_data and sheet_data[0] and sheet_data[0]["valueRanges"] and sheet_data[0]["valueRanges"][0]["values"] %}
+  {% set rows = sheet_data[0]["valueRanges"][0]["values"] %}
+  {% for row in rows %}
+  {{ row|join(',') }}
+  {% endfor %}
+  {% else %}
+  データが見つかりません
+  {% endif %}
+```
+```
+
+**「品質チェックリスト.md」にGoogle Sheets関連チェック項目を追加**
+
+
+### 1.3 変数参照記法の統一強化
+
+#### 現状の問題
+- LLMノードのプロンプトで `{{ sheet_data }}` のような誤った記法
+- 正しくは `{{#transform_data_node.output#}}` であるべき
+
+#### 改善案
+**「03_変数とデータ管理.md」の「1.3 変数参照記法の完全対応表」を拡張：**
+
+```markdown
+### 1.3.1 Google Sheets関連の変数参照パターン
+
+| 使用場所 | 正しい参照方法 | よくある間違い |
+|---------|--------------|--------------|
+| template-transform内でのbatch_get出力 | `{{ sheet_data[0]["valueRanges"][0]["values"] }}` | `{{ sheet_data[0].values }}` |
+| LLMプロンプト内でのtemplate出力 | `{{#transform_node.output#}}` | `{{ transform_node.output }}` |
+| answerノードでのLLM出力 | `{{#llm_node.text#}}` | `{{ llm_node.text }}` |
+```
+
+
+## 2. インポート失敗防止の改善
+
+### 2.1 dependencies形式の明確化
+
+#### 現状の問題
+- インポート失敗の原因の一つがdependencies形式の誤り
+- 正しい形式がルールに明記されていない
+
+#### 改善案
+**「01_基本構造とエラー防止.md」に追加：**
+
+```markdown
+### 3.5 dependenciesセクションの正しい記述
+
+#### Google Sheets連携の場合
+```yaml
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+```
+
+**重要:**
+- `current_identifier: null` は必須
+- `type: marketplace` は必須
+- `value` オブジェクト内に `marketplace_plugin_unique_identifier` を配置
+- 単純な文字列形式 `- omluc/google_sheets:0.0.2` は使用不可
+```
+
+
+### 2.2 ツールパラメータの型指定ルール
+
+#### 現状の問題
+- ケース4で tool_parameters の型エラー
+- 文字列を直接指定しているため validation error
+
+#### 改善案
+**「06_外部連携とツール.md」に追加：**
+
+```markdown
+### 6.3 ツールパラメータの正しい記述方法
+
+**必須構造:**
+```yaml
+tool_parameters:
+  パラメータ名:
+    type: mixed  # または string, number など
+    value: 値    # 実際の値
+```
+
+**Google Sheets batch_get の例:**
+```yaml
+tool_parameters:
+  ranges:
+    type: mixed
+    value: '["シート名!A1:C10"]'  # JSON配列形式の文字列
+  spreadsheet_id:
+    type: mixed
+    value: "スプレッドシートID"
+```
+
+**よくある間違い:**
+```yaml
+# ❌ 型指定なしの直接指定（エラー）
+tool_parameters:
+  ranges: "シート名!A1:C10"
+  
+# ✅ 正しい型指定
+tool_parameters:
+  ranges:
+    type: mixed
+    value: '["シート名!A1:C10"]'
+```
+```
+
+
+## 3. 品質チェックリストの強化
+
+### 3.1 Google Sheets特化チェック項目
+
+**「品質チェックリスト.md」に新セクション追加：**
+
+```markdown
+## 10. Google Sheets連携チェック
+
+### 10.1 batch_get使用時
+- [ ] dependenciesが正しい形式で記述されている
+- [ ] tool_parametersで type と value の構造を使用
+- [ ] rangesの値がJSON配列形式 '["範囲"]'
+- [ ] template-transformで正しいパス [0]["valueRanges"][0]["values"] を使用
+- [ ] フィルター使用時にスペースがない
+
+### 10.2 batch_update使用時
+- [ ] dataパラメータが正しいJSON構造
+- [ ] 変数参照が {{#node.output#}} 形式
+```
+
+
+## 4. 成功例の活用
+
+### 4.1 テンプレートライブラリの作成
+
+**新規ファイル作成を提案：**
+`/コーディングルール/成功パターンテンプレート/GoogleSheets_batch_get_template.yml`
+
+成功例の重要部分を抽出してテンプレート化し、開発者が参照できるようにする。
+
+
+## 5. エラー防止の自動化提案
+
+### 5.1 検証スクリプトの改善
+
+既存の検証ツール（validate_dify.py）に以下のチェックを追加：
+
+1. Jinja2フィルターのスペースチェック（正規表現: `\|\s+\w`）
+2. Google Sheets参照パスのチェック
+3. 変数参照記法の統一性チェック
+4. dependencies形式の検証
+
+
+## 6. ドキュメント更新の優先順位
+
+1. **最優先**: クラッシュ事項チェックリスト.md - Jinja2フィルタースペース問題を最上位に
+2. **優先**: 03_変数とデータ管理.md - Google Sheets参照方法の追加
+3. **重要**: 06_外部連携とツール.md - batch_get構造の明文化
+4. **推奨**: 品質チェックリスト.md - Google Sheets専用セクション追加
+
+
+## まとめ
+
+今回の分析で判明した最大の問題は、**Jinja2フィルターのスペース問題**と**Google Sheets APIレスポンス構造の理解不足**です。これらは既存のコーディングルールでは十分にカバーされていないため、優先的に改善が必要です。
+
+特に、成功例（在庫管理判定ワークフロー_成功例.yml）で使用されている以下のパターンをルールに反映することが重要です：
+
+```yaml
+template: |
+  {% set rows = sheet_data[0]["valueRanges"][0]["values"] %}
+  {% for row in rows %}
+  {{ row|join(',') }}{% if not loop.last %}\n{% endif %}
+  {% endfor %}
+```
+
+このパターンを標準として採用し、全開発者に周知することで、エラーの大幅な削減が期待できます。
