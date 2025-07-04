@@ -1,0 +1,259 @@
+app:
+  description: "営業案件の金額、納期、顧客ランクに基づいて優先度を自動判定し、適切な対応指示を出力するワークフローです。"
+  icon: "📊"
+  icon_background: "#FFD43B"
+  mode: advanced-chat
+  name: "営業案件優先度判定システム"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "案件金額1500万円、納期5日、顧客ランクAの場合の優先度を判定してください"
+      - "案件金額700万円、納期20日、顧客ランクBの場合の対応方法を教えてください"
+      - "案件金額300万円、納期40日、顧客ランクCの場合どう対応すべきですか"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+    opening_statement: "営業案件の優先度を判定します。以下の情報を入力してください：\n\n1. 案件金額（万円）\n2. 納期までの日数\n3. 顧客ランク（A/B/C）\n\n例：「案件金額1000万円、納期7日、顧客ランクA」"
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-parse-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: parse_input_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: if-else
+        id: parse-priority-edge
+        selected: false
+        source: parse_input_node
+        sourceHandle: source
+        target: priority_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: priority-urgent-edge
+        selected: false
+        source: priority_check_node
+        sourceHandle: urgent_case
+        target: urgent_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: priority-high-edge
+        selected: false
+        source: priority_check_node
+        sourceHandle: high_priority_case
+        target: high_priority_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: priority-normal-edge
+        selected: false
+        source: priority_check_node
+        sourceHandle: "false"
+        target: normal_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "開始ノード"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          completion_params:
+            max_tokens: 1000
+            temperature: 0.3
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "入力データの解析と優先度判定"
+          model:
+            mode: chat
+            name: gpt-3.5-turbo
+            provider: openai
+          prompt_template:
+            - id: prompt_1
+              role: system
+              text: "あなたは営業案件の優先度を判定する専門家です。ユーザーの入力から案件情報を抽出し、以下の基準で優先度を判定してください：\n\n【最優先案件】金額1000万円以上 かつ 納期7日以内\n【優先案件】金額500万円以上 または (納期14日以内 かつ 顧客ランクA)\n【通常案件】上記以外\n\n必ず以下の形式で出力してください：\n優先度: [最優先/優先/通常]\n案件金額: [数値]万円\n納期日数: [数値]日\n顧客ランク: [A/B/C]"
+            - id: prompt_2
+              role: user
+              text: "{{#sys.query#}}"
+          selected: false
+          structured_output_enabled: false
+          title: "入力データ解析"
+          type: llm
+          variables: []
+          vision:
+            enabled: false
+        height: 161
+        id: parse_input_node
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - id: urgent_case
+              case_id: urgent_case
+              conditions:
+                - id: urgent_check
+                  variable_selector:
+                    - parse_input_node
+                    - text
+                  comparison_operator: contains
+                  value: "優先度: 最優先"
+              logical_operator: and
+            - id: high_priority_case
+              case_id: high_priority_case
+              conditions:
+                - id: priority_check
+                  variable_selector:
+                    - parse_input_node
+                    - text
+                  comparison_operator: contains
+                  value: "優先度: 優先"
+              logical_operator: and
+          desc: "優先度判定"
+          selected: false
+          title: "優先度チェック"
+          type: if-else
+        height: 198
+        id: priority_check_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【最優先案件】\n\n{{#parse_input_node.text#}}\n\n判定結果：最優先対応が必要です。\n\n対応指示：\n即座に営業部長に報告し、専任チームを編成してください。\n\n理由：\n- 案件金額が1000万円以上\n- 納期が7日以内\n\nこの案件は売上への影響が極めて大きく、かつ時間的制約も厳しいため、組織全体で最優先で対応する必要があります。"
+          desc: "最優先案件の回答"
+          selected: false
+          title: "最優先案件回答"
+          type: answer
+          variables: []
+        height: 107
+        id: urgent_answer_node
+        position:
+          x: 950
+          y: 50
+        positionAbsolute:
+          x: 950
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【優先案件】\n\n{{#parse_input_node.text#}}\n\n判定結果：優先的な対応が必要です。\n\n対応指示：\n営業マネージャーに報告し、優先的にリソースを割り当ててください。\n\n理由：\n- 案件金額が500万円以上、または\n- 納期が14日以内、かつ顧客ランクがA\n\nこの案件は重要度が高いため、通常案件より優先して対応し、適切なリソース配分を行ってください。"
+          desc: "優先案件の回答"
+          selected: false
+          title: "優先案件回答"
+          type: answer
+          variables: []
+        height: 107
+        id: high_priority_answer_node
+        position:
+          x: 950
+          y: 200
+        positionAbsolute:
+          x: 950
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【通常案件】\n\n{{#parse_input_node.text#}}\n\n判定結果：通常対応で問題ありません。\n\n対応指示：\n通常の営業プロセスに従って対応してください。\n\n理由：\n- 案件金額が500万円未満\n- 納期に余裕がある（14日超）\n- または顧客ランクがB/C\n\n標準的な営業活動の一環として、計画的に進めてください。必要に応じて他の優先案件との調整を行ってください。"
+          desc: "通常案件の回答"
+          selected: false
+          title: "通常案件回答"
+          type: answer
+          variables: []
+        height: 107
+        id: normal_answer_node
+        position:
+          x: 950
+          y: 350
+        positionAbsolute:
+          x: 950
+          y: 350
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

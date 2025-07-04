@@ -1,0 +1,174 @@
+# コーディングルール改善案 - 音声認識・画像認識機能の追加
+作成日: 2025年1月4日
+
+## 改善概要
+音声認識（OpenAI Audio）と画像認識（Vision/OCR）に関するルールを整理し、マーケットプレイスプラグインの使用許可を明確化する。
+
+## 1. 外部連携とツール.md への追加事項
+
+### 24.2 マーケットプレイスプラグイン一覧（更新）
+
+現在の記載：
+```
+| プラグイン名 | 用途 | 最新バージョン |
+|-------------|-----|---------------|
+| @langgenius/google-sheets | Google Sheets操作 | 1.0.0 |
+| @langgenius/slack | Slackメッセージ送信 | 1.0.0 |
+| @langgenius/github | GitHub操作 | 1.0.0 |
+```
+
+改善案：
+```
+| プラグイン名 | 用途 | 最新バージョン | 識別子 |
+|-------------|-----|---------------|--------|
+| @langgenius/google-sheets | Google Sheets操作 | 1.0.0 | - |
+| lysonober/openai_audio | 音声認識・文字起こし | 0.0.4 | lysonober/openai_audio:0.0.4@2a7bc1307f6d4337b597cafe1c75f20e0fabf0dd8132a0a4e04496b3c949c86c |
+| langgenius/openai | OpenAI API（Vision含む） | 0.0.26 | langgenius/openai:0.0.26@c1e643ac6a7732f6333a783320b4d3026fa5e31d8e7026375b98d44418d33f26 |
+```
+
+### 26.6 音声認識ツールの使用（新規追加）
+
+```yaml
+#### 26.6.1 前提条件
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: lysonober/openai_audio:0.0.4@2a7bc1307f6d4337b597cafe1c75f20e0fabf0dd8132a0a4e04496b3c949c86c
+
+#### 26.6.2 音声文字起こしツールの設定例
+- data:
+    type: tool
+    title: "音声文字起こし"
+    provider_id: lysonober/openai_audio/openai_audio_stt
+    provider_type: builtin  # marketplaceではなくbuiltin
+    provider_name: lysonober/openai_audio/openai_audio_stt
+    tool_name: openai_audio_stt
+    tool_label: 音声文字起こし
+    desc: "音声ファイルをテキストに変換"
+    is_team_authorization: false
+    tool_configurations:
+      model: gpt-4o-transcribe  # 推奨モデル
+      output_format: default
+      response_format: text
+      stream: 1
+      timestamp_granularities: none
+      transcription_type: transcribe
+    tool_parameters:
+      file:
+        type: variable
+        value: [sys, files]
+      language:
+        type: mixed
+        value: "ja"  # 日本語音声の場合
+      prompt:
+        type: mixed
+        value: "音声ファイルを文字起こししてください"
+
+#### 26.6.3 音声認識の注意事項
+- ファイルサイズ制限：25MB
+- サポート形式：MP3、MP4、MPEG、MPGA、M4A、WAV、WEBM
+- 翻訳機能（translate）はwhisper-1モデルのみサポート
+- ストリーミング（stream: 1）はGPT-4oモデルのみサポート
+```
+
+## 2. 01_基本構造とエラー防止.md への追加事項
+
+### 0.6 許可されているマーケットプレイスプラグイン（新規追加）
+
+```markdown
+以下のマーケットプレイスプラグインのみ使用が許可されています：
+
+1. **Google Sheets操作**
+   - 識別子: omluc/google_sheets
+   - 用途: スプレッドシートの読み書き
+
+2. **音声認識（OpenAI Audio）**
+   - 識別子: lysonober/openai_audio:0.0.4@2a7bc1307f6d4337b597cafe1c75f20e0fabf0dd8132a0a4e04496b3c949c86c
+   - 用途: 音声ファイルの文字起こし・翻訳
+   - 注意: provider_typeは"builtin"を使用
+
+3. **OpenAI API（Vision機能含む）**
+   - 識別子: langgenius/openai:0.0.26@c1e643ac6a7732f6333a783320b4d3026fa5e31d8e7026375b98d44418d33f26
+   - 用途: 画像認識・OCR処理（LLMのvision機能経由）
+
+上記以外のマーケットプレイスプラグインの使用は禁止されています。
+```
+
+## 3. 品質チェックリスト.md への追加事項
+
+### 音声・画像処理の品質チェック項目（新規追加）
+
+```markdown
+## 12. 音声・画像処理機能
+
+### 音声認識
+- [ ] dependencies に lysonober/openai_audio が正しく定義されているか
+- [ ] provider_type が "builtin" になっているか（"marketplace"ではない）
+- [ ] file_upload で audio タイプが許可されているか
+- [ ] 音声ファイルサイズ制限が適切に設定されているか（25MB以下）
+- [ ] モデル選択が用途に適しているか（gpt-4o-transcribe推奨）
+
+### 画像認識・OCR
+- [ ] LLMノードで vision.enabled: true が設定されているか
+- [ ] vision対応モデル（gpt-4o等）が選択されているか
+- [ ] file_upload で image タイプが許可されているか
+- [ ] detail設定がOCR用途に適しているか（high推奨）
+- [ ] プロンプトで出力形式（CSV、JSON等）が明確に指定されているか
+```
+
+## 4. コンポーネント別ルールの微調整
+
+### コンポーネント記述ルール_音声認識.txt（追記）
+
+既存のルールはほぼ完成しているため、以下の点のみ追記：
+
+```
+■マーケットプレイス使用の承認
+このプラグインは公式に承認されたマーケットプレイスツールです。
+dependencies での定義が必須ですが、使用が許可されています。
+```
+
+### コンポーネント記述ルール_画像認識.txt（追記）
+
+```
+■OpenAIプラグインの使用について
+langgenius/openai プラグインは、Vision機能を含むOpenAI APIの利用に必要です。
+このプラグインは公式に承認されており、画像認識・OCR機能で使用可能です。
+```
+
+## 5. 実装時の注意事項（まとめ）
+
+### 音声認識実装時
+1. dependencies セクションに音声認識プラグインを必ず追加
+2. provider_type は "builtin" を使用（"marketplace" は無効）
+3. file_upload 設定で audio タイプを許可
+4. 用途に応じたモデル選択（通常はgpt-4o-transcribe）
+
+### 画像認識実装時
+1. LLMノードの vision 機能を使用（専用ノードではない）
+2. vision.enabled: true を必ず設定
+3. file_upload 設定で image タイプを許可
+4. OCR用途では detail: "high" を推奨
+5. OpenAIプラグイン（langgenius/openai）の dependencies 定義は任意
+
+## 6. 推奨ワークフローパターン
+
+### 音声認識ワークフロー
+```
+start_node → file_check → audio_transcription_tool → text_processing → answer
+```
+
+### 画像認識（OCR）ワークフロー
+```
+start_node → file_check → ocr_llm_vision → csv_generation → answer
+```
+
+### 複合処理ワークフロー（音声＋画像）
+```
+start_node → file_type_check → routing_node → 
+  ├─ audio_path → transcription → merger →
+  └─ image_path → ocr_vision ────────────┘ → final_processing → answer
+```
+
+以上の改善により、音声認識と画像認識機能の実装がより明確になり、エラーを防止できます。

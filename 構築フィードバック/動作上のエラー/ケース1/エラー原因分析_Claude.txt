@@ -1,81 +1,50 @@
-# ケース1: 営業日報分析_最終版_5865.yml エラー原因分析
+# ケース1: 営業日報集計システム_GoogleSheets検証用.yml エラー原因分析
 
-## エラー概要
-- **エラータイプ**: Jinja2テンプレートレンダリングエラー
-- **発生箇所**: template-transformノード（transform_data_node、format_output_node）
+## エラー内容
+- TypeError: 'builtin_function_or_method' object is not iterable
+- Jinja2テンプレートエラー（line 10）
 
-## 主要なエラー原因
+## エラー発生箇所
+template-transformノード（ID: transform_data_node）の以下のテンプレート:
 
-### 1. transform_data_node（行199-204）での問題
-```yaml
-template: |
-  取得データ（CSV形式）：
-  {% for row in sheet_data[0].values %}
-  {{ row | join(',') }}
-  {% endfor %}
+```
+取得データ（CSV形式）：
+{% for row in sheet_data[0].values %}
+{{ row | join(',') }}
+{% endfor %}
 ```
 
-**問題点**:
-- `sheet_data[0].values`へのアクセスが失敗
-- Google Sheets APIレスポンスの構造が想定と異なる
-- エラーハンドリングが不十分（データが存在しない場合の対処なし）
-- Jinja2フィルター記法のスペース問題（`| join` → `|join`）
+## エラー原因
+1. **変数参照の誤り**：
+   - 変数定義では `variable: sheet_data` としているが、これは配列オブジェクト
+   - `sheet_data[0].values` でアクセスしようとしているが、batch_getノードからの出力は `json` という形式
+   - 正しい参照方法は成功例に示されている通り、`sheet_data[0]["valueRanges"][0]["values"]` の形式
 
-### 2. format_output_node（行292-298）での問題
-```yaml
-template: |
-  {% set parsed_result = analysis_result | default('{}') %}
-  {% if parsed_result %}
-  [{"range": "OUTPUT!A1:C10", "values": {{ parsed_result }}}]
-  {% else %}
-  [{"range": "OUTPUT!A1:C10", "values": [["エラー", "分析結果の取得に失敗しました"]]}]
-  {% endif %}
+2. **データ構造の不適切な参照**：
+   - Google Sheets batch_getの戻り値は複雑な入れ子構造
+   - "valueRanges" というキーの中に実際のデータが含まれる
+
+3. **その他の問題点**：
+   - LLM promptでの変数参照が`{{ sheet_data }}`となっているが、これは`{{#transform_data_node.output#}}`であるべき
+   - 変数参照記法の不統一（`{{ variable }}`と`{{#node.output#}}`の混在）
+
+## 成功例との比較
+成功例（在庫管理判定ワークフロー_成功例.yml）では:
+```
+{% set rows = sheet_data[0]["valueRanges"][0]["values"] %}
+```
+と正しくデータを取得している。
+
+## 修正案
+```
+取得データ（CSV形式）：
+{% set rows = sheet_data[0]["valueRanges"][0]["values"] %}
+{% for row in rows %}
+{{ row | join(',') }}
+{% endfor %}
 ```
 
-**問題点**:
-- `analysis_result`が文字列として渡されているが、JSONオブジェクトとして処理
-- JSONパース処理が欠落
-- `default('{}')` フィルターが期待通りに動作しない
-
-## 根本原因
-
-1. **データ構造の不一致**
-   - Google Sheets APIからのレスポンス構造の理解不足
-   - `.values`がプロパティではなくメソッドとして扱われている可能性
-   - 変数の型や構造の検証が行われていない
-
-2. **エラーハンドリングの欠如**
-   - Jinja2テンプレート内でのnullチェックや存在確認が不十分
-   - データが期待通りでない場合の代替処理がない
-
-3. **Jinja2記法の問題**
-   - フィルター使用時のスペース問題
-   - ドット記法とブラケット記法の混在
-
-## 修正提案
-
-1. **transform_data_nodeの修正**:
-```jinja2
-{% if sheet_data and sheet_data[0] and 'values' in sheet_data[0] %}
-  {% for row in sheet_data[0]['values'] %}
-    {{ row|join(',') }}
-  {% endfor %}
-{% else %}
-  エラー: データが取得できませんでした
-{% endif %}
-```
-
-2. **format_output_nodeの修正**:
-```jinja2
-{% if analysis_result %}
-  {% set parsed_result = analysis_result|from_json|default({}) %}
-  [{"range": "OUTPUT!A1:C10", "values": {{ parsed_result|tojson }}}]
-{% else %}
-  [{"range": "OUTPUT!A1:C10", "values": [["エラー", "分析結果の取得に失敗しました"]]}]
-{% endif %}
-```
-
-3. **追加の改善点**:
-   - Google Sheets APIレスポンスの構造を事前確認
-   - 全てのJinja2フィルターでスペースを削除
-   - ブラケット記法での安全なアクセス
+## 推奨事項
+1. 変数参照は`{{#ノードID.output#}}`形式に統一
+2. Google Sheetsのレスポンス構造を正しく理解し、適切なパスでアクセス
+3. データ存在チェックの追加（`{% if sheet_data and sheet_data[0]["valueRanges"] %}`）

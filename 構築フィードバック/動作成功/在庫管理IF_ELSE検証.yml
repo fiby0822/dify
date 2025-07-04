@@ -1,0 +1,352 @@
+app:
+  description: IF_ELSEコンポーネントの動作検証用ワークフロー。在庫数に応じて4つの条件分岐（10個以下、11-50個、51-100個、101個以上）を行い、適切なメッセージを返します。
+  icon: 📦
+  icon_background: '#FFEAD5'
+  mode: advanced-chat
+  name: 在庫管理IF_ELSE検証
+  use_icon_as_answer_icon: true
+dependencies: []
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .jpg
+      - .jpeg
+      - .png
+      - .gif
+      - .webp
+      - .svg
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+    opening_statement: |-
+      在庫管理システムへようこそ。
+      商品の在庫数を入力してください。
+      在庫状況に応じて適切なアドバイスをお伝えします。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: start
+        targetType: llm
+      id: start-llm
+      selected: false
+      source: start_node
+      sourceHandle: source
+      target: inventory_input_node
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: if-else
+      id: llm-ifelse
+      selected: false
+      source: inventory_input_node
+      sourceHandle: source
+      target: inventory_check_node
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: answer
+      id: ifelse-urgent
+      selected: false
+      source: inventory_check_node
+      sourceHandle: urgent_case
+      target: urgent_order_node
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: answer
+      id: ifelse-normal
+      selected: false
+      source: inventory_check_node
+      sourceHandle: normal_case
+      target: normal_order_node
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: answer
+      id: ifelse-optimal
+      selected: false
+      source: inventory_check_node
+      sourceHandle: optimal_case
+      target: optimal_stock_node
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: answer
+      id: ifelse-excess
+      selected: false
+      source: inventory_check_node
+      sourceHandle: "false"
+      target: excess_stock_node
+      zIndex: 0
+    nodes:
+    - data:
+        desc: システムの開始点
+        selected: false
+        title: 開始
+        type: start
+        variables: []
+      height: 54
+      id: start_node
+      position:
+        x: 50
+        y: 200
+      positionAbsolute:
+        x: 50
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: ユーザー入力から在庫数を抽出
+        memory:
+          query_prompt_template: ''
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: false
+            size: 50
+        model:
+          completion_params:
+            temperature: 0.3
+          mode: chat
+          name: gpt-3.5-turbo
+          provider: openai
+        prompt_template:
+        - id: system_prompt
+          role: system
+          text: あなたは在庫管理アシスタントです。ユーザーの入力から在庫数（数値）を抽出してください。数値が含まれていない場合は、在庫数を尋ねてください。
+        - id: user_prompt
+          role: user
+          text: '{{#sys.query#}}'
+        selected: false
+        title: 在庫数入力処理
+        type: llm
+        variables:
+        - variable: inventory_count
+          value_selector:
+          - inventory_input_node
+          - text
+        vision:
+          enabled: false
+      height: 98
+      id: inventory_input_node
+      position:
+        x: 350
+        y: 200
+      positionAbsolute:
+        x: 350
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        cases:
+        - case_id: urgent_case
+          conditions:
+          - comparison_operator: "is"
+            id: urgent_condition
+            value: 緊急発注が必要
+            variable_selector:
+            - inventory_input_node
+            - text
+          id: urgent_case
+          logical_operator: and
+        - case_id: normal_case
+          conditions:
+          - comparison_operator: "is"
+            id: normal_condition
+            value: 通常発注を検討
+            variable_selector:
+            - inventory_input_node
+            - text
+          id: normal_case
+          logical_operator: and
+        - case_id: optimal_case
+          conditions:
+          - comparison_operator: "is"
+            id: optimal_condition
+            value: 在庫適正
+            variable_selector:
+            - inventory_input_node
+            - text
+          id: optimal_case
+          logical_operator: and
+        desc: 在庫数に応じた条件分岐（10個以下：緊急発注、11-50個：通常発注、51-100個：在庫適正、101個以上：在庫過多）
+        selected: false
+        title: 在庫条件分岐
+        type: if-else
+      height: 226
+      id: inventory_check_node
+      position:
+        x: 650
+        y: 200
+      positionAbsolute:
+        x: 650
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: |-
+          🚨 **緊急発注が必要です！**
+          
+          現在の在庫数が10個以下となっています。
+          
+          **推奨アクション：**
+          - 至急、優先度を上げて発注手続きを行ってください
+          - 発注数量は通常より多めに設定することをお勧めします
+          - 納期の短縮交渉を検討してください
+          - 代替商品の確保も並行して進めてください
+        desc: 在庫10個以下の場合の緊急メッセージ
+        selected: false
+        title: 緊急発注メッセージ
+        type: answer
+        variables: []
+      height: 107
+      id: urgent_order_node
+      position:
+        x: 950
+        y: 50
+      positionAbsolute:
+        x: 950
+        y: 50
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: |-
+          📋 **通常発注を検討してください**
+          
+          現在の在庫数は11-50個の範囲です。
+          
+          **推奨アクション：**
+          - 通常の発注サイクルで補充を計画してください
+          - 需要予測を確認し、適切な発注数量を決定してください
+          - コスト効率を考慮した発注タイミングを検討してください
+          - 在庫回転率の改善機会を探ってください
+        desc: 在庫11-50個の場合の通常発注メッセージ
+        selected: false
+        title: 通常発注メッセージ
+        type: answer
+        variables: []
+      height: 107
+      id: normal_order_node
+      position:
+        x: 950
+        y: 200
+      positionAbsolute:
+        x: 950
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: |-
+          ✅ **在庫は適正水準です**
+          
+          現在の在庫数は51-100個の最適範囲にあります。
+          
+          **推奨アクション：**
+          - 現在の在庫管理方針を継続してください
+          - 定期的な在庫確認を継続してください
+          - 需要の変化に注意を払ってください
+          - 在庫の品質管理にも注意を向けてください
+        desc: 在庫51-100個の場合の適正メッセージ
+        selected: false
+        title: 在庫適正メッセージ
+        type: answer
+        variables: []
+      height: 107
+      id: optimal_stock_node
+      position:
+        x: 950
+        y: 350
+      positionAbsolute:
+        x: 950
+        y: 350
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: |-
+          ⚠️ **在庫過多の状態です**
+          
+          現在の在庫数が101個以上となっています。
+          
+          **推奨アクション：**
+          - 発注を一時停止することを検討してください
+          - 販売促進キャンペーンの実施を検討してください
+          - 在庫保管コストの削減方法を検討してください
+          - 商品の劣化リスクに注意し、先入先出を徹底してください
+          - 他店舗や他部門への在庫移動も選択肢として検討してください
+        desc: 在庫101個以上の場合の過多メッセージ
+        selected: false
+        title: 在庫過多メッセージ
+        type: answer
+        variables: []
+      height: 107
+      id: excess_stock_node
+      position:
+        x: 950
+        y: 500
+      positionAbsolute:
+        x: 950
+        y: 500
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

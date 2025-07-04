@@ -1,0 +1,402 @@
+app:
+  description: Google Sheetsを使用して在庫管理を行う動作検証用ワークフロー。商品名と在庫数を入力すると、スプレッドシートの在庫データを更新します。
+  icon: 📦
+  icon_background: '#FBE8D3'
+  mode: advanced-chat
+  name: 在庫管理GoogleSheets検証
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions: []
+      allowed_file_types:
+      - document
+      allowed_upload_methods:
+      - local_file
+      enabled: false
+      max_file_size: 15
+      number_limits: 3
+    opening_statement: "在庫管理システムへようこそ！\n\n商品名と在庫数を入力してください。\n例：「商品A」の在庫を「100」に更新"
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+    - 商品Aの在庫を150個に更新してください
+    - 新商品「商品Z」を在庫50個で登録してください
+    - 現在の在庫一覧を確認したい
+    text_to_speech:
+      enabled: false
+      language: ""
+      voice: ""
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: start
+        targetType: tool
+      id: start_node-google_sheets_read
+      selected: false
+      source: start_node
+      sourceHandle: source
+      target: google_sheets_read
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: template-transform
+      id: google_sheets_read-transform_to_csv
+      selected: false
+      source: google_sheets_read
+      sourceHandle: source
+      target: transform_to_csv
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: template-transform
+        targetType: llm
+      id: transform_to_csv-llm_processor
+      selected: false
+      source: transform_to_csv
+      sourceHandle: source
+      target: llm_processor
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: template-transform
+      id: llm_processor-transform_to_json
+      selected: false
+      source: llm_processor
+      sourceHandle: source
+      target: transform_to_json
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: template-transform
+        targetType: tool
+      id: transform_to_json-google_sheets_write
+      selected: false
+      source: transform_to_json
+      sourceHandle: source
+      target: google_sheets_write
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: answer
+      id: google_sheets_write-answer_node
+      selected: false
+      source: google_sheets_write
+      sourceHandle: source
+      target: answer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: ''
+        selected: false
+        title: 開始
+        type: start
+        variables: []
+      height: 54
+      id: start_node
+      position:
+        x: 50
+        y: 200
+      positionAbsolute:
+        x: 50
+        y: 200
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        type: tool
+        provider_id: omluc/google_sheets/google_sheets
+        provider_name: omluc/google_sheets/google_sheets
+        provider_type: builtin
+        tool_label: Batch Get
+        tool_name: batch_get
+        tool_description: Retrieve data from multiple ranges in a Google Sheet
+        is_team_authorization: true
+        output_schema: null
+        paramSchemas:
+        - name: spreadsheet_id
+          type: string
+          required: true
+          label:
+            en_US: Spreadsheet ID
+            ja_JP: Spreadsheet ID
+          human_description:
+            en_US: The ID of the Google Sheet (found in the URL)
+            ja_JP: The ID of the Google Sheet (found in the URL)
+          llm_description: The ID of the Google Sheet, which can be found in the sheet's URL
+        - name: ranges
+          type: mixed
+          required: true
+          label:
+            en_US: Ranges
+            ja_JP: Ranges
+          human_description:
+            en_US: The ranges to retrieve data from
+            ja_JP: The ranges to retrieve data from
+          llm_description: The ranges to retrieve data from
+        params:
+          spreadsheet_id: ''
+          ranges: ''
+        tool_configurations:
+          date_time_render_option: FORMATTED_STRING
+          major_dimension: null
+          value_render_option: null
+        tool_parameters:
+          ranges:
+            type: mixed
+            value: '["在庫管理!A1:B100"]'
+          spreadsheet_id:
+            type: mixed
+            value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+        selected: false
+        title: 在庫データ取得
+        desc: ''
+      height: 54
+      id: google_sheets_read
+      position:
+        x: 350
+        y: 200
+      positionAbsolute:
+        x: 350
+        y: 200
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        type: template-transform
+        template: |
+          {% if sheet_data and sheet_data[0] and sheet_data[0]["valueRanges"] and sheet_data[0]["valueRanges"][0] and sheet_data[0]["valueRanges"][0]["values"] %}
+          {% for row in sheet_data[0]["valueRanges"][0]["values"] %}
+          {{ row|join(',') }}
+          {% endfor %}
+          {% else %}
+          商品名,在庫数
+          {% endif %}
+        variables:
+        - value_selector:
+          - google_sheets_read
+          - json
+          value_type: array[object]
+          variable: sheet_data
+        selected: false
+        title: CSV形式に変換
+        desc: ''
+      height: 54
+      id: transform_to_csv
+      position:
+        x: 650
+        y: 200
+      positionAbsolute:
+        x: 650
+        y: 200
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        type: llm
+        prompt_template:
+        - edition_type: basic
+          id: 'prompt_1'
+          role: system
+          text: |
+            あなたは在庫管理システムのアシスタントです。
+            ユーザーからの商品名と在庫数の指示に基づいて、在庫データを更新します。
+            
+            現在の在庫データ（CSV形式）:
+            {{ csv_data }}
+            
+            ユーザーの指示に基づいて、以下の形式で更新後の在庫データを出力してください：
+            
+            1. 既存の商品の在庫を更新する場合は、その商品の在庫数を変更
+            2. 新しい商品を追加する場合は、リストの最後に追加
+            3. ヘッダー行（商品名,在庫数）は必ず最初に含める
+            
+            出力形式（CSV）:
+            商品名,在庫数
+            商品A,100
+            商品B,200
+            ...
+        - edition_type: basic
+          id: 'prompt_2'
+          role: user
+          text: "{{ user_query }}"
+        model:
+          completion_params:
+            temperature: 0.7
+            max_tokens: 1000
+          mode: chat
+          name: gpt-4o-mini
+          provider: openai
+        structured_output_enabled: false
+        variables: []
+        vision:
+          enabled: false
+        selected: false
+        title: 在庫データ処理
+        desc: ''
+        context:
+          enabled: false
+          variable_selector: []
+      height: 54
+      id: llm_processor
+      position:
+        x: 950
+        y: 200
+      positionAbsolute:
+        x: 950
+        y: 200
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        type: template-transform
+        template: |
+          {% set lines = llm_output.split('\n') %}
+          [{
+            "range": "在庫管理!A1:B{{ lines|length }}",
+            "values": [
+              {% for line in lines %}
+              {% set items = line.split(',') %}
+              {% if items|length >= 2 %}
+              ["{{ items[0]|trim }}", "{{ items[1]|trim }}"]{% if not loop.last %},{% endif %}
+              {% endif %}
+              {% endfor %}
+            ]
+          }]
+        variables:
+        - value_selector:
+          - llm_processor
+          - text
+          value_type: string
+          variable: llm_output
+        selected: false
+        title: JSON形式に変換
+        desc: ''
+      height: 54
+      id: transform_to_json
+      position:
+        x: 1250
+        y: 200
+      positionAbsolute:
+        x: 1250
+        y: 200
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        type: tool
+        provider_id: omluc/google_sheets/google_sheets
+        provider_name: omluc/google_sheets/google_sheets
+        provider_type: builtin
+        tool_label: Batch Update
+        tool_name: batch_update
+        tool_description: Updates multiple ranges in a Google Sheet with specified values
+        is_team_authorization: true
+        output_schema: null
+        paramSchemas:
+        - name: spreadsheet_id
+          type: string
+          required: true
+          label:
+            en_US: Spreadsheet ID
+            ja_JP: Spreadsheet ID
+          human_description:
+            en_US: The ID of the Google Sheet (found in the URL)
+            ja_JP: The ID of the Google Sheet (found in the URL)
+          llm_description: The ID of the Google Sheet, which can be found in the sheet's URL
+        - name: data
+          type: mixed
+          required: true
+          label:
+            en_US: Data
+            ja_JP: Data
+          human_description:
+            en_US: List of value ranges to update
+            ja_JP: List of value ranges to update
+          llm_description: A list of value ranges to update. Each value range should contain a 'range' and 'values' field.
+        params:
+          spreadsheet_id: ''
+          data: ''
+        tool_configurations:
+          include_values_in_response: null
+          response_date_time_render_option: null
+          response_value_render_option: null
+          value_input_option: USER_ENTERED
+        tool_parameters:
+          data:
+            type: mixed
+            value: '{{#transform_to_json.output#}}'
+          spreadsheet_id:
+            type: mixed
+            value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+        selected: false
+        title: 在庫データ更新
+        desc: ''
+      height: 54
+      id: google_sheets_write
+      position:
+        x: 1550
+        y: 200
+      positionAbsolute:
+        x: 1550
+        y: 200
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        type: answer
+        answer: |
+          在庫データを更新しました。
+          
+          更新結果：
+          {{#google_sheets_write.json#}}
+        selected: false
+        title: 完了メッセージ
+        desc: ''
+      height: 107
+      id: answer_node
+      position:
+        x: 1850
+        y: 200
+      positionAbsolute:
+        x: 1850
+        y: 200
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244

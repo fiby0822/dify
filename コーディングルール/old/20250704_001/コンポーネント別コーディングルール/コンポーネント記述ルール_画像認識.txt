@@ -1,0 +1,194 @@
+コンポーネント記述ルール: 画像認識（OCR/Vision）
+
+■ブロック概要
+画像ファイルからテキスト抽出やOCR、画像認識を行うノード。LLMのVision機能を使用して画像内容を分析・テキスト化する。
+
+■必須パラメータ（詳細）
+画像認識は通常のLLMノード + Vision機能で実装
+- id: 意味のある名前（例: "ocr_analysis_node"、"image_recognition_node"）
+- type: "custom"（外側のtype属性。固定値）
+- data.type: "llm"（データ内のtype属性。固定値）
+- position: x, y座標
+- positionAbsolute: positionと同じ値を設定
+- selected: false（固定値）
+- sourcePosition: "right"（推奨）
+- targetPosition: "left"（推奨）
+- height: 数値（通常150）
+- width: 数値（通常244）
+- data:
+  - model: モデル設定
+    - provider: "langgenius/openai/openai"（画像認識対応プロバイダー）
+    - name: "gpt-4o"（Vision対応モデル）
+    - mode: "chat"
+  - prompt_template: プロンプトテンプレート
+  - vision: 必須
+    - enabled: true
+    - configs:
+      - detail: "high"（高精度）または"low"（低精度）
+      - variable_selector: []（通常空）
+  - structured_output_enabled: false（必須）
+
+■依存関係（OpenAIプラグイン使用時）
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/openai:0.0.26@c1e643ac6a7732f6333a783320b4d3026fa5e31d8e7026375b98d44418d33f26
+
+■file_upload設定（features内）
+features:
+  file_upload:
+    enabled: true
+    allowed_file_types:
+      - image
+      - document  # PDFも可
+    allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .WEBP
+      - .HEIC
+      - .PDF  # OCR対応
+    fileUploadConfig:
+      image_file_size_limit: 10  # MB単位
+      file_size_limit: 15
+      workflow_file_upload_limit: 10
+    image:
+      enabled: false  # 通常はfalse
+      number_limits: 5
+      transfer_methods:
+        - local_file
+        - remote_url
+
+■入力
+- sys.files: システムファイルからの画像ファイル
+- 画像はLLMが直接処理（vision機能により）
+
+■出力
+- text: 抽出されたテキストまたは画像分析結果
+
+■使用例（OCR処理）
+```yaml
+- data:
+    context:
+      enabled: false
+      variable_selector: []
+    desc: 画像からOCRでテキスト情報を抽出し、CSV形式で出力
+    model:
+      completion_params: {}
+      mode: chat
+      name: gpt-4o
+      provider: langgenius/openai/openai
+    prompt_template:
+    - id: system-prompt
+      role: system
+      text: |
+        手書き作業日報画像を読み取り、CSV形式で出力してください。
+        画像のヘッダー行をそのまま使用し、各作業を1行ずつ出力。
+        説明は不要、CSVデータのみ出力。
+    - id: user-prompt
+      role: user
+      text: アップロードされた作業日報画像を読み取り、CSV形式で出力してください。
+    selected: false
+    structured_output_enabled: false
+    title: OCR画像解析・CSV出力
+    type: llm
+    variables: []
+    vision:
+      configs:
+        detail: high  # 高精度OCR
+        variable_selector: []
+      enabled: true  # Vision機能を有効化
+  height: 150
+  id: ocr_analysis_node
+  position:
+    x: 650
+    y: 180
+  positionAbsolute:
+    x: 650
+    y: 180
+  selected: false
+  sourcePosition: right
+  targetPosition: left
+  type: custom
+  width: 244
+```
+
+■使用例（画像認識）
+```yaml
+prompt_template:
+- id: system-prompt
+  role: system
+  text: |
+    画像を分析して内容を説明してください。
+    1. 画像に含まれる物体や人物
+    2. テキスト情報
+    3. 色彩情報
+    4. 全体的な印象
+- id: user-prompt
+  role: user
+  text: この画像の内容を教えてください。
+```
+
+■Vision設定の詳細
+1. detail設定
+   - "high": 高精度解析、OCR用途推奨
+   - "low": 低精度解析、高速処理用
+
+2. 対応モデル
+   - gpt-4o（推奨）: 最新の画像認識
+   - gpt-4-turbo: 高性能画像認識
+   - gpt-4-vision-preview: レガシーモデル
+
+■注意事項
+- vision.enabled: trueは必須、falseだと画像処理不可
+- 画像はfile_uploadからLLMに直接渡される（sys.files参照）
+- 複数画像の処理はnumber_limitsで制御
+- PDFファイルもOCR処理として画像扱い可能
+- detail: "high"は処理時間が長いが精度が高い
+
+■よくあるエラー
+1. "Vision not enabled"エラー
+   - vision.enabled: trueの設定漏れ
+   - モデルがVision非対応
+
+2. "Invalid image format"エラー
+   - サポート外の画像形式
+   - ファイルサイズ超過
+
+3. "Model does not support vision"エラー
+   - gpt-4oまたはgpt-4-turbo以外を使用
+   - providerの設定誤り
+
+■ベストプラクティス
+- OCR用途ではdetail: "high"を推奨
+- 手書き文字認識では具体的な指示をプロンプトに含める
+- 出力形式（CSV、JSON等）を明確に指定
+- 大量の画像処理ではイテレーションノードを活用
+- 画像のテキスト抽出後はcodeノードで後処理
+
+■推奨ワークフロー構成
+OCR処理の場合：
+```
+start_node → file_check → ocr_llm_node → csv_generation_code → answer
+```
+
+画像分析の場合：
+```
+start_node → image_upload_check → image_analysis_llm → result_formatter → answer
+```
+
+■画像処理の高度な活用
+1. 構造化データ抽出
+   - 表形式のデータをCSV化
+   - フォームからのフィールド抽出
+   - レシートや請求書の解析
+
+2. 画像分類
+   - カテゴリ判定
+   - 品質検査
+   - 異常検知
+
+3. マルチモーダル処理
+   - 画像＋テキストの複合分析
+   - 画像内容に基づく質問応答

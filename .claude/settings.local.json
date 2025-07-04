@@ -25,7 +25,8 @@
       "Bash(git commit:*)",
       "Bash(echo $((RANDOM % 9000 + 1000)))",
       "Bash(sed:*)",
-      "Bash(# コンポーネント別コーディングルールのコピー\ncp -r /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/コンポーネント別コーディングルール /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/old/20250703_008/\n\n# 全体コーディングルールのコピー\ncp -r /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/全体コーディングルール /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/old/20250703_008/\n\n# 品質チェックのコピー\ncp -r /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/品質チェック /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/old/20250703_008/)"
+      "Bash(# コンポーネント別コーディングルールのコピー\ncp -r /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/コンポーネント別コーディングルール /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/old/20250703_008/\n\n# 全体コーディングルールのコピー\ncp -r /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/全体コーディングルール /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/old/20250703_008/\n\n# 品質チェックのコピー\ncp -r /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/品質チェック /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/old/20250703_008/)",
+      "Bash(cat:*)"
     ],
     "deny": []
   }

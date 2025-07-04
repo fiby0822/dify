@@ -1,34 +1,44 @@
 次のymlを読み込み、コーディングルールの改善案を作成して下さい
 
 #読み込み対象
-/Users/tatsuya/Documents/01_fiby/09_ゼット/ymlサンプル/GoogleShpredSheetサンプル.yml
+/Users/tatsuya/Documents/01_fiby/09_ゼット/ymlサンプル/音声認識テスト.yml
+/Users/tatsuya/Documents/01_fiby/09_ゼット/ymlサンプル/作業日報OCR-CSV出力ボット.yml
+
 
 #追加したい内容
-Googleスプレッドシートからの読み込み/値の反映に関するコンポーネント別コーディングルール
+音声ファイルからの読み込みに関するコンポーネント別コーディングルール
+画像ファイルからの読み込みに関するコンポーネント別コーディングルール
 現状、marketplaceの使用は禁止されていますが、下記については許可をしたいです。
 
-- current_identifier: null
-  type: marketplace
-  value:
-    marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+marketplace_plugin_unique_identifier: lysonober/openai_audio:0.0.4@2a7bc1307f6d4337b597cafe1c75f20e0fabf0dd8132a0a4e04496b3c949c86c
 
 #追加先
-/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/コンポーネント別コーディングルール/コンポーネント記述ルール_GoogleShpredSheet操作.txt
+/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/コンポーネント別コーディングルール/コンポーネント記述ルール_音声認識.txt
+/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/コンポーネント別コーディングルール/コンポーネント記述ルール_画像認識.txt
 
-#下記の構造にあることを理解した上で、改善案を考えること
-①全体品質を保つためのもの
-/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/全体コーディングルール/全体コーディングルール.md
+反映時には、下記#役割と#条件 を十分に考慮して、適切なファイルに記載して下さい
 
-②各コンポーネントの品質を保つためのもの
-/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/コンポーネント別コーディングルール/コンポーネント記述ルール_GoogleShpredSheet操作.txt
+#役割
+①全体ルール：ワークフロー全体の構造や開発作法に関わる共通ルール
+/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/全体コーディングルール
 
-③作成後に品質チェックするためのリスト
+②コンポーネント別コーディングルール：各コンポーネントを利用する際のルール
+/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/コンポーネント別コーディングルール
+
+③品質チェックリスト：ワークフローの品質を担保するため、開発後にチェックするリスト
 /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/品質チェック/品質チェックリスト.md
 
-④作成後にクラッシュが発生する条件が含まれていないかチェックするためのリスト
+④クラッシュ事項チェックリスト：インポート時のクラッシュが発生する条件が含まれていないかチェックするリスト
 /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/品質チェック/クラッシュ事項チェックリスト.md
 
+⑤作成後にコーディング要素についてチェックするためのリスト
+/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/品質チェック/コードチェック.md
+
+#条件
+①と②の役割に即し、全体に関わることは①に、コンポーネント個別に関わることは②に記載すること（①と②の重複を極力減らすこと）
+③と④と⑤の役割に即し、品質全般に関わることを③に、クラッシュに関する内容は④に、コーディングに関することは⑤に記載すること（③と④と⑤の重複を極力減らすこと）
+
 #出力ルール
-その上で、開発時のルール（①、②、③、④）の見直しが必要な箇所を列挙し、
-/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/ルール改善案_<適当な整数4桁>.txt
+その上で、開発時のルール（①、②、③、④、⑤）の見直しが必要な箇所を列挙し、
+/Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/ルール改善案_<被りの無いような名前>.txt
 として出力して下さい ultrathink

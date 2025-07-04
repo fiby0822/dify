@@ -1,0 +1,40 @@
+# Dify YML作成依頼プロンプト
+
+## 要件
+営業売上データをGoogle Sheetsで管理するワークフローを作成してください。
+
+### 機能詳細
+1. Google Sheetsから営業データを読み込む（batch_get）
+2. データを加工・整形（template-transform）
+3. 処理結果をGoogle Sheetsに書き込む（batch_update）
+
+### ワークフロー構成
+- 開始ノード（シートIDと範囲の入力）
+- Toolノード（Google Sheets batch_get）
+- template-transformノード（データ整形）
+- Toolノード（Google Sheets batch_update）
+- 終了ノード（処理結果の出力）
+
+### 制約事項
+- Codeノードは使用しない
+- プラグイン：omluc/google_sheets:0.0.2 を使用
+- provider_typeは必ず"builtin"を使用
+- tool_configurationsセクションを必須で含める
+- version: 0.3.0 を使用する
+- template-transformノードでは {{ 変数 }} 形式のみ使用
+
+## アウトプット
+- フォルダパス: /Users/tatsuya/Documents/01_fiby/09_ゼット/Dev/
+- ファイル名: 売上データ管理システム_GoogleSheets検証用_[ランダムな4桁の数字].yml
+
+## コーディングルール参照ファイル
+- /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/コンポーネント別コーディングルール/コンポーネント記述ルール_GoogleShpredSheet操作.txt
+- /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/
+- /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/品質チェック/品質チェックリスト.md
+- /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/品質チェック/クラッシュ事項チェックリスト.md
+
+## 注意事項
+- YAMLコメント（#で始まる行）は一切記載しない
+- batch_getの出力変数名は必ず「output」にする
+- batch_updateのvaluesパラメータは配列の配列形式にする
+- provider_id、provider_type、tool_nameを正確に設定する

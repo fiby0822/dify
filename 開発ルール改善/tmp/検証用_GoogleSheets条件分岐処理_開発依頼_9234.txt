@@ -1,0 +1,43 @@
+# GoogleSheets条件分岐処理 - 開発依頼文
+
+## 要件
+GoogleSheetの読み込み・書き込みを条件分岐で制御するワークフローを作成してください。
+
+### 機能要件
+1. **ユーザー入力**
+   - operation_type: 操作タイプ（"read" または "write"）
+   - sheet_url: Google SheetsのURL
+   - range: 操作対象の範囲（例：A1:C10）
+   - data: 書き込み時のデータ（writeの場合のみ）
+
+2. **処理フロー**
+   - IF/ELSEノードで操作タイプを判定
+   - "read"の場合：batch_getでデータを読み込み
+   - "write"の場合：batch_updateでデータを書き込み
+   - 結果をtemplate-transformで整形して出力
+
+3. **出力形式**
+   - 操作結果のサマリー
+   - 実行されたオペレーション
+   - 処理されたデータ（読み込みの場合は取得データ、書き込みの場合は書き込み完了メッセージ）
+
+### 技術仕様
+- version: 0.3.0 を使用
+- Google Sheets操作にはomluc/google_sheets:0.0.2プラグインを使用
+- provider_typeは"builtin"を指定
+- template-transformノードで出力を整形
+
+## アウトプットパス
+/Users/tatsuya/Documents/01_fiby/09_ゼット/Dev/GoogleSheets条件分岐処理_検証用_9234.yml
+
+## 参考資料パス
+1. /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/全体コーディングルール.txt
+2. /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/コンポーネント別コーディングルール/コンポーネント記述ルール_IF_ELSE.txt
+3. /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/コンポーネント別コーディングルール/コンポーネント記述ルール_GoogleShpredSheet操作.txt
+4. /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/品質チェック/品質チェックリスト.md
+5. /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/品質チェック/クラッシュ事項チェックリスト.md
+
+## 注意事項
+※template-transformノード内では必ず {{ 変数 }} の形式を使用し、{{#変数#}}の形式は使用しないでください。
+※IF/ELSEノードではlogical_operatorフィールドが必須です。条件が1つでも必ず設定してください。
+※Google Sheets操作時のprovider_typeは必ず"builtin"を使用してください。

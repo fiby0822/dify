@@ -1,0 +1,365 @@
+app:
+  name: 営業成績評価システム
+  description: Google スプレッドシートから営業データを取得し、売上金額に応じて評価を行うシステム
+  icon: 📊
+  icon_background: "#4A90E2"
+  mode: advanced-chat
+  use_icon_as_answer_icon: false
+
+dependencies:
+  - id: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+    type: marketplace
+    name: google_sheets
+    config:
+      credentials:
+        type: secret
+        secret_id: secret_google_oauth2_account
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+          - remote_url
+          - local_file
+    opening_statement: "営業担当者名を入力してください。月間売上データを取得して評価を行います。"
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ""
+      voice: ""
+  graph:
+    nodes:
+      - data:
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 80
+          y: 282
+        positionAbsolute:
+          x: 80
+          y: 282
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          provider_id: omluc/google_sheets/google_sheets
+          provider_name: google_sheets
+          provider_type: builtin
+          tool_configurations:
+            batch_get:
+              dimensions: ROWS
+              ranges: '["営業データ!A2:B100"]'
+              spreadsheet_id: "1234567890abcdefghijklmnopqrstuvwxyz"
+          tool_label: Batch Get
+          tool_name: batch_get
+          tool_parameters:
+            dimensions:
+              type: mixed
+              value: ROWS
+            ranges:
+              type: mixed
+              value: '["営業データ!A2:B100"]'
+            spreadsheet_id:
+              type: mixed
+              value: "1234567890abcdefghijklmnopqrstuvwxyz"
+          type: tool
+        height: 435
+        id: sheets_read
+        position:
+          x: 380
+          y: 224
+        positionAbsolute:
+          x: 380
+          y: 224
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          code: |
+            import json
+            
+            sales_data = sheets_read.get('values', [[]])[0]
+            target_name = sys_query
+            found = False
+            sales_amount = 0
+            
+            for row in sales_data:
+                if len(row) >= 2 and row[0] == target_name:
+                    found = True
+                    try:
+                        sales_amount = int(row[1])
+                    except:
+                        sales_amount = 0
+                    break
+            
+            result = {
+                "found": found,
+                "name": target_name,
+                "sales_amount": sales_amount
+            }
+          code_language: python3
+          outputs:
+            found:
+              type: boolean
+            name:
+              type: string
+            sales_amount:
+              type: number
+          type: code
+          variables:
+            - value_selector:
+                - sheets_read
+              variable: sheets_read
+            - value_selector:
+                - sys
+                - query
+              variable: sys_query
+        height: 76
+        id: data_processor
+        position:
+          x: 680
+          y: 335
+        positionAbsolute:
+          x: 680
+          y: 335
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - case_id: "not_found"
+              id: case_not_found
+              conditions:
+                - comparison_operator: "="
+                  id: "cond1"
+                  value: "false"
+                  variable_selector:
+                    - data_processor
+                    - found
+              logical_operator: and
+            - case_id: "excellent"
+              id: case_excellent
+              conditions:
+                - comparison_operator: ">="
+                  id: "cond2"
+                  value: 5000000
+                  variable_selector:
+                    - data_processor
+                    - sales_amount
+              logical_operator: and
+            - case_id: "good"
+              id: case_good
+              conditions:
+                - comparison_operator: ">="
+                  id: "cond3"
+                  value: 3000000
+                  variable_selector:
+                    - data_processor
+                    - sales_amount
+                - comparison_operator: "<"
+                  id: "cond4"
+                  value: 5000000
+                  variable_selector:
+                    - data_processor
+                    - sales_amount
+              logical_operator: and
+            - case_id: "needs_improvement"
+              id: case_needs_improvement
+              conditions:
+                - comparison_operator: "<"
+                  id: "cond5"
+                  value: 3000000
+                  variable_selector:
+                    - data_processor
+                    - sales_amount
+              logical_operator: and
+          desc: 売上金額に基づく評価分岐
+          logical_operator: and
+          type: if-else
+        height: 130
+        id: if_else_evaluator
+        position:
+          x: 980
+          y: 308
+        positionAbsolute:
+          x: 980
+          y: 308
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "営業担当者「{{#data_processor.name#}}」が見つかりませんでした。\n\n入力された名前を確認して、もう一度お試しください。"
+          type: answer
+        height: 107
+        id: answer_not_found
+        position:
+          x: 1280
+          y: 80
+        positionAbsolute:
+          x: 1280
+          y: 80
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【優秀評価】🏆\n\n営業担当者: {{#data_processor.name#}}\n月間売上: {{#data_processor.sales_amount#}}円\n\n素晴らしい成績です！\n✅ 特別ボーナスの対象となります\n✅ 全社会議での表彰対象です\n✅ 来月も引き続きこの調子で頑張ってください\n\n今後のアドバイス:\n- 成功事例を他のメンバーに共有してください\n- 新規顧客開拓にもチャレンジしてみましょう"
+          type: answer
+        height: 269
+        id: answer_excellent
+        position:
+          x: 1280
+          y: 207
+        positionAbsolute:
+          x: 1280
+          y: 207
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【良好評価】✨\n\n営業担当者: {{#data_processor.name#}}\n月間売上: {{#data_processor.sales_amount#}}円\n\n良い成績を維持しています！\n✅ 標準ボーナスの対象です\n✅ 安定した成果を評価します\n\n今後のアドバイス:\n- 目標の500万円まであと少しです\n- 既存顧客との関係強化を継続してください\n- 営業スキル向上研修への参加を推奨します"
+          type: answer
+        height: 242
+        id: answer_good
+        position:
+          x: 1280
+          y: 496
+        positionAbsolute:
+          x: 1280
+          y: 496
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【要改善評価】📈\n\n営業担当者: {{#data_processor.name#}}\n月間売上: {{#data_processor.sales_amount#}}円\n\n改善が必要な状況です。\n⚠️ マネージャーとの1on1面談を設定します\n⚠️ 営業活動の見直しが必要です\n\n今後のサポート:\n- 営業スキル向上プログラムへの参加\n- 先輩社員とのペア営業実施\n- 週次での進捗確認ミーティング\n- 営業ツールの活用方法研修\n\n一緒に改善していきましょう！"
+          type: answer
+        height: 296
+        id: answer_needs_improvement
+        position:
+          x: 1280
+          y: 758
+        positionAbsolute:
+          x: 1280
+          y: 758
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: tool
+        id: start_to_sheets
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: sheets_read
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: tool
+          targetType: code
+        id: sheets_to_processor
+        selected: false
+        source: sheets_read
+        sourceHandle: source
+        target: data_processor
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: code
+          targetType: if-else
+        id: processor_to_ifelse
+        selected: false
+        source: data_processor
+        sourceHandle: source
+        target: if_else_evaluator
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: ifelse_to_not_found
+        selected: false
+        source: if_else_evaluator
+        sourceHandle: not_found
+        target: answer_not_found
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: ifelse_to_excellent
+        selected: false
+        source: if_else_evaluator
+        sourceHandle: excellent
+        target: answer_excellent
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: ifelse_to_good
+        selected: false
+        source: if_else_evaluator
+        sourceHandle: good
+        target: answer_good
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: ifelse_to_needs_improvement
+        selected: false
+        source: if_else_evaluator
+        sourceHandle: needs_improvement
+        target: answer_needs_improvement
+        targetHandle: target
+        type: custom
+        zIndex: 0

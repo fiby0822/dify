@@ -1,0 +1,250 @@
+app:
+  description: Google Sheetsで営業売上データを読み込み、整形して更新するワークフロー
+  icon: 📊
+  icon_background: '#E0F2FE'
+  mode: workflow
+  name: 売上データ管理システム_GoogleSheets検証用
+  use_icon_as_answer_icon: false
+dependencies:
+- omluc/google_sheets:0.0.2
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+    opening_statement: ''
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: tool
+      id: 1734591234001-edge
+      selected: false
+      source: 1734591234001
+      sourceHandle: source
+      target: 1734591234002
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: tool
+        targetType: template-transform
+      id: 1734591234002-1734591234003-edge
+      selected: false
+      source: 1734591234002
+      sourceHandle: source
+      target: 1734591234003
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: template-transform
+        targetType: tool
+      id: 1734591234003-1734591234004-edge
+      selected: false
+      source: 1734591234003
+      sourceHandle: source
+      target: 1734591234004
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: tool
+        targetType: end
+      id: 1734591234004-1734591234005-edge
+      selected: false
+      source: 1734591234004
+      sourceHandle: source
+      target: 1734591234005
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: ''
+        selected: false
+        title: 開始
+        type: start
+        variables:
+        - label: スプレッドシートID
+          max_length: 100
+          options: []
+          required: true
+          type: text-input
+          variable: spreadsheet_id
+        - label: 読み込み範囲
+          max_length: 50
+          options: []
+          required: true
+          type: text-input
+          variable: read_range
+        - label: 書き込み範囲
+          max_length: 50
+          options: []
+          required: true
+          type: text-input
+          variable: write_range
+      height: 154
+      id: '1734591234001'
+      position:
+        x: 80
+        y: 282
+      positionAbsolute:
+        x: 80
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: ''
+        id: '1734591234002'
+        provider_id: omluc/google_sheets
+        provider_name: omluc/google_sheets
+        provider_type: builtin
+        selected: false
+        title: データ読み込み
+        tool_configurations:
+          omluc/google_sheets:0.0.2:
+            method: batch_get
+            ranges: '{{ read_range }}'
+            spreadsheet_id: '{{ spreadsheet_id }}'
+        tool_label: batch_get
+        tool_name: omluc/google_sheets:0.0.2
+        tool_parameters: {}
+        type: tool
+      height: 90
+      id: '1734591234002'
+      position:
+        x: 384
+        y: 282
+      positionAbsolute:
+        x: 384
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: ''
+        id: '1734591234003'
+        selected: false
+        template: |-
+          {
+            "processed_data": [
+              {% for row in output.data %}
+              [
+                "{{ row[0] }}",
+                "{{ row[1] }}",
+                "処理済み"
+              ]{% if not loop.last %},{% endif %}
+              {% endfor %}
+            ]
+          }
+        title: データ整形
+        type: template-transform
+        variables:
+        - value_selector:
+          - '1734591234002'
+          - output
+          variable: output
+      height: 82
+      id: '1734591234003'
+      position:
+        x: 688
+        y: 282
+      positionAbsolute:
+        x: 688
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: ''
+        id: '1734591234004'
+        provider_id: omluc/google_sheets
+        provider_name: omluc/google_sheets
+        provider_type: builtin
+        selected: false
+        title: データ書き込み
+        tool_configurations:
+          omluc/google_sheets:0.0.2:
+            method: batch_update
+            range: '{{ write_range }}'
+            spreadsheet_id: '{{ spreadsheet_id }}'
+            value_input_option: USER_ENTERED
+            values: '{{ output.processed_data }}'
+        tool_label: batch_update
+        tool_name: omluc/google_sheets:0.0.2
+        tool_parameters: {}
+        type: tool
+      height: 90
+      id: '1734591234004'
+      position:
+        x: 992
+        y: 282
+      positionAbsolute:
+        x: 992
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: ''
+        id: '1734591234005'
+        outputs:
+        - value_selector:
+          - '1734591234004'
+          - output
+          variable: result
+        selected: false
+        title: 終了
+        type: end
+      height: 90
+      id: '1734591234005'
+      position:
+        x: 1296
+        y: 282
+      positionAbsolute:
+        x: 1296
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244

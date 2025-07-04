@@ -1,0 +1,733 @@
+app:
+  description: "Google Spreadsheetsの顧客リストを管理するワークフローです。顧客データの確認、追加、ステータス更新が可能です。"
+  icon: "👥"
+  icon_background: "#4285F4"
+  mode: advanced-chat
+  name: "顧客リスト管理システム"
+  use_icon_as_answer_icon: false
+
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "顧客リストの状況を確認してください"
+      - "新規顧客を追加：顧客名：XYZ商事、案件名：AIシステム導入、金額：800万円、ステータス：提案中"
+      - "顧客名：ABC商事のステータスを「成約」に更新してください"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+    opening_statement: "顧客リスト管理システムへようこそ！\n\n以下の操作が可能です：\n\n1. **顧客リストの確認**\n   「リスト確認」または「顧客リストを見せて」\n\n2. **新規顧客の追加**\n   「新規追加：顧客名：○○、案件名：○○、金額：○○万円、ステータス：○○」\n\n3. **ステータス更新**\n   「更新：顧客名：○○のステータスを○○に変更」\n\nどの操作を行いますか？"
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-parse-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: parse_request_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: if-else
+        id: parse-operation-edge
+        selected: false
+        source: parse_request_node
+        sourceHandle: source
+        target: operation_router_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: tool
+        id: router-list-edge
+        selected: false
+        source: operation_router_node
+        sourceHandle: list_case
+        target: get_list_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: tool
+          targetType: template-transform
+        id: list-transform-edge
+        selected: false
+        source: get_list_node
+        sourceHandle: source
+        target: transform_list_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: answer
+        id: transform-answer-edge
+        selected: false
+        source: transform_list_node
+        sourceHandle: source
+        target: list_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: tool
+        id: router-count-edge
+        selected: false
+        source: operation_router_node
+        sourceHandle: add_case
+        target: count_rows_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: tool
+          targetType: template-transform
+        id: count-prepare-edge
+        selected: false
+        source: count_rows_node
+        sourceHandle: source
+        target: prepare_add_data_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: tool
+        id: prepare-add-edge
+        selected: false
+        source: prepare_add_data_node
+        sourceHandle: source
+        target: add_customer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: tool
+          targetType: answer
+        id: add-answer-edge
+        selected: false
+        source: add_customer_node
+        sourceHandle: source
+        target: add_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: tool
+        id: router-update-edge
+        selected: false
+        source: operation_router_node
+        sourceHandle: update_case
+        target: find_customer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: tool
+          targetType: template-transform
+        id: find-prepare-edge
+        selected: false
+        source: find_customer_node
+        sourceHandle: source
+        target: prepare_update_data_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: tool
+        id: prepare-update-edge
+        selected: false
+        source: prepare_update_data_node
+        sourceHandle: source
+        target: update_status_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: tool
+          targetType: answer
+        id: update-answer-edge
+        selected: false
+        source: update_status_node
+        sourceHandle: source
+        target: update_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: router-error-edge
+        selected: false
+        source: operation_router_node
+        sourceHandle: "false"
+        target: error_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "開始ノード"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 400
+        positionAbsolute:
+          x: 50
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          completion_params:
+            max_tokens: 1000
+            temperature: 0.3
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "ユーザー要求の解析"
+          model:
+            mode: chat
+            name: gpt-3.5-turbo
+            provider: openai
+          prompt_template:
+            - id: prompt_1
+              role: system
+              text: "あなたは顧客リスト管理システムのアシスタントです。ユーザーの要求を解析し、操作種別を判定してください。\n\n操作種別：\n1. リスト確認：顧客リストの表示要求\n2. 新規追加：新しい顧客データの追加\n3. ステータス更新：既存顧客のステータス変更\n\n必ず以下の形式で出力してください：\n操作種別: [リスト確認/新規追加/ステータス更新]\n\n新規追加の場合：\n顧客名: [値]\n案件名: [値]\n金額: [値]\nステータス: [値]\n\nステータス更新の場合：\n対象顧客名: [値]\n新ステータス: [値]"
+            - id: prompt_2
+              role: user
+              text: "{{#sys.query#}}"
+          selected: false
+          structured_output_enabled: false
+          title: "要求解析"
+          type: llm
+          variables: []
+          vision:
+            enabled: false
+        height: 161
+        id: parse_request_node
+        position:
+          x: 350
+          y: 400
+        positionAbsolute:
+          x: 350
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - id: list_case
+              case_id: list_case
+              conditions:
+                - id: list_check
+                  variable_selector:
+                    - parse_request_node
+                    - text
+                  comparison_operator: contains
+                  value: "操作種別: リスト確認"
+              logical_operator: and
+            - id: add_case
+              case_id: add_case
+              conditions:
+                - id: add_check
+                  variable_selector:
+                    - parse_request_node
+                    - text
+                  comparison_operator: contains
+                  value: "操作種別: 新規追加"
+              logical_operator: and
+            - id: update_case
+              case_id: update_case
+              conditions:
+                - id: update_check
+                  variable_selector:
+                    - parse_request_node
+                    - text
+                  comparison_operator: contains
+                  value: "操作種別: ステータス更新"
+              logical_operator: and
+          desc: "操作種別の振り分け"
+          selected: false
+          title: "操作ルーター"
+          type: if-else
+        height: 198
+        id: operation_router_node
+        position:
+          x: 650
+          y: 400
+        positionAbsolute:
+          x: 650
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "顧客リストの取得"
+          is_team_authorization: true
+          output_schema: null
+          provider_id: omluc/google_sheets/google_sheets
+          provider_name: omluc/google_sheets/google_sheets
+          provider_type: builtin
+          selected: false
+          title: "リスト取得"
+          tool_configurations:
+            date_time_render_option: FORMATTED_STRING
+            major_dimension: null
+            value_render_option: null
+          tool_label: Batch Get
+          tool_name: batch_get
+          tool_parameters:
+            ranges:
+              type: mixed
+              value: '["顧客リスト!A1:D100"]'
+            spreadsheet_id:
+              type: mixed
+              value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+          type: tool
+        height: 131
+        id: get_list_node
+        position:
+          x: 950
+          y: 50
+        positionAbsolute:
+          x: 950
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "リストデータの整形"
+          selected: false
+          title: "リスト表示整形"
+          type: template-transform
+          variables:
+            - value_selector:
+                - get_list_node
+                - json
+              variable: sheet_data
+              value_type: array[object]
+          template: |
+            【顧客リスト】
+            
+            {% if sheet_data and sheet_data[0] and sheet_data[0]["valueRanges"] and sheet_data[0]["valueRanges"][0] and sheet_data[0]["valueRanges"][0]["values"] %}
+            {% set rows = sheet_data[0]["valueRanges"][0]["values"] %}
+            {% set data_rows = rows[1:] if rows|length > 1 else [] %}
+            
+            登録顧客数: {{ data_rows|length }}件
+            
+            {% if data_rows|length > 0 %}
+            | 顧客名 | 案件名 | 金額 | ステータス |
+            |--------|--------|------|------------|
+            {% for row in data_rows %}
+            | {{ row[0]|default('') }} | {{ row[1]|default('') }} | {{ row[2]|default('') }} | {{ row[3]|default('') }} |
+            {% endfor %}
+            {% else %}
+            顧客データがありません。
+            {% endif %}
+            {% else %}
+            データの取得に失敗しました。
+            {% endif %}
+        height: 54
+        id: transform_list_node
+        position:
+          x: 1250
+          y: 50
+        positionAbsolute:
+          x: 1250
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#transform_list_node.output#}}"
+          desc: "リスト表示"
+          selected: false
+          title: "リスト表示"
+          type: answer
+          variables: []
+        height: 107
+        id: list_answer_node
+        position:
+          x: 1550
+          y: 50
+        positionAbsolute:
+          x: 1550
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "行数カウント用データ取得"
+          is_team_authorization: true
+          output_schema: null
+          provider_id: omluc/google_sheets/google_sheets
+          provider_name: omluc/google_sheets/google_sheets
+          provider_type: builtin
+          selected: false
+          title: "行数確認"
+          tool_configurations:
+            date_time_render_option: FORMATTED_STRING
+            major_dimension: null
+            value_render_option: null
+          tool_label: Batch Get
+          tool_name: batch_get
+          tool_parameters:
+            ranges:
+              type: mixed
+              value: '["顧客リスト!A:A"]'
+            spreadsheet_id:
+              type: mixed
+              value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+          type: tool
+        height: 131
+        id: count_rows_node
+        position:
+          x: 950
+          y: 300
+        positionAbsolute:
+          x: 950
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "新規追加データの準備"
+          selected: false
+          title: "追加データ準備"
+          type: template-transform
+          variables:
+            - value_selector:
+                - count_rows_node
+                - json
+              variable: count_data
+              value_type: array[object]
+            - value_selector:
+                - parse_request_node
+                - text
+              variable: parsed_data
+              value_type: string
+          template: |
+            {% if count_data and count_data[0] and count_data[0]["valueRanges"] and count_data[0]["valueRanges"][0] and count_data[0]["valueRanges"][0]["values"] %}
+            {% set row_count = count_data[0]["valueRanges"][0]["values"]|length %}
+            {% set next_row = row_count + 1 %}
+            [{
+              "range": "顧客リスト!A{{ next_row }}:D{{ next_row }}",
+              "values": [[
+                "{{ parsed_data.split('顧客名: ')[1].split('\n')[0] if '顧客名: ' in parsed_data else '' }}",
+                "{{ parsed_data.split('案件名: ')[1].split('\n')[0] if '案件名: ' in parsed_data else '' }}",
+                "{{ parsed_data.split('金額: ')[1].split('\n')[0] if '金額: ' in parsed_data else '' }}",
+                "{{ parsed_data.split('ステータス: ')[1].split('\n')[0] if 'ステータス: ' in parsed_data else '' }}"
+              ]]
+            }]
+            {% else %}
+            [{
+              "range": "顧客リスト!A2:D2",
+              "values": [["エラー", "データ取得失敗", "", ""]]
+            }]
+            {% endif %}
+        height: 54
+        id: prepare_add_data_node
+        position:
+          x: 1250
+          y: 300
+        positionAbsolute:
+          x: 1250
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "新規顧客データの追加"
+          is_team_authorization: true
+          output_schema: null
+          provider_id: omluc/google_sheets/google_sheets
+          provider_name: omluc/google_sheets/google_sheets
+          provider_type: builtin
+          selected: false
+          title: "データ追加"
+          tool_configurations:
+            include_values_in_response: null
+            response_date_time_render_option: null
+            response_value_render_option: null
+            value_input_option: USER_ENTERED
+          tool_label: Batch Update
+          tool_name: batch_update
+          tool_parameters:
+            data:
+              type: mixed
+              value: "{{#prepare_add_data_node.output#}}"
+            spreadsheet_id:
+              type: mixed
+              value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+          type: tool
+        height: 131
+        id: add_customer_node
+        position:
+          x: 1550
+          y: 300
+        positionAbsolute:
+          x: 1550
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【新規顧客追加完了】\n\n以下の顧客データを追加しました：\n\n{{#parse_request_node.text#}}\n\n顧客リストへの追加が正常に完了しました。"
+          desc: "追加完了メッセージ"
+          selected: false
+          title: "追加完了"
+          type: answer
+          variables: []
+        height: 107
+        id: add_answer_node
+        position:
+          x: 1850
+          y: 300
+        positionAbsolute:
+          x: 1850
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "更新対象の顧客を検索"
+          is_team_authorization: true
+          output_schema: null
+          provider_id: omluc/google_sheets/google_sheets
+          provider_name: omluc/google_sheets/google_sheets
+          provider_type: builtin
+          selected: false
+          title: "顧客検索"
+          tool_configurations:
+            date_time_render_option: FORMATTED_STRING
+            major_dimension: null
+            value_render_option: null
+          tool_label: Batch Get
+          tool_name: batch_get
+          tool_parameters:
+            ranges:
+              type: mixed
+              value: '["顧客リスト!A1:D100"]'
+            spreadsheet_id:
+              type: mixed
+              value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+          type: tool
+        height: 131
+        id: find_customer_node
+        position:
+          x: 950
+          y: 550
+        positionAbsolute:
+          x: 950
+          y: 550
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "更新データの準備"
+          selected: false
+          title: "更新データ準備"
+          type: template-transform
+          variables:
+            - value_selector:
+                - find_customer_node
+                - json
+              variable: customer_data
+              value_type: array[object]
+            - value_selector:
+                - parse_request_node
+                - text
+              variable: parsed_data
+              value_type: string
+          template: |
+            {% if customer_data and customer_data[0] and customer_data[0]["valueRanges"] and customer_data[0]["valueRanges"][0] and customer_data[0]["valueRanges"][0]["values"] %}
+            {% set rows = customer_data[0]["valueRanges"][0]["values"] %}
+            {% set target_name = parsed_data.split('対象顧客名: ')[1].split('\n')[0] if '対象顧客名: ' in parsed_data else '' %}
+            {% set new_status = parsed_data.split('新ステータス: ')[1].split('\n')[0] if '新ステータス: ' in parsed_data else '' %}
+            {% set found_row = -1 %}
+            {% for i in range(1, rows|length) %}
+              {% if rows[i] and rows[i][0] == target_name %}
+                {% set found_row = i + 1 %}
+              {% endif %}
+            {% endfor %}
+            {% if found_row > 0 %}
+            [{
+              "range": "顧客リスト!D{{ found_row }}",
+              "values": [["{{ new_status }}"]]
+            }]
+            {% else %}
+            [{
+              "range": "顧客リスト!A1",
+              "values": [["エラー：顧客が見つかりません"]]
+            }]
+            {% endif %}
+            {% else %}
+            [{
+              "range": "顧客リスト!A1",
+              "values": [["エラー：データ取得失敗"]]
+            }]
+            {% endif %}
+        height: 54
+        id: prepare_update_data_node
+        position:
+          x: 1250
+          y: 550
+        positionAbsolute:
+          x: 1250
+          y: 550
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "ステータスの更新"
+          is_team_authorization: true
+          output_schema: null
+          provider_id: omluc/google_sheets/google_sheets
+          provider_name: omluc/google_sheets/google_sheets
+          provider_type: builtin
+          selected: false
+          title: "ステータス更新"
+          tool_configurations:
+            include_values_in_response: null
+            response_date_time_render_option: null
+            response_value_render_option: null
+            value_input_option: USER_ENTERED
+          tool_label: Batch Update
+          tool_name: batch_update
+          tool_parameters:
+            data:
+              type: mixed
+              value: "{{#prepare_update_data_node.output#}}"
+            spreadsheet_id:
+              type: mixed
+              value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+          type: tool
+        height: 131
+        id: update_status_node
+        position:
+          x: 1550
+          y: 550
+        positionAbsolute:
+          x: 1550
+          y: 550
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【ステータス更新完了】\n\n{{#parse_request_node.text#}}\n\n顧客のステータス更新が正常に完了しました。"
+          desc: "更新完了メッセージ"
+          selected: false
+          title: "更新完了"
+          type: answer
+          variables: []
+        height: 107
+        id: update_answer_node
+        position:
+          x: 1850
+          y: 550
+        positionAbsolute:
+          x: 1850
+          y: 550
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【エラー】\n\n申し訳ございません。操作種別を判定できませんでした。\n\n以下のいずれかの形式でご入力ください：\n\n1. リスト確認：「リスト確認」「顧客リストを見せて」など\n2. 新規追加：「新規追加」の後に顧客情報を入力\n3. ステータス更新：「更新」の後に対象顧客名と新ステータスを入力"
+          desc: "エラーメッセージ"
+          selected: false
+          title: "エラー"
+          type: answer
+          variables: []
+        height: 107
+        id: error_answer_node
+        position:
+          x: 950
+          y: 800
+        positionAbsolute:
+          x: 950
+          y: 800
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.5

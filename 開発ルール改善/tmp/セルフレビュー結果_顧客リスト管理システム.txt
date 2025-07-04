@@ -1,0 +1,78 @@
+# セルフレビュー結果報告書
+
+## 対象ファイル
+- ファイル名：顧客リスト管理システム_7892.yml
+- 保存先：/Users/tatsuya/Documents/01_fiby/09_ゼット/Dev/
+
+## 検証目的
+GoogleSheets操作とIF_ELSEコンポーネントを組み合わせた複雑なワークフローのコーディングルール準拠確認
+
+## レビュー結果
+
+### ✅ 合格項目一覧
+
+1. **全体構造**
+   - version: 0.3.0が正しく設定されている
+   - YAMLコメントが一切含まれていない
+   - 必須フィールドがすべて設定されている
+
+2. **IF_ELSEコンポーネント**
+   - logical_operatorがすべてのケースに設定されている（"and"）
+   - 比較演算子はASCII文字のみ使用（"=="）
+   - エッジのsourceHandleが正しく設定されている
+     - 条件合致時：case_id（confirm_case、add_case、update_case）
+     - デフォルト："false"（文字列）
+   - targetTypeが接続先ノードの実際のdata.typeと一致
+
+3. **Google Sheets操作**
+   - provider_typeが"builtin"に設定されている
+   - tool_configurationsが適切に設定されている
+   - batch_getのrangesが引用符で囲まれている
+   - batch_updateの前にtemplate-transformで整形している
+   - is_team_authorization: trueが設定されている
+
+4. **template-transformノード**
+   - 変数参照が{{ }}形式になっている（{{# #}}は使用していない）
+   - フィルター使用時もスペースなし記法（|join、|trim、|length）
+   - Google Sheetsデータの参照で正しいパス構造を使用
+
+5. **エッジ設定**
+   - すべてのエッジでisInLoop、selected、zIndexが設定されている
+   - sourceTypeとtargetTypeが正しく設定されている
+
+### 📋 実施した修正
+
+1. **spreadsheet_id参照エラーの修正**
+   - startノードのvariables配列が空だったため、spreadsheet_id入力フィールドを追加
+   - Google Sheetsノードのspreadsheet_id参照を{{#sys.query#}}に変更
+   - opening_statementにID入力の案内を追加
+
+### 🎯 総合評価
+**評価：A（合格）**
+
+すべての重要な品質チェック項目とクラッシュ防止項目をクリアしています。
+修正後のYMLファイルは安全にDifyにインポートして使用できます。
+
+## 実装された機能
+
+1. **確認機能**
+   - Google Sheetsから顧客リスト全体を読み取り
+   - 行番号付きで表示し、合計件数も表示
+
+2. **追加機能**
+   - 現在の行数を取得して、最終行の次に新規データを追加
+   - 顧客名、案件名、金額、ステータスをユーザー入力から抽出
+
+3. **更新機能**
+   - 顧客名で検索して該当行を特定
+   - ステータス列（D列）のみを新しい値で更新
+
+## 使用方法
+1. Difyにインポート
+2. チャットで最初にGoogle SheetsのIDを入力
+3. 操作（確認/追加/更新）を選択して実行
+
+## 特記事項
+- Codeノードは使用していない（要件通り）
+- 複雑な条件分岐をIF_ELSEで実装
+- エラーハンドリングも実装（顧客が見つからない場合など）

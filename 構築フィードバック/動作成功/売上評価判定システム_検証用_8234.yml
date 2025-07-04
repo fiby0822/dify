@@ -1,0 +1,366 @@
+app:
+  description: "Google Sheetsから営業員の売上データを読み取り、金額に応じて評価判定を行い、結果をRESULTシートに書き込むシステムです。"
+  icon: "📊"
+  icon_background: "#FFEAD5"
+  mode: advanced-chat
+  name: "売上評価判定システム"
+  use_icon_as_answer_icon: false
+
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+    opening_statement: "売上評価判定システムへようこそ！\n\nGoogle Sheetsから営業員の売上データを読み取り、評価判定を行います。\n評価基準：\n- 1000万円以上：高評価\n- 500万円以上1000万円未満：中評価\n- 500万円未満：低評価\n\n処理を開始するには、Google SheetsのIDを入力してください。"
+    suggested_questions:
+      - "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: tool
+        id: start-sheets_read-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: sheets_read_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: tool
+          targetType: template-transform
+        id: sheets_read-transform_data-edge
+        selected: false
+        source: sheets_read_node
+        sourceHandle: source
+        target: transform_data_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: llm
+        id: transform_data-llm_analyzer-edge
+        selected: false
+        source: transform_data_node
+        sourceHandle: source
+        target: llm_analyzer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: template-transform
+        id: llm_analyzer-prepare_update-edge
+        selected: false
+        source: llm_analyzer_node
+        sourceHandle: source
+        target: prepare_update_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: tool
+        id: prepare_update-sheets_write-edge
+        selected: false
+        source: prepare_update_node
+        sourceHandle: source
+        target: sheets_write_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: tool
+          targetType: answer
+        id: sheets_write-answer-edge
+        selected: false
+        source: sheets_write_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "ユーザーからのスプレッドシートID入力を受け付けます"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 300
+        positionAbsolute:
+          x: 50
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: tool
+          provider_id: omluc/google_sheets/google_sheets
+          provider_name: omluc/google_sheets/google_sheets
+          provider_type: builtin
+          tool_label: Batch Get
+          tool_name: batch_get
+          tool_description: Retrieve data from multiple ranges in a Google Sheet
+          is_team_authorization: true
+          output_schema: null
+          tool_configurations:
+            date_time_render_option: FORMATTED_STRING
+            major_dimension: null
+            value_render_option: null
+          tool_parameters:
+            ranges:
+              type: mixed
+              value: '["Sheet1!A:B"]'
+            spreadsheet_id:
+              type: mixed
+              value: "{{#sys.query#}}"
+          selected: false
+          title: "売上データ読み取り"
+          desc: "Google SheetsのA列（営業員名）とB列（売上金額）を読み取ります"
+        height: 90
+        id: sheets_read_node
+        position:
+          x: 350
+          y: 300
+        positionAbsolute:
+          x: 350
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: template-transform
+          variables:
+            - value_selector:
+                - sheets_read_node
+                - json
+              variable: sheet_data
+              value_type: array[object]
+          template: |
+            売上データ一覧：
+            {% if sheet_data and sheet_data[0] and sheet_data[0]["valueRanges"] and sheet_data[0]["valueRanges"][0] and sheet_data[0]["valueRanges"][0]["values"] %}
+            {% set rows = sheet_data[0]["valueRanges"][0]["values"] %}
+            {% for row in rows %}
+            {% if loop.index > 1 and row|length >= 2 %}
+            営業員名: {{ row[0] }}, 売上金額: {{ row[1] }}万円
+            {% endif %}
+            {% endfor %}
+            {% else %}
+            データが見つかりませんでした。
+            {% endif %}
+          selected: false
+          title: "データ変換"
+          desc: "読み取ったデータをLLM処理用に整形します"
+        height: 102
+        id: transform_data_node
+        position:
+          x: 650
+          y: 300
+        positionAbsolute:
+          x: 650
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: llm
+          provider: openai
+          model:
+            provider: openai
+            name: gpt-4o-mini
+            mode: chat
+            completion_params:
+              temperature: 0.1
+              max_tokens: 2000
+          prompt_template:
+            - id: "system_prompt"
+              role: system
+              text: |
+                あなたは売上評価判定システムです。
+                以下の基準で営業員の売上を評価してください：
+                - 1000万円以上：高評価
+                - 500万円以上1000万円未満：中評価
+                - 500万円未満：低評価
+                
+                必ず以下のJSON形式で出力してください：
+                ```json
+                [
+                  ["営業員名", "売上金額", "評価"],
+                  ["山田太郎", "1200", "高評価"],
+                  ["田中次郎", "750", "中評価"],
+                  ["佐藤三郎", "300", "低評価"]
+                ]
+                ```
+                
+                注意：
+                1. 最初の行はヘッダー行です
+                2. 売上金額は数値のみ（単位なし）で記載
+                3. 評価は「高評価」「中評価」「低評価」のいずれか
+                4. 必ずJSON配列形式で出力
+            - id: "user_prompt"
+              role: user
+              text: |
+                以下の売上データを評価してください：
+                
+                {{#transform_data_node.output#}}
+          structured_output_enabled: false
+          variables: []
+          context:
+            enabled: false
+            variable_selector: []
+          vision:
+            enabled: false
+          selected: false
+          title: "売上評価判定"
+          desc: "各営業員の売上金額を基に評価を行います"
+        height: 98
+        id: llm_analyzer_node
+        position:
+          x: 950
+          y: 300
+        positionAbsolute:
+          x: 950
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: template-transform
+          variables:
+            - value_selector:
+                - llm_analyzer_node
+                - text
+              variable: evaluation_result
+              value_type: string
+          template: |
+            [{
+              "range": "RESULT!A1:C100",
+              "values": {{ evaluation_result|trim }}
+            }]
+          selected: false
+          title: "更新データ準備"
+          desc: "評価結果をGoogle Sheets更新用の形式に変換します"
+        height: 102
+        id: prepare_update_node
+        position:
+          x: 1250
+          y: 300
+        positionAbsolute:
+          x: 1250
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: tool
+          provider_id: omluc/google_sheets/google_sheets
+          provider_name: omluc/google_sheets/google_sheets
+          provider_type: builtin
+          tool_label: Batch Update
+          tool_name: batch_update
+          tool_description: Updates multiple ranges in a Google Sheet with specified values
+          is_team_authorization: true
+          output_schema: null
+          tool_configurations:
+            include_values_in_response: null
+            response_date_time_render_option: null
+            response_value_render_option: null
+            value_input_option: USER_ENTERED
+          tool_parameters:
+            data:
+              type: mixed
+              value: "{{#prepare_update_node.output#}}"
+            spreadsheet_id:
+              type: mixed
+              value: "{{#sys.query#}}"
+          selected: false
+          title: "結果書き込み"
+          desc: "評価結果をRESULTシートに書き込みます"
+        height: 90
+        id: sheets_write_node
+        position:
+          x: 1550
+          y: 300
+        positionAbsolute:
+          x: 1550
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: |
+            売上評価判定が完了しました！
+            
+            処理結果：
+            {{#llm_analyzer_node.text#}}
+            
+            RESULTシートに評価結果を書き込みました。
+            Google Sheetsでご確認ください。
+          desc: "処理完了メッセージを表示します"
+          selected: false
+          title: "完了"
+          type: answer
+          variables: []
+        height: 107
+        id: answer_node
+        position:
+          x: 1850
+          y: 300
+        positionAbsolute:
+          x: 1850
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

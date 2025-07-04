@@ -1,0 +1,828 @@
+app:
+  description: Google Sheetsと連携した在庫管理判定ワークフローです。商品名を入力すると、在庫状況を判定し、結果をシートに記録します。
+  icon: 📦
+  icon_background: "#FEE2E2"
+  mode: advanced-chat
+  name: 在庫管理判定ワークフロー
+  use_icon_as_answer_icon: false
+
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+
+kind: app
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: tool
+        id: start-batch_get-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: batch_get_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: tool
+          targetType: template-transform
+        id: batch_get-transform_csv-edge
+        selected: false
+        source: batch_get_node
+        sourceHandle: source
+        target: transform_csv_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: llm
+        id: transform_csv-llm_extract-edge
+        selected: false
+        source: transform_csv_node
+        sourceHandle: source
+        target: llm_extract_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: if-else
+        id: llm_extract-inventory_check-edge
+        selected: false
+        source: llm_extract_node
+        sourceHandle: source
+        target: inventory_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: template-transform
+        id: inventory_check-out_of_stock-edge
+        selected: false
+        source: inventory_check_node
+        sourceHandle: out_of_stock
+        target: out_of_stock_message_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: template-transform
+        id: inventory_check-low_stock-edge
+        selected: false
+        source: inventory_check_node
+        sourceHandle: low_stock
+        target: low_stock_message_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: template-transform
+        id: inventory_check-sufficient_stock-edge
+        selected: false
+        source: inventory_check_node
+        sourceHandle: false
+        target: sufficient_stock_message_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: template-transform
+        id: out_of_stock-prepare_log-edge
+        selected: false
+        source: out_of_stock_message_node
+        sourceHandle: source
+        target: prepare_log_node_1
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: template-transform
+        id: low_stock-prepare_log-edge
+        selected: false
+        source: low_stock_message_node
+        sourceHandle: source
+        target: prepare_log_node_2
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: template-transform
+        id: sufficient_stock-prepare_log-edge
+        selected: false
+        source: sufficient_stock_message_node
+        sourceHandle: source
+        target: prepare_log_node_3
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: tool
+        id: prepare_log_1-batch_update-edge
+        selected: false
+        source: prepare_log_node_1
+        sourceHandle: source
+        target: batch_update_node_1
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: tool
+        id: prepare_log_2-batch_update-edge
+        selected: false
+        source: prepare_log_node_2
+        sourceHandle: source
+        target: batch_update_node_2
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: tool
+        id: prepare_log_3-batch_update-edge
+        selected: false
+        source: prepare_log_node_3
+        sourceHandle: source
+        target: batch_update_node_3
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: tool
+          targetType: answer
+        id: batch_update_1-answer-edge
+        selected: false
+        source: batch_update_node_1
+        sourceHandle: source
+        target: answer_node_1
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: tool
+          targetType: answer
+        id: batch_update_2-answer-edge
+        selected: false
+        source: batch_update_node_2
+        sourceHandle: source
+        target: answer_node_2
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: tool
+          targetType: answer
+        id: batch_update_3-answer-edge
+        selected: false
+        source: batch_update_node_3
+        sourceHandle: source
+        target: answer_node_3
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: 開始ノード
+          selected: false
+          title: 開始
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 300
+        positionAbsolute:
+          x: 50
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: tool
+          provider_id: omluc/google_sheets/google_sheets
+          provider_name: omluc/google_sheets/google_sheets
+          provider_type: builtin
+          tool_label: Batch Get
+          tool_name: batch_get
+          tool_description: Retrieve data from multiple ranges in a Google Sheet
+          is_team_authorization: true
+          output_schema: null
+          tool_configurations:
+            date_time_render_option: FORMATTED_STRING
+            major_dimension: null
+            value_render_option: null
+          tool_parameters:
+            ranges:
+              type: mixed
+              value: '["INVENTORY!A1:C10"]'
+            spreadsheet_id:
+              type: mixed
+              value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+          selected: false
+          title: 在庫データ取得
+          desc: Google Sheetsから在庫データを取得
+        height: 122
+        id: batch_get_node
+        position:
+          x: 350
+          y: 300
+        positionAbsolute:
+          x: 350
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: 取得データをCSV形式に変換
+          selected: false
+          title: データ整形
+          type: template-transform
+          variables:
+            - value_selector:
+                - batch_get_node
+                - json
+              variable: sheet_data
+          template: |
+            取得した在庫データ（CSV形式）：
+            {% for row in sheet_data[0].values %}
+            {{ row|join(',') }}
+            {% endfor %}
+        height: 80
+        id: transform_csv_node
+        position:
+          x: 650
+          y: 300
+        positionAbsolute:
+          x: 650
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          desc: 商品の在庫数を抽出
+          model:
+            completion_params:
+              temperature: 0.1
+            mode: chat
+            name: gpt-3.5-turbo
+            provider: openai
+          prompt_template:
+            - id: system
+              role: system
+              text: あなたは在庫管理のエキスパートです。CSV形式の在庫データから指定された商品の在庫数を抽出してください。
+            - id: user
+              role: user
+              text: |
+                {{#transform_csv_node.output#}}
+                
+                ユーザーが入力した商品名：{{#sys.query#}}
+                
+                上記のデータから、ユーザーが入力した商品名に該当する商品の在庫数を抽出してください。
+                商品が見つからない場合は「-1」を返してください。
+                
+                出力形式：
+                商品名: [商品名]
+                在庫数: [数値のみ]
+          selected: false
+          title: 在庫数抽出
+          type: llm
+          variables: []
+          vision:
+            enabled: false
+        height: 161
+        id: llm_extract_node
+        position:
+          x: 950
+          y: 300
+        positionAbsolute:
+          x: 950
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          cases:
+            - id: out_of_stock
+              case_id: out_of_stock
+              conditions:
+                - id: stock_zero_condition
+                  variable_selector:
+                    - llm_extract_node
+                    - text
+                  comparison_operator: contains
+                  value: "在庫数: 0"
+              logical_operator: and
+            - id: low_stock
+              case_id: low_stock
+              conditions:
+                - id: stock_low_condition_1
+                  variable_selector:
+                    - llm_extract_node
+                    - text
+                  comparison_operator: contains
+                  value: "在庫数: 1"
+                - id: stock_low_condition_2
+                  variable_selector:
+                    - llm_extract_node
+                    - text
+                  comparison_operator: contains
+                  value: "在庫数: 2"
+                - id: stock_low_condition_3
+                  variable_selector:
+                    - llm_extract_node
+                    - text
+                  comparison_operator: contains
+                  value: "在庫数: 3"
+                - id: stock_low_condition_4
+                  variable_selector:
+                    - llm_extract_node
+                    - text
+                  comparison_operator: contains
+                  value: "在庫数: 4"
+                - id: stock_low_condition_5
+                  variable_selector:
+                    - llm_extract_node
+                    - text
+                  comparison_operator: contains
+                  value: "在庫数: 5"
+                - id: stock_low_condition_6
+                  variable_selector:
+                    - llm_extract_node
+                    - text
+                  comparison_operator: contains
+                  value: "在庫数: 6"
+                - id: stock_low_condition_7
+                  variable_selector:
+                    - llm_extract_node
+                    - text
+                  comparison_operator: contains
+                  value: "在庫数: 7"
+                - id: stock_low_condition_8
+                  variable_selector:
+                    - llm_extract_node
+                    - text
+                  comparison_operator: contains
+                  value: "在庫数: 8"
+                - id: stock_low_condition_9
+                  variable_selector:
+                    - llm_extract_node
+                    - text
+                  comparison_operator: contains
+                  value: "在庫数: 9"
+                - id: stock_low_condition_10
+                  variable_selector:
+                    - llm_extract_node
+                    - text
+                  comparison_operator: contains
+                  value: "在庫数: 10"
+              logical_operator: or
+          desc: 在庫状況に応じた分岐
+          selected: false
+          title: 在庫状況判定
+        height: 250
+        id: inventory_check_node
+        position:
+          x: 1250
+          y: 300
+        positionAbsolute:
+          x: 1250
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: 在庫切れメッセージ作成
+          selected: false
+          title: 在庫切れメッセージ
+          type: template-transform
+          variables:
+            - value_selector:
+                - llm_extract_node
+                - text
+              variable: product_info
+          template: |
+            在庫切れアラート！
+            
+            {{ product_info }}
+            
+            この商品は現在在庫切れです。
+            早急に発注手続きを行ってください。
+            
+            対応内容：緊急発注が必要
+        height: 80
+        id: out_of_stock_message_node
+        position:
+          x: 1550
+          y: 100
+        positionAbsolute:
+          x: 1550
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: 在庫不足メッセージ作成
+          selected: false
+          title: 在庫不足メッセージ
+          type: template-transform
+          variables:
+            - value_selector:
+                - llm_extract_node
+                - text
+              variable: product_info
+          template: |
+            在庫不足警告
+            
+            {{ product_info }}
+            
+            在庫が少なくなっています。
+            早めの発注をご検討ください。
+            
+            対応内容：通常発注を推奨
+        height: 80
+        id: low_stock_message_node
+        position:
+          x: 1550
+          y: 300
+        positionAbsolute:
+          x: 1550
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: 在庫充分メッセージ作成
+          selected: false
+          title: 在庫充分メッセージ
+          type: template-transform
+          variables:
+            - value_selector:
+                - llm_extract_node
+                - text
+              variable: product_info
+          template: |
+            在庫状況：正常
+            
+            {{ product_info }}
+            
+            在庫は充分にあります。
+            現時点で発注の必要はありません。
+            
+            対応内容：対応不要
+        height: 80
+        id: sufficient_stock_message_node
+        position:
+          x: 1550
+          y: 500
+        positionAbsolute:
+          x: 1550
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: ログデータ準備（在庫切れ）
+          selected: false
+          title: ログデータ準備1
+          type: template-transform
+          variables:
+            - value_selector:
+                - sys
+                - query
+              variable: product_name
+            - value_selector:
+                - out_of_stock_message_node
+                - output
+              variable: message
+          template: |
+            [{
+              "range": "LOG!A2:D2",
+              "values": [
+                ["2025/01/14 12:00", "{{ product_name }}", "在庫切れ", "緊急発注が必要"]
+              ]
+            }]
+        height: 80
+        id: prepare_log_node_1
+        position:
+          x: 1850
+          y: 100
+        positionAbsolute:
+          x: 1850
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: ログデータ準備（在庫不足）
+          selected: false
+          title: ログデータ準備2
+          type: template-transform
+          variables:
+            - value_selector:
+                - sys
+                - query
+              variable: product_name
+            - value_selector:
+                - low_stock_message_node
+                - output
+              variable: message
+          template: |
+            [{
+              "range": "LOG!A2:D2",
+              "values": [
+                ["2025/01/14 12:00", "{{ product_name }}", "在庫不足", "通常発注を推奨"]
+              ]
+            }]
+        height: 80
+        id: prepare_log_node_2
+        position:
+          x: 1850
+          y: 300
+        positionAbsolute:
+          x: 1850
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: ログデータ準備（在庫充分）
+          selected: false
+          title: ログデータ準備3
+          type: template-transform
+          variables:
+            - value_selector:
+                - sys
+                - query
+              variable: product_name
+            - value_selector:
+                - sufficient_stock_message_node
+                - output
+              variable: message
+          template: |
+            [{
+              "range": "LOG!A2:D2",
+              "values": [
+                ["2025/01/14 12:00", "{{ product_name }}", "在庫充分", "対応不要"]
+              ]
+            }]
+        height: 80
+        id: prepare_log_node_3
+        position:
+          x: 1850
+          y: 500
+        positionAbsolute:
+          x: 1850
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: tool
+          provider_id: omluc/google_sheets/google_sheets
+          provider_name: omluc/google_sheets/google_sheets
+          provider_type: builtin
+          tool_label: Batch Update
+          tool_name: batch_update
+          tool_description: Updates multiple ranges in a Google Sheet with specified values
+          is_team_authorization: true
+          output_schema: null
+          tool_configurations:
+            include_values_in_response: null
+            response_date_time_render_option: null
+            response_value_render_option: null
+            value_input_option: USER_ENTERED
+          tool_parameters:
+            data:
+              type: mixed
+              value: '{{#prepare_log_node_1.output#}}'
+            spreadsheet_id:
+              type: mixed
+              value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+          selected: false
+          title: ログ記録1
+          desc: 在庫切れログをシートに記録
+        height: 122
+        id: batch_update_node_1
+        position:
+          x: 2150
+          y: 100
+        positionAbsolute:
+          x: 2150
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: tool
+          provider_id: omluc/google_sheets/google_sheets
+          provider_name: omluc/google_sheets/google_sheets
+          provider_type: builtin
+          tool_label: Batch Update
+          tool_name: batch_update
+          tool_description: Updates multiple ranges in a Google Sheet with specified values
+          is_team_authorization: true
+          output_schema: null
+          tool_configurations:
+            include_values_in_response: null
+            response_date_time_render_option: null
+            response_value_render_option: null
+            value_input_option: USER_ENTERED
+          tool_parameters:
+            data:
+              type: mixed
+              value: '{{#prepare_log_node_2.output#}}'
+            spreadsheet_id:
+              type: mixed
+              value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+          selected: false
+          title: ログ記録2
+          desc: 在庫不足ログをシートに記録
+        height: 122
+        id: batch_update_node_2
+        position:
+          x: 2150
+          y: 300
+        positionAbsolute:
+          x: 2150
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: tool
+          provider_id: omluc/google_sheets/google_sheets
+          provider_name: omluc/google_sheets/google_sheets
+          provider_type: builtin
+          tool_label: Batch Update
+          tool_name: batch_update
+          tool_description: Updates multiple ranges in a Google Sheet with specified values
+          is_team_authorization: true
+          output_schema: null
+          tool_configurations:
+            include_values_in_response: null
+            response_date_time_render_option: null
+            response_value_render_option: null
+            value_input_option: USER_ENTERED
+          tool_parameters:
+            data:
+              type: mixed
+              value: '{{#prepare_log_node_3.output#}}'
+            spreadsheet_id:
+              type: mixed
+              value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+          selected: false
+          title: ログ記録3
+          desc: 在庫充分ログをシートに記録
+        height: 122
+        id: batch_update_node_3
+        position:
+          x: 2150
+          y: 500
+        positionAbsolute:
+          x: 2150
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: '{{#out_of_stock_message_node.output#}}'
+          desc: 在庫切れ結果表示
+          selected: false
+          title: 在庫切れ回答
+          type: answer
+          variables: []
+        height: 107
+        id: answer_node_1
+        position:
+          x: 2450
+          y: 100
+        positionAbsolute:
+          x: 2450
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: '{{#low_stock_message_node.output#}}'
+          desc: 在庫不足結果表示
+          selected: false
+          title: 在庫不足回答
+          type: answer
+          variables: []
+        height: 107
+        id: answer_node_2
+        position:
+          x: 2450
+          y: 300
+        positionAbsolute:
+          x: 2450
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: '{{#sufficient_stock_message_node.output#}}'
+          desc: 在庫充分結果表示
+          selected: false
+          title: 在庫充分回答
+          type: answer
+          variables: []
+        height: 107
+        id: answer_node_3
+        position:
+          x: 2450
+          y: 500
+        positionAbsolute:
+          x: 2450
+          y: 500
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.5

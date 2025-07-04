@@ -1,0 +1,557 @@
+app:
+  description: ''
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  mode: advanced-chat
+  name: 音声認識テスト
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: lysonober/openai_audio:0.0.4@2a7bc1307f6d4337b597cafe1c75f20e0fabf0dd8132a0a4e04496b3c949c86c
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - audio
+      allowed_file_upload_methods:
+      - remote_url
+      - local_file
+      enabled: true
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        image_file_size_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 1
+    opening_statement: ''
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: tool
+      id: 1751587638883-source-1751588227719-target
+      source: '1751587638883'
+      sourceHandle: source
+      target: '1751588227719'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: answer
+      id: 1751588227719-source-answer-target
+      source: '1751588227719'
+      sourceHandle: source
+      target: answer
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: ''
+        selected: false
+        title: 開始
+        type: start
+        variables: []
+      height: 54
+      id: '1751587638883'
+      position:
+        x: 79
+        y: 282
+      positionAbsolute:
+        x: 79
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '{{#1751588227719.text#}}'
+        desc: ''
+        selected: false
+        title: 回答
+        type: answer
+        variables: []
+      height: 105
+      id: answer
+      position:
+        x: 692
+        y: 282
+      positionAbsolute:
+        x: 692
+        y: 282
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: ''
+        is_team_authorization: false
+        output_schema: null
+        paramSchemas:
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: The audio file to transcribe. Supported formats include mp3, mp4,
+              mpeg, mpga, m4a, wav, and webm. Max 25MB.
+            ja_JP: 文字起こしする音声ファイル。サポートされている形式はmp3、mp4、mpeg、mpga、m4a、wav、webmです。最大サイズは25MBです。
+            pt_BR: O arquivo de áudio para transcrever. Formatos suportados incluem
+              mp3, mp4, mpeg, mpga, m4a, wav e webm. Máximo 25MB.
+            zh_Hans: 要转录的音频文件。支持的格式包括 mp3、mp4、mpeg、mpga、m4a、wav 和 webm。最大 25MB。
+          label:
+            en_US: Audio File
+            ja_JP: 音声ファイル
+            pt_BR: Arquivo de Áudio
+            zh_Hans: 音频文件
+          llm_description: The audio file to transcribe. Supported formats include
+            mp3, mp4, mpeg, mpga, m4a, wav, and webm. Maximum file size is 25MB.
+          max: null
+          min: null
+          name: file
+          options: []
+          placeholder: null
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: file
+        - auto_generate: null
+          default: transcribe
+          form: form
+          human_description:
+            en_US: Choose whether to transcribe the audio in its original language
+              or translate it to English. Note that 'Translate to English' only supports
+              the whisper-1 model and will disable streaming output.
+            ja_JP: 音声を原語のまま文字起こしするか、英語に翻訳するかを選択します。「英語に翻訳」はwhisper-1モデルのみをサポートし、ストリーミング出力が無効になります。
+            pt_BR: Escolha entre transcrever o áudio em seu idioma original ou traduzi-lo
+              para inglês.
+            zh_Hans: 选择是以原始语言转录音频还是将其翻译成英语。请注意，"翻译成英语"选项仅支持 whisper-1 模型，并且会禁用流式输出。
+          label:
+            en_US: Transcription Type
+            ja_JP: 文字起こしタイプ
+            pt_BR: Tipo de Transcrição
+            zh_Hans: 转录类型
+          llm_description: Choose whether to transcribe the audio in its original
+            language or translate it to English. Note that translation only supports
+            whisper-1 model.
+          max: null
+          min: null
+          name: transcription_type
+          options:
+          - icon: ''
+            label:
+              en_US: Transcribe (Keep Original Language)
+              ja_JP: 文字起こし（原語を維持）
+              pt_BR: Transcrever (Manter Idioma Original)
+              zh_Hans: 转录（保持原始语言）
+            value: transcribe
+          - icon: ''
+            label:
+              en_US: Translate to English
+              ja_JP: 英語に翻訳
+              pt_BR: Traduzir para Inglês
+              zh_Hans: 翻译成英语
+            value: translate
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: select
+        - auto_generate: null
+          default: gpt-4o-transcribe
+          form: form
+          human_description:
+            en_US: Select the model to use. Note that translations only support whisper-1.
+            ja_JP: 使用するモデルを選択します。翻訳機能はwhisper-1モデルのみをサポートしていることに注意してください。
+            pt_BR: Selecione o modelo a ser usado. Note que traduções só suportam
+              whisper-1.
+            zh_Hans: 选择要使用的模型。请注意，翻译功能仅支持 whisper-1。
+          label:
+            en_US: Model
+            ja_JP: モデル
+            pt_BR: Modelo
+            zh_Hans: 模型
+          llm_description: Select the model to use for transcription or translation.
+            GPT-4o models provide higher quality but translations only support whisper-1.
+          max: null
+          min: null
+          name: model
+          options:
+          - icon: ''
+            label:
+              en_US: GPT-4o Transcribe (High Quality)
+              ja_JP: GPT-4o Transcribe (高品質)
+              pt_BR: GPT-4o Transcribe (Alta Qualidade)
+              zh_Hans: GPT-4o Transcribe (高质量)
+            value: gpt-4o-transcribe
+          - icon: ''
+            label:
+              en_US: GPT-4o Mini Transcribe (Faster)
+              ja_JP: GPT-4o Mini Transcribe (高速)
+              pt_BR: GPT-4o Mini Transcribe (Mais Rápido)
+              zh_Hans: GPT-4o Mini Transcribe (更快)
+            value: gpt-4o-mini-transcribe
+          - icon: ''
+            label:
+              en_US: Whisper-1 (Legacy, More Formats)
+              ja_JP: Whisper-1 (レガシー、複数フォーマット対応)
+              pt_BR: Whisper-1 (Legado, Mais Formatos)
+              zh_Hans: Whisper-1 (旧版，更多格式)
+            value: whisper-1
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: select
+        - auto_generate: null
+          default: text
+          form: form
+          human_description:
+            en_US: The format of the transcript output. Note that some formats are
+              only available with whisper-1.
+            ja_JP: 文字起こし出力のフォーマット。一部のフォーマットはWhisper-1モデルでのみ利用可能です。
+            pt_BR: O formato da saída da transcrição. Note que alguns formatos só
+              estão disponíveis com whisper-1.
+            zh_Hans: 转录输出的格式。请注意，某些格式仅适用于 whisper-1。
+          label:
+            en_US: Response Format
+            ja_JP: レスポンスフォーマット
+            pt_BR: Formato de Resposta
+            zh_Hans: 响应格式
+          llm_description: The format of the transcript output. verbose_json, srt,
+            and vtt formats are only available with the whisper-1 model.
+          max: null
+          min: null
+          name: response_format
+          options:
+          - icon: ''
+            label:
+              en_US: Text
+              ja_JP: テキスト
+              pt_BR: Texto
+              zh_Hans: 文本
+            value: text
+          - icon: ''
+            label:
+              en_US: JSON
+              ja_JP: JSON
+              pt_BR: JSON
+              zh_Hans: JSON
+            value: json
+          - icon: ''
+            label:
+              en_US: Verbose JSON (Whisper-1 only)
+              ja_JP: 詳細JSON (Whisper-1のみ)
+              pt_BR: JSON Detalhado (Apenas Whisper-1)
+              zh_Hans: 详细 JSON (仅 Whisper-1)
+            value: verbose_json
+          - icon: ''
+            label:
+              en_US: SRT Subtitles (Whisper-1 only)
+              ja_JP: SRT字幕 (Whisper-1のみ)
+              pt_BR: Legendas SRT (Apenas Whisper-1)
+              zh_Hans: SRT 字幕 (仅 Whisper-1)
+            value: srt
+          - icon: ''
+            label:
+              en_US: VTT Subtitles (Whisper-1 only)
+              ja_JP: VTT字幕 (Whisper-1のみ)
+              pt_BR: Legendas VTT (Apenas Whisper-1)
+              zh_Hans: VTT 字幕 (仅 Whisper-1)
+            value: vtt
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: select
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: Optional prompt to guide transcription. Can help with uncommon
+              words, acronyms, or context.
+            ja_JP: Optional prompt to guide transcription. Can help with uncommon
+              words, acronyms, or context.
+            pt_BR: Prompt opcional para guiar a transcrição. Pode ajudar com palavras
+              incomuns, siglas ou contexto.
+            zh_Hans: 可选的提示词，指导转录。有助于处理不常见的单词、缩写词或上下文。
+          label:
+            en_US: Prompt
+            ja_JP: プロンプト
+            pt_BR: Prompt
+            zh_Hans: 提示词
+          llm_description: Optional prompt to guide the model's transcription. This
+            can help with uncommon words, acronyms, or providing context for better
+            accuracy.
+          max: null
+          min: null
+          name: prompt
+          options: []
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: null
+          form: llm
+          human_description:
+            en_US: ISO-639-1 language code (e.g. 'en', 'zh', 'ja'). Helps improve
+              accuracy if audio language is known.
+            ja_JP: ISO-639-1言語コード（例：'en'、'zh'、'ja'）。音声の言語が分かっている場合、精度を向上させるのに役立ちます。
+            pt_BR: Código de idioma ISO-639-1 (ex. 'en', 'pt', 'es'). Ajuda a melhorar
+              a precisão se o idioma do áudio for conhecido.
+            zh_Hans: ISO-639-1 语言代码（例如 'en'、'zh'、'ja'）。如果知道音频语言，有助于提高准确性。
+          label:
+            en_US: Language Code
+            ja_JP: 言語コード
+            pt_BR: Código de Idioma
+            zh_Hans: 语言代码
+          llm_description: ISO-639-1 language code of the input audio. Supplying the
+            input language will improve accuracy if the audio language is known.
+          max: null
+          min: null
+          name: language
+          options: []
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: none
+          form: form
+          human_description:
+            en_US: Add timestamps to transcript. Only available with whisper-1 and
+              verbose_json response format.
+            ja_JP: 文字起こしにタイムスタンプを追加します。Whisper-1モデルとverbose_jsonレスポンスフォーマットでのみ利用可能です。
+            pt_BR: Adicionar marcações de tempo à transcrição. Disponível apenas com
+              whisper-1 e formato de resposta verbose_json.
+            zh_Hans: 向转录添加时间戳。仅适用于 whisper-1 和 verbose_json 响应格式。
+          label:
+            en_US: Timestamp Granularities (Whisper-1 only)
+            ja_JP: タイムスタンプ粒度 (Whisper-1のみ)
+            pt_BR: Granularidade de Timestamp (Apenas Whisper-1)
+            zh_Hans: 时间戳粒度 (仅 Whisper-1)
+          llm_description: Add timestamps to the transcript at segment or word level.
+            This is only available with the whisper-1 model and requires verbose_json
+            response format.
+          max: null
+          min: null
+          name: timestamp_granularities
+          options:
+          - icon: ''
+            label:
+              en_US: None
+              ja_JP: なし
+              pt_BR: Nenhum
+              zh_Hans: 无
+            value: none
+          - icon: ''
+            label:
+              en_US: Segment
+              ja_JP: セグメント
+              pt_BR: Segmento
+              zh_Hans: 段落
+            value: segment
+          - icon: ''
+            label:
+              en_US: Word
+              ja_JP: 単語
+              pt_BR: Palavra
+              zh_Hans: 单词
+            value: word
+          - icon: ''
+            label:
+              en_US: Segment and Word
+              ja_JP: セグメントと単語
+              pt_BR: Segmento e Palavra
+              zh_Hans: 段落和单词
+            value: segment_and_word
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: select
+        - auto_generate: null
+          default: 1
+          form: form
+          human_description:
+            en_US: Stream transcription results as they're generated. Only available
+              with gpt-4o models.
+            ja_JP: 生成されると同時に文字起こし結果をストリーミングします。GPT-4oモデルでのみ利用可能です。
+            pt_BR: Transmitir resultados da transcrição à medida que são gerados.
+              Disponível apenas com modelos gpt-4o.
+            zh_Hans: 在生成结果时流式输出转录内容。仅适用于 gpt-4o 模型。
+          label:
+            en_US: Stream Output (GPT-4o models only)
+            ja_JP: ストリーミング出力 (GPT-4oモデルのみ)
+            pt_BR: Saída em Stream (Apenas modelos GPT-4o)
+            zh_Hans: 流式输出 (仅 GPT-4o 模型)
+          llm_description: Stream transcription results as they're generated. This
+            feature is only available with gpt-4o-transcribe and gpt-4o-mini-transcribe
+            models.
+          max: null
+          min: null
+          name: stream
+          options: []
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: boolean
+        - auto_generate: null
+          default: default
+          form: form
+          human_description:
+            en_US: Choose how the plugin should format its output in Dify. Default
+              returns both JSON and text, while the other options return only one
+              format.
+            ja_JP: Choose how the plugin should format its output in Dify. Default
+              returns both JSON and text, while the other options return only one
+              format.
+            pt_BR: Escolha como o plug-in deve formatar sua saída no Dify. O padrão
+              retorna ambos JSON e texto, enquanto as outras op es retornam apenas
+              um formato.
+            zh_Hans: 选择插件在 Dify 中的输出格式。默认返回 JSON 和文本，而其他选项只能返回一种格式。
+          label:
+            en_US: Output Format
+            ja_JP: 出力形式
+            pt_BR: Formato de Saída
+            zh_Hans: 输出格式
+          llm_description: Choose how the plugin should format its output in Dify.
+            Default returns both JSON and text, while the other options return only
+            one format.
+          max: null
+          min: null
+          name: output_format
+          options:
+          - icon: ''
+            label:
+              en_US: Default (JSON + Text)
+              ja_JP: デフォルト (JSON + テキスト)
+              pt_BR: Padrão (JSON + Texto)
+              zh_Hans: 默认 (JSON + 文本)
+            value: default
+          - icon: ''
+            label:
+              en_US: JSON Only
+              ja_JP: JSONのみ
+              pt_BR: Apenas JSON
+              zh_Hans: 仅 JSON
+            value: json_only
+          - icon: ''
+            label:
+              en_US: Text Only
+              ja_JP: テキストのみ
+              pt_BR: Apenas Texto
+              zh_Hans: 仅文本
+            value: text_only
+          placeholder: null
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: select
+        params:
+          file: ''
+          language: ''
+          model: ''
+          output_format: ''
+          prompt: ''
+          response_format: ''
+          stream: ''
+          timestamp_granularities: ''
+          transcription_type: ''
+        provider_id: lysonober/openai_audio/openai_audio_stt
+        provider_name: lysonober/openai_audio/openai_audio_stt
+        provider_type: builtin
+        selected: false
+        title: 音声文字起こし
+        tool_configurations:
+          model: gpt-4o-transcribe
+          output_format: default
+          response_format: text
+          stream: 1
+          timestamp_granularities: none
+          transcription_type: transcribe
+        tool_description: OpenAIのAudio APIを使用して音声ファイルをテキストに文字起こしまたは翻訳します。
+        tool_label: 音声文字起こし
+        tool_name: openai_audio_stt
+        tool_parameters:
+          file:
+            type: variable
+            value:
+            - sys
+            - files
+          language:
+            type: mixed
+            value: ''
+          prompt:
+            type: mixed
+            value: 音声ファイルを文字起こしして下さい
+        type: tool
+      height: 220
+      id: '1751588227719'
+      position:
+        x: 380
+        y: 282
+      positionAbsolute:
+        x: 380
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: 4
+      y: 131.5
+      zoom: 1

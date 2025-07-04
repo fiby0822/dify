@@ -1,0 +1,456 @@
+app:
+  description: "Google Sheetsと連携して営業データの追加・取得を行うワークフローです。データの追加と取得の両方に対応しています。"
+  icon: "📑"
+  icon_background: "#34A853"
+  mode: advanced-chat
+  name: "営業データ管理システム（Google Sheets連携）"
+  use_icon_as_answer_icon: false
+
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: false
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "データを追加したい。顧客名：ABC商事、案件名：新システム導入、金額：500万円、ステータス：商談中"
+      - "最新10件のデータを取得してください"
+      - "データを追加。顧客：XYZ工業、案件：設備更新、金額：1200万円、ステータス：成約"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+    opening_statement: "営業データ管理システムへようこそ！\n\n以下の操作が可能です：\n\n【データ追加】\n「データ追加」と入力後、以下の情報をお知らせください：\n- 顧客名\n- 案件名\n- 金額\n- ステータス\n\n【データ取得】\n「データ取得」と入力後、取得したい行数をお知らせください。\n\n例：「データを追加したい。顧客名：ABC商事、案件名：新システム導入、金額：500万円、ステータス：商談中」"
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-parse-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: parse_request_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: if-else
+        id: parse-operation-edge
+        selected: false
+        source: parse_request_node
+        sourceHandle: source
+        target: operation_check_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: template-transform
+        id: operation-transform-edge
+        selected: false
+        source: operation_check_node
+        sourceHandle: add_data_case
+        target: transform_add_data_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: tool
+        id: transform-update-edge
+        selected: false
+        source: transform_add_data_node
+        sourceHandle: source
+        target: sheets_update_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: tool
+          targetType: answer
+        id: update-answer-edge
+        selected: false
+        source: sheets_update_node
+        sourceHandle: source
+        target: add_complete_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: tool
+        id: operation-get-edge
+        selected: false
+        source: operation_check_node
+        sourceHandle: get_data_case
+        target: sheets_get_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: tool
+          targetType: template-transform
+        id: get-transform-edge
+        selected: false
+        source: sheets_get_node
+        sourceHandle: source
+        target: transform_get_data_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: answer
+        id: transform-display-edge
+        selected: false
+        source: transform_get_data_node
+        sourceHandle: source
+        target: display_data_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: operation-error-edge
+        selected: false
+        source: operation_check_node
+        sourceHandle: "false"
+        target: error_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "開始ノード"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 300
+        positionAbsolute:
+          x: 50
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          completion_params:
+            max_tokens: 1000
+            temperature: 0.3
+          context:
+            enabled: false
+            variable_selector: []
+          desc: "ユーザー要求の解析"
+          model:
+            mode: chat
+            name: gpt-3.5-turbo
+            provider: openai
+          prompt_template:
+            - id: prompt_1
+              role: system
+              text: "あなたはGoogle Sheetsの営業データ管理システムのアシスタントです。ユーザーの要求を解析し、操作種別とデータを抽出してください。\n\n必ず以下の形式で出力してください：\n操作種別: [データ追加/データ取得]\n\nデータ追加の場合：\n顧客名: [値]\n案件名: [値]\n金額: [値]\nステータス: [値]\n\nデータ取得の場合：\n取得行数: [数値]"
+            - id: prompt_2
+              role: user
+              text: "{{#sys.query#}}"
+          selected: false
+          structured_output_enabled: false
+          title: "要求解析"
+          type: llm
+          variables: []
+          vision:
+            enabled: false
+        height: 161
+        id: parse_request_node
+        position:
+          x: 350
+          y: 300
+        positionAbsolute:
+          x: 350
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          cases:
+            - id: add_data_case
+              case_id: add_data_case
+              conditions:
+                - id: add_check
+                  variable_selector:
+                    - parse_request_node
+                    - text
+                  comparison_operator: contains
+                  value: "操作種別: データ追加"
+              logical_operator: and
+            - id: get_data_case
+              case_id: get_data_case
+              conditions:
+                - id: get_check
+                  variable_selector:
+                    - parse_request_node
+                    - text
+                  comparison_operator: contains
+                  value: "操作種別: データ取得"
+              logical_operator: and
+          desc: "操作種別の判定"
+          selected: false
+          title: "操作種別チェック"
+          type: if-else
+        height: 154
+        id: operation_check_node
+        position:
+          x: 650
+          y: 300
+        positionAbsolute:
+          x: 650
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "データ追加用の形式に変換"
+          selected: false
+          title: "追加データ整形"
+          type: template-transform
+          variables:
+            - value_selector:
+                - parse_request_node
+                - text
+              variable: parsed_data
+          template: |
+            [
+              {
+                "range": "OUTPUT!A:D",
+                "values": [
+                  [
+                    "{{ parsed_data.split('顧客名: ')[1].split('\n')[0] if '顧客名: ' in parsed_data else '' }}",
+                    "{{ parsed_data.split('案件名: ')[1].split('\n')[0] if '案件名: ' in parsed_data else '' }}",
+                    "{{ parsed_data.split('金額: ')[1].split('\n')[0] if '金額: ' in parsed_data else '' }}",
+                    "{{ parsed_data.split('ステータス: ')[1].split('\n')[0] if 'ステータス: ' in parsed_data else '' }}"
+                  ]
+                ]
+              }
+            ]
+        height: 54
+        id: transform_add_data_node
+        position:
+          x: 950
+          y: 50
+        positionAbsolute:
+          x: 950
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "Google Sheetsへデータ追加"
+          is_team_authorization: true
+          output_schema: null
+          provider_id: omluc/google_sheets/google_sheets
+          provider_name: omluc/google_sheets/google_sheets
+          provider_type: builtin
+          selected: false
+          title: "データ追加"
+          tool_configurations:
+            include_values_in_response: null
+            response_date_time_render_option: null
+            response_value_render_option: null
+            value_input_option: USER_ENTERED
+          tool_label: Batch Update
+          tool_name: batch_update
+          tool_parameters:
+            data:
+              type: mixed
+              value: "{{#transform_add_data_node.output#}}"
+            spreadsheet_id:
+              type: mixed
+              value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+          type: tool
+        height: 131
+        id: sheets_update_node
+        position:
+          x: 1250
+          y: 50
+        positionAbsolute:
+          x: 1250
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【データ追加完了】\n\n営業データを正常に追加しました。\n\n追加内容：\n{{#parse_request_node.text#}}\n\n次の操作をお選びください：\n- 別のデータを追加する\n- データを取得して確認する"
+          desc: "データ追加完了の回答"
+          selected: false
+          title: "追加完了"
+          type: answer
+          variables: []
+        height: 107
+        id: add_complete_answer_node
+        position:
+          x: 1550
+          y: 50
+        positionAbsolute:
+          x: 1550
+          y: 50
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "Google Sheetsからデータ取得"
+          is_team_authorization: true
+          output_schema: null
+          provider_id: omluc/google_sheets/google_sheets
+          provider_name: omluc/google_sheets/google_sheets
+          provider_type: builtin
+          selected: false
+          title: "データ取得"
+          tool_configurations:
+            date_time_render_option: FORMATTED_STRING
+            major_dimension: null
+            value_render_option: null
+          tool_label: Batch Get
+          tool_name: batch_get
+          tool_parameters:
+            ranges:
+              type: mixed
+              value: '["INPUT!A1:D10"]'
+            spreadsheet_id:
+              type: mixed
+              value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+          type: tool
+        height: 131
+        id: sheets_get_node
+        position:
+          x: 950
+          y: 300
+        positionAbsolute:
+          x: 950
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "取得データの整形"
+          selected: false
+          title: "データ表示整形"
+          type: template-transform
+          variables:
+            - value_selector:
+                - sheets_get_node
+                - json
+              variable: sheet_data
+          template: |
+            【取得データ】
+            
+            {% if sheet_data[0].values %}
+            顧客名 | 案件名 | 金額 | ステータス
+            ---|---|---|---
+            {% for row in sheet_data[0].values %}
+            {{ row[0]|default('') }} | {{ row[1]|default('') }} | {{ row[2]|default('') }} | {{ row[3]|default('') }}
+            {% endfor %}
+            {% else %}
+            データがありません。
+            {% endif %}
+        height: 54
+        id: transform_get_data_node
+        position:
+          x: 1250
+          y: 300
+        positionAbsolute:
+          x: 1250
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#transform_get_data_node.output#}}\n\n次の操作をお選びください：\n- 新しいデータを追加する\n- 別の範囲のデータを取得する"
+          desc: "データ表示の回答"
+          selected: false
+          title: "データ表示"
+          type: answer
+          variables: []
+        height: 107
+        id: display_data_answer_node
+        position:
+          x: 1550
+          y: 300
+        positionAbsolute:
+          x: 1550
+          y: 300
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "【エラー】\n\n申し訳ございません。操作種別を判定できませんでした。\n\n以下のいずれかの形式でご入力ください：\n\n【データ追加の場合】\n「データ追加」と明記し、顧客名、案件名、金額、ステータスを含めてください。\n\n【データ取得の場合】\n「データ取得」と明記し、取得したい行数を指定してください。"
+          desc: "エラー時の回答"
+          selected: false
+          title: "エラー回答"
+          type: answer
+          variables: []
+        height: 107
+        id: error_answer_node
+        position:
+          x: 950
+          y: 550
+        positionAbsolute:
+          x: 950
+          y: 550
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.6

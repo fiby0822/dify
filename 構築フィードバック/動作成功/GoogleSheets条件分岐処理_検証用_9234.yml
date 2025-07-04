@@ -1,0 +1,516 @@
+app:
+  description: Google Sheetsの読み込み・書き込みを条件分岐で制御するワークフローです。操作タイプに応じて適切な処理を実行します。
+  icon: 📊
+  icon_background: '#E1F5FE'
+  mode: advanced-chat
+  name: GoogleSheets条件分岐処理ツール
+  use_icon_as_answer_icon: false
+dependencies:
+  - current_identifier: null
+    type: marketplace
+    value:
+      marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      custom_config:
+        file_size_limit: 15
+        number_limits: 5
+      enabled: false
+    opening_statement: "Google Sheetsの読み込み・書き込みツールです。\n\n使用方法：\n1. 操作タイプを選択（read: 読み込み、write: 書き込み）\n2. Google SheetsのURLを入力\n3. 操作対象の範囲を指定（例：A1:C10）\n4. 書き込みの場合は、データをJSON形式で入力\n\n例：\n- 読み込み: operation_type=read, range=A1:C10\n- 書き込み: operation_type=write, range=A1:B2, data=[[\"項目\",\"値\"],[\"データ1\",\"100\"]]"
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - シートからA1:C10の範囲のデータを読み込みたい
+      - シートのA1:B2に新しいデータを書き込みたい
+      - 読み込みと書き込みの使い分けを教えて
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: edge_start_to_parse
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: parse_input_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: if-else
+        id: edge_parse_to_condition
+        selected: false
+        source: parse_input_node
+        sourceHandle: source
+        target: operation_type_check
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: tool
+        id: edge_condition_to_read
+        selected: false
+        source: operation_type_check
+        sourceHandle: read_case
+        target: google_sheets_read
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: template-transform
+        id: edge_condition_to_transform
+        selected: false
+        source: operation_type_check
+        sourceHandle: write_case
+        target: transform_write_data
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: tool
+        id: edge_transform_to_write
+        selected: false
+        source: transform_write_data
+        sourceHandle: source
+        target: google_sheets_write
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: tool
+          targetType: template-transform
+        id: edge_read_to_format
+        selected: false
+        source: google_sheets_read
+        sourceHandle: source
+        target: format_read_result
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: tool
+          targetType: template-transform
+        id: edge_write_to_format
+        selected: false
+        source: google_sheets_write
+        sourceHandle: source
+        target: format_write_result
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: answer
+        id: edge_format_read_to_answer
+        selected: false
+        source: format_read_result
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: answer
+        id: edge_format_write_to_answer
+        selected: false
+        source: format_write_result
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: if-else
+          targetType: answer
+        id: edge_condition_to_error
+        selected: false
+        source: operation_type_check
+        sourceHandle: "false"
+        target: error_answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: ''
+          selected: false
+          title: 開始
+          type: start
+          variables: []
+        height: 90
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: llm
+          title: 入力解析
+          desc: ユーザーの入力を解析し、必要なパラメータを抽出
+          variables: []
+          model:
+            provider: openai
+            name: gpt-4o
+            mode: chat
+            completion_params:
+              temperature: 0.3
+              max_tokens: 1000
+              top_p: 0.7
+              frequency_penalty: 0
+              presence_penalty: 0
+          prompt_template:
+            - id: system_prompt
+              role: system
+              text: |
+                あなたはGoogle Sheets操作パラメータを抽出する専門家です。
+                ユーザーの入力から以下の情報を抽出してください：
+                
+                1. operation_type: "read"（読み込み）または"write"（書き込み）
+                2. sheet_url: Google SheetsのURL（完全なURL）
+                3. range: 操作対象の範囲（例：A1:C10, Sheet1!A1:B5）
+                4. data: 書き込み時のデータ（writeの場合のみ、JSON配列形式）
+                
+                出力形式（JSON）：
+                {
+                  "operation_type": "read/write",
+                  "spreadsheet_id": "抽出したスプレッドシートID",
+                  "range": "範囲",
+                  "data": [[...]] // writeの場合のみ
+                }
+                
+                注意：
+                - URLからスプレッドシートIDを抽出（/d/と/editの間の44文字）
+                - rangeにシート名が含まれない場合は、デフォルトでSheet1を使用
+                - dataは必ず2次元配列形式で出力
+            - id: user_prompt
+              role: user
+              text: "{{#sys.query#}}"
+          selected: false
+          context:
+            enabled: false
+            variable_selector: []
+          vision:
+            enabled: false
+          structured_output_enabled: false
+        height: 98
+        id: parse_input_node
+        position:
+          x: 350
+          y: 200
+        positionAbsolute:
+          x: 350
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: if-else
+          title: 操作タイプ判定
+          desc: readまたはwriteの判定
+          cases:
+            - id: read_case
+              case_id: read_case
+              conditions:
+                - id: read_condition
+                  variable_selector:
+                    - parse_input_node
+                    - text
+                  comparison_operator: contains
+                  value: '"operation_type": "read"'
+              logical_operator: and
+            - id: write_case
+              case_id: write_case
+              conditions:
+                - id: write_condition
+                  variable_selector:
+                    - parse_input_node
+                    - text
+                  comparison_operator: contains
+                  value: '"operation_type": "write"'
+              logical_operator: and
+          selected: false
+        height: 154
+        id: operation_type_check
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: tool
+          provider_id: omluc/google_sheets/google_sheets
+          provider_name: omluc/google_sheets/google_sheets
+          provider_type: builtin
+          tool_label: Batch Get
+          tool_name: batch_get
+          tool_description: Retrieve data from multiple ranges in a Google Sheet
+          is_team_authorization: true
+          output_schema: null
+          tool_configurations:
+            date_time_render_option: FORMATTED_STRING
+            major_dimension: null
+            value_render_option: null
+          tool_parameters:
+            ranges:
+              type: mixed
+              value: '{{#parse_input_node.text|fromjson|attr("range")|default("Sheet1!A1:A1")|list|tojson#}}'
+            spreadsheet_id:
+              type: mixed
+              value: '{{#parse_input_node.text|fromjson|attr("spreadsheet_id")|default("")#}}'
+          selected: false
+          title: シートからデータ読み込み
+          desc: Google Sheetsからデータを取得
+        height: 90
+        id: google_sheets_read
+        position:
+          x: 950
+          y: 100
+        positionAbsolute:
+          x: 950
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: template-transform
+          title: 書き込みデータ整形
+          desc: 書き込み用データをJSON形式に整形
+          template: |
+            {% set parsed_data = input_data|fromjson|default({}) %}
+            {% if parsed_data.data %}
+            [{
+              "range": "{{ parsed_data.range|default('Sheet1!A1') }}",
+              "values": {{ parsed_data.data|tojson }}
+            }]
+            {% else %}
+            [{
+              "range": "Sheet1!A1:B2",
+              "values": [["エラー", "データが指定されていません"]]
+            }]
+            {% endif %}
+          variables:
+            - value_selector:
+                - parse_input_node
+                - text
+              value_type: object
+              variable: input_data
+          selected: false
+        height: 54
+        id: transform_write_data
+        position:
+          x: 950
+          y: 250
+        positionAbsolute:
+          x: 950
+          y: 250
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: tool
+          provider_id: omluc/google_sheets/google_sheets
+          provider_name: omluc/google_sheets/google_sheets
+          provider_type: builtin
+          tool_label: Batch Update
+          tool_name: batch_update
+          tool_description: Updates multiple ranges in a Google Sheet with specified values
+          is_team_authorization: true
+          output_schema: null
+          tool_configurations:
+            include_values_in_response: null
+            response_date_time_render_option: null
+            response_value_render_option: null
+            value_input_option: USER_ENTERED
+          tool_parameters:
+            data:
+              type: mixed
+              value: '{{#transform_write_data.output#}}'
+            spreadsheet_id:
+              type: mixed
+              value: '{{#parse_input_node.text|fromjson|attr("spreadsheet_id")|default("")#}}'
+          selected: false
+          title: シートへデータ書き込み
+          desc: Google Sheetsにデータを書き込み
+        height: 90
+        id: google_sheets_write
+        position:
+          x: 1250
+          y: 250
+        positionAbsolute:
+          x: 1250
+          y: 250
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: template-transform
+          title: 読み込み結果整形
+          desc: 読み込んだデータを見やすく整形
+          template: |
+            ## 読み込み結果
+            
+            操作: データ読み込み完了
+            
+            {% if sheet_data and sheet_data[0] and sheet_data[0].values %}
+            取得データ（{{ sheet_data[0].values|length }}行）：
+            
+            {% for row in sheet_data[0].values %}
+            {{ loop.index }}. {{ row|join(' | ') }}
+            {% endfor %}
+            {% else %}
+            指定された範囲にデータが見つかりませんでした。
+            {% endif %}
+          variables:
+            - value_selector:
+                - google_sheets_read
+                - json
+              value_type: array[object]
+              variable: sheet_data
+          selected: false
+        height: 54
+        id: format_read_result
+        position:
+          x: 1250
+          y: 100
+        positionAbsolute:
+          x: 1250
+          y: 100
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: template-transform
+          title: 書き込み結果整形
+          desc: 書き込み完了メッセージを生成
+          template: |
+            ## 書き込み結果
+            
+            操作: データ書き込み完了
+            
+            Google Sheetsへのデータ書き込みが正常に完了しました。
+            
+            更新情報：
+            - 更新範囲: {{ update_info.updatedRange|default('不明') }}
+            - 更新セル数: {{ update_info.updatedCells|default(0) }}
+            - 更新行数: {{ update_info.updatedRows|default(0) }}
+            - 更新列数: {{ update_info.updatedColumns|default(0) }}
+          variables:
+            - value_selector:
+                - google_sheets_write
+                - json
+              value_type: object
+              variable: update_info
+          selected: false
+        height: 54
+        id: format_write_result
+        position:
+          x: 1550
+          y: 250
+        positionAbsolute:
+          x: 1550
+          y: 250
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: answer
+          title: 処理結果
+          desc: ''
+          answer: '{{#format_read_result.output#}}{{#format_write_result.output#}}'
+          selected: false
+        height: 107
+        id: answer_node
+        position:
+          x: 1850
+          y: 175
+        positionAbsolute:
+          x: 1850
+          y: 175
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          type: answer
+          title: エラー
+          desc: ''
+          answer: |
+            エラー: 無効な操作タイプが指定されました。
+            
+            正しい使用方法：
+            1. operation_typeに"read"または"write"を指定してください
+            2. sheet_urlにGoogle SheetsのURLを入力してください
+            3. rangeに操作対象の範囲を指定してください（例：A1:C10）
+            4. writeの場合は、dataにJSON形式の2次元配列を指定してください
+            
+            例：
+            - 読み込み: "A1:C10の範囲を読み込みたい"
+            - 書き込み: "A1:B2に[["項目","値"],["データ1","100"]]を書き込みたい"
+          selected: false
+        height: 107
+        id: error_answer_node
+        position:
+          x: 950
+          y: 400
+        positionAbsolute:
+          x: 950
+          y: 400
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244

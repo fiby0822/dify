@@ -1,0 +1,547 @@
+# Dify開発用コーディングルール改善案（音声認識・画像認識コンポーネント追加）
+
+## 1. 音声認識コンポーネント記述ルール（新規作成）
+
+ファイル: /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/コンポーネント別コーディングルール/コンポーネント記述ルール_音声認識.txt
+
+```
+コンポーネント記述ルール: 音声認識（Audio Transcription）
+
+■重要な許可事項
+音声認識に限り、以下のmarketplaceプラグインの使用が許可されています：
+- lysonober/openai_audio:0.0.4@2a7bc1307f6d4337b597cafe1c75f20e0fabf0dd8132a0a4e04496b3c949c86c
+
+この許可は他のmarketplaceプラグインには適用されません。
+
+■ブロック概要
+音声ファイルをテキストに変換するtoolノード。OpenAI Audio APIを利用して音声認識・文字起こしを実現。複数のモデルと出力形式をサポート。
+
+■依存関係（必須）
+【重要】音声認識ツールは特別に許可されたマーケットプレイスツールです。
+以下の設定を必ず含めてください：
+
+dependencies:
+- current_identifier: null
+  type: marketplace  # 音声認識のみ例外的に許可
+  value:
+    marketplace_plugin_unique_identifier: lysonober/openai_audio:0.0.4@2a7bc1307f6d4337b597cafe1c75f20e0fabf0dd8132a0a4e04496b3c949c86c
+
+注意事項：
+- この識別子は完全一致である必要があります
+- バージョンを含む全文字列をコピーして使用してください
+- 他のmarketplaceツールの使用は引き続き禁止です
+
+■ノード基本構造
+- id: 明確な識別子（例："audio_transcription_node"）
+- type: "custom"（nodeのtype属性）
+- data.type: "tool"（dataのtype属性）
+- position/positionAbsolute: 配置座標
+- selected: false（通常）
+- sourcePosition: "right"
+- targetPosition: "left"
+- height: 通常220
+- width: 通常244
+- data:
+  - title: わかりやすい日本語（例："音声文字起こし"）
+  - provider_id: "lysonober/openai_audio/openai_audio_stt"
+  - provider_type: "builtin"（marketplaceでもbuiltinを使用）
+  - provider_name: "lysonober/openai_audio/openai_audio_stt"
+  - tool_name: "openai_audio_stt"
+  - tool_label: "音声文字起こし"
+  - is_team_authorization: false（通常）
+  - tool_configurations: 設定項目
+  - tool_parameters: パラメータ設定
+
+■tool_configurations設定項目
+- model: 使用モデル
+  - "gpt-4o-transcribe": 高品質な文字起こし（推奨）
+  - "gpt-4o-mini-transcribe": 高速処理
+  - "whisper-1": レガシーモデル（より多くのフォーマットをサポート）
+- output_format: 出力形式
+  - "default": JSON + テキスト（デフォルト）
+  - "json_only": JSONのみ
+  - "text_only": テキストのみ
+- response_format: レスポンス形式
+  - "text": プレーンテキスト
+  - "json": JSON形式
+  - "verbose_json": 詳細JSON（whisper-1のみ）
+  - "srt": SRT字幕（whisper-1のみ）
+  - "vtt": VTT字幕（whisper-1のみ）
+- stream: ストリーミング設定（0または1、GPT-4oモデルのみ）
+- timestamp_granularities: タイムスタンプ粒度
+  - "none": なし
+  - "segment": セグメント単位
+  - "word": 単語単位
+  - "segment_and_word": 両方
+- transcription_type: 処理タイプ
+  - "transcribe": 文字起こし（原語維持）
+  - "translate": 英語への翻訳（whisper-1のみ）
+
+■tool_parameters（音声ファイル設定）
+- file:
+    type: variable
+    value: [sys, files]  # 音声ファイルの必須参照
+- language:
+    type: mixed
+    value: ""  # 空または言語コード（例："ja", "en"）
+- prompt:
+    type: mixed
+    value: "音声ファイルを文字起こししてください"
+
+■file_upload設定（features内）
+features:
+  file_upload:
+    enabled: true
+    allowed_file_types:
+      - audio
+    allowed_file_extensions:
+      - .MP3
+      - .MP4
+      - .MPEG
+      - .MPGA
+      - .M4A
+      - .WAV
+      - .WEBM
+    fileUploadConfig:
+      audio_file_size_limit: 50  # MB単位
+      workflow_file_upload_limit: 10
+
+■入力
+- sys.files: システムファイル参照（音声ファイル）
+- 音声は必須でファイルアップロードから取得
+
+■出力
+- text: 文字起こしされたテキスト
+- json: JSON形式の出力（response_formatに依存）
+
+■使用例（基本）
+```yaml
+# 依存関係
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: lysonober/openai_audio:0.0.4@2a7bc1307f6d4337b597cafe1c75f20e0fabf0dd8132a0a4e04496b3c949c86c
+
+# ノード定義
+- data:
+    desc: ''
+    is_team_authorization: false
+    provider_id: lysonober/openai_audio/openai_audio_stt
+    provider_name: lysonober/openai_audio/openai_audio_stt
+    provider_type: builtin
+    selected: false
+    title: 音声文字起こし
+    tool_configurations:
+      model: gpt-4o-transcribe
+      output_format: default
+      response_format: text
+      stream: 1
+      timestamp_granularities: none
+      transcription_type: transcribe
+    tool_label: 音声文字起こし
+    tool_name: openai_audio_stt
+    tool_parameters:
+      file:
+        type: variable
+        value:
+        - sys
+        - files
+      language:
+        type: mixed
+        value: ''
+      prompt:
+        type: mixed
+        value: 音声ファイルを文字起こししてください
+    type: tool
+  height: 220
+  id: audio_transcription_node
+  position:
+    x: 380
+    y: 282
+  positionAbsolute:
+    x: 380
+    y: 282
+  selected: false
+  sourcePosition: right
+  targetPosition: left
+  type: custom
+  width: 244
+```
+
+■モデル選択ガイドライン
+1. gpt-4o-transcribe（推奨）
+   - 高品質な文字起こし
+   - ストリーミング対応
+   - 最新のモデル
+
+2. gpt-4o-mini-transcribe
+   - 高速処理
+   - ストリーミング対応
+   - コスト効率的
+
+3. whisper-1
+   - レガシーモデル
+   - より多くのフォーマット対応
+   - 翻訳機能あり
+
+■制限事項
+- marketplace_plugin_unique_identifierは完全一致が必要
+- provider_typeは"builtin"を使用（"marketplace"ではない）
+- 音声ファイルサイズは最大25MB
+- response_formatでsrt/vttを使用する場合はwhisper-1のみ
+- 翻訳（translate）機能はwhisper-1のみ
+- ストリーミング（stream: 1）はGPT-4oモデルのみ
+
+■エラー対処
+1. "Tool not found"エラー
+   - dependencies設定の確認
+   - marketplace_plugin_unique_identifierの完全一致確認
+
+2. "Invalid file format"エラー
+   - 対応ファイル形式の確認
+   - ファイルサイズの制限確認（25MB以下）
+
+3. "Model not supported"エラー
+   - モデル名の正確性確認
+   - response_formatとモデルの組み合わせ確認
+
+■ベストプラクティス
+- 言語が事前にわかっている場合はlanguageパラメータを指定
+- 専門用語や固有名詞が多い場合はpromptで文脈を提供
+- languageパラメータで音声の言語を指定すると精度向上
+- 長い音声の場合はタイムスタンプを活用
+- 日本語の場合は"ja"を指定すると認識精度が向上
+- 複数の音声ファイルを処理する場合はバッチ制限に注意
+```
+
+## 2. 画像認識コンポーネント記述ルール（新規作成）
+
+ファイル: /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/コンポーネント別コーディングルール/コンポーネント記述ルール_画像認識.txt
+
+```
+コンポーネント記述ルール: 画像認識（Vision/OCR）
+
+■ブロック概要
+画像ファイルからテキストを抽出したりOCRを実行するLLMノード。画像認識にはLLMノードのvision機能を使用して画像の内容を理解・テキスト化。
+
+■実装方法
+画像認識はツールではなくLLMノードのvision機能として実装されます。
+
+■ノード基本構造（LLMノード + Vision）
+- id: 明確な識別子（例："ocr_analysis_node", "image_recognition_node"）
+- type: "custom"（nodeのtype属性）
+- data.type: "llm"（dataのtype属性）
+- position/positionAbsolute: 配置座標
+- selected: false（通常）
+- sourcePosition: "right"
+- targetPosition: "left"
+- height: 通常150
+- width: 通常244
+- data:
+  - model: モデル設定
+    - provider: "langgenius/openai/openai"（画像認識対応プロバイダー）
+    - name: "gpt-4o"（vision対応モデル）
+    - mode: "chat"
+  - prompt_template: プロンプト設定
+  - vision: 【重要】
+    - enabled: true
+    - configs:
+      - detail: "high"（高精度）または"low"（低精度）
+      - variable_selector: []（通常空）
+  - structured_output_enabled: false（通常）
+
+■依存関係（OpenAI使用時）
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/openai:0.0.26@c1e643ac6a7732f6333a783320b4d3026fa5e31d8e7026375b98d44418d33f26
+
+■file_upload設定（features内）
+features:
+  file_upload:
+    enabled: true
+    allowed_file_types:
+      - image
+      - document  # PDF対応
+    allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .WEBP
+      - .HEIC
+      - .PDF  # OCR対応
+    fileUploadConfig:
+      image_file_size_limit: 10  # MB単位
+      file_size_limit: 15
+      workflow_file_upload_limit: 10
+    image:
+      enabled: false  # 通常はfalse
+      number_limits: 5
+      transfer_methods:
+        - local_file
+        - remote_url
+
+■入力
+- sys.files: システムファイル参照（画像ファイル）
+- 画像はLLMに自動的に渡される
+
+■出力
+- text: 抽出されたテキストまたは画像の説明
+
+■使用例（OCR処理）
+```yaml
+- data:
+    context:
+      enabled: false
+      variable_selector: []
+    desc: 画像からOCRでテキスト情報を抽出し、CSV形式で出力
+    model:
+      completion_params: {}
+      mode: chat
+      name: gpt-4o
+      provider: langgenius/openai/openai
+    prompt_template:
+    - id: system-prompt
+      role: system
+      text: |
+        手書き作業日報画像を読み取り、CSV形式で出力してください。
+        画像のヘッダー行をそのまま使用し、各作業を1行ずつ出力。
+        説明は不要、CSVデータのみ出力。
+    - id: user-prompt
+      role: user
+      text: アップロードされた作業日報画像を読み取り、CSV形式で出力してください。
+    selected: false
+    structured_output_enabled: false
+    title: OCR画像解析
+    type: llm
+    variables: []
+    vision:
+      configs:
+        detail: high  # 高精度OCR
+        variable_selector: []
+      enabled: true  # Vision機能有効化
+  height: 150
+  id: ocr_analysis_node
+  position:
+    x: 650
+    y: 180
+  positionAbsolute:
+    x: 650
+    y: 180
+  selected: false
+  sourcePosition: right
+  targetPosition: left
+  type: custom
+  width: 244
+```
+
+■使用例（画像認識）
+```yaml
+prompt_template:
+- id: system-prompt
+  role: system
+  text: |
+    画像を分析して内容を説明してください。
+    1. 画像に含まれる主要な要素
+    2. テキスト情報の抽出
+    3. 色彩情報
+    4. 全体的な印象
+- id: user-prompt
+  role: user
+  text: この画像の内容を分析してください。
+```
+
+■Vision設定の詳細
+1. detail設定
+   - "high": 高精度（OCR推奨）
+   - "low": 低精度（高速処理）
+
+2. 対応モデル
+   - gpt-4o（推奨）: 最新の画像認識
+   - gpt-4-turbo: 高品質画像認識
+   - gpt-4-vision-preview: レガシーモデル
+
+■制限事項
+- vision.enabled: trueが必須（falseだと画像認識できない）
+- 画像は自動的にLLMに渡される（sys.filesから）
+- 複数画像の同時処理はnumber_limitsで制限
+- PDFファイルのOCR処理も画像として扱われる
+- detail: "high"は処理時間が長い
+
+■エラー対処
+1. "Vision not enabled"エラー
+   - vision.enabled: trueの設定確認
+   - モデルがvision対応か確認
+
+2. "Invalid image format"エラー
+   - 対応ファイル形式の確認
+   - ファイルサイズの制限確認
+
+3. "Model does not support vision"エラー
+   - gpt-4oまたはgpt-4-turboを使用
+   - providerの設定確認
+
+■ベストプラクティス
+- OCR処理にはdetail: "high"を推奨
+- 手書き文字の場合はプロンプトで明示
+- 表形式データはCSV出力を指定すると整形しやすい
+- 大量のテキストがある場合は出力形式を明確に指定
+- 画像のテキスト抽出後は後続のコード処理で整形
+- 複雑な画像の場合はプロンプトで注目点を指定
+
+■後続処理との連携
+OCR結果は通常以下のように処理：
+1. codeノードでCSV整形
+2. template-transformで形式変換
+3. 外部サービスへのデータ送信
+
+```yaml
+# 推奨フロー
+start_node → file_check → ocr_llm_node → csv_generation_code → answer
+```
+```
+
+## 3. 全体コーディングルールへの追記提案
+
+ファイル: /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/全体コーディングルール/06_外部連携とツール.md
+
+### 追記内容（24.5 特別許可されたマーケットプレイスプラグイン）
+
+```markdown
+### 24.5 特別許可されたマーケットプレイスプラグイン
+
+以下のマーケットプレイスプラグインに限り、使用が許可されています：
+
+| プラグイン名 | 用途 | 識別子 |
+|-------------|-----|--------|
+| Google Sheets操作 | スプレッドシート連携 | omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f |
+| OpenAI Audio | 音声認識・文字起こし | lysonober/openai_audio:0.0.4@2a7bc1307f6d4337b597cafe1c75f20e0fabf0dd8132a0a4e04496b3c949c86c |
+| OpenAI | 画像認識・Vision機能 | langgenius/openai:0.0.26@c1e643ac6a7732f6333a783320b4d3026fa5e31d8e7026375b98d44418d33f26 |
+
+**重要：**
+- 上記以外のマーケットプレイスプラグインの使用は禁止
+- 識別子は完全一致で記述すること
+- バージョンを含む全文字列をコピーして使用すること
+```
+
+## 4. 品質チェックリストへの追記提案
+
+ファイル: /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/品質チェック/品質チェックリスト.md
+
+### 追記内容（セクション6後に追加）
+
+```markdown
+## 7. 音声認識ノードチェック
+
+### 7.1 基本設定確認
+- [ ] dependencies設定でmarketplace_plugin_unique_identifierが正確に記述されている
+- [ ] provider_typeが"builtin"に設定されている（"marketplace"ではない）
+- [ ] tool_nameが"openai_audio_stt"である
+- [ ] file_upload設定でaudioタイプが許可されている
+
+### 7.2 パラメータ確認
+- [ ] fileパラメータが[sys, files]を参照している
+- [ ] modelが適切に選択されている（gpt-4o-transcribe推奨）
+- [ ] response_formatとmodelの組み合わせが適切
+- [ ] streamを使用する場合はGPT-4oモデルを選択
+
+### 7.3 制限事項確認
+- [ ] 音声ファイルサイズが25MB以下に制限されている
+- [ ] 翻訳機能を使用する場合はwhisper-1モデルを選択
+- [ ] srt/vtt形式を使用する場合はwhisper-1モデルを選択
+
+## 8. 画像認識（Vision）ノードチェック
+
+### 8.1 基本設定確認
+- [ ] LLMノードのvision.enabledがtrueに設定されている
+- [ ] vision対応モデル（gpt-4o等）が選択されている
+- [ ] file_upload設定でimageタイプが許可されている
+- [ ] detail設定が用途に応じて適切（OCRは"high"推奨）
+
+### 8.2 プロンプト確認
+- [ ] 画像処理の目的が明確に記述されている
+- [ ] OCRの場合は出力形式が指定されている
+- [ ] 手書き文字の場合はその旨が明記されている
+
+### 8.3 後続処理との連携
+- [ ] OCR結果を整形するノードが配置されている
+- [ ] 出力形式に応じた後処理が設計されている
+- [ ] エラーハンドリングが考慮されている
+```
+
+## 5. クラッシュ事項チェックリストへの追記提案
+
+ファイル: /Users/tatsuya/Documents/01_fiby/09_ゼット/コーディングルール/品質チェック/クラッシュ事項チェックリスト.md
+
+### 追記内容（セクション7後に追加）
+
+```markdown
+## 8. 音声認識・画像認識特有のクラッシュ事項
+
+### 8.1 音声認識のクラッシュ原因
+- [ ] **marketplace_plugin_unique_identifierが1文字でも異なる**
+  - エラー: Tool not found
+  - 解決: 完全一致でコピー＆ペースト
+  
+- [ ] **provider_typeを"marketplace"に設定**
+  - エラー: Provider type mismatch
+  - 解決: "builtin"を使用
+
+- [ ] **ストリーミングとモデルの不整合**
+  - エラー: Streaming not supported for this model
+  - 解決: stream: 1はGPT-4oモデルのみ
+
+### 8.2 画像認識のクラッシュ原因
+- [ ] **vision.enabledの設定漏れ**
+  - エラー: Cannot process image without vision enabled
+  - 解決: vision.enabled: trueを必ず設定
+
+- [ ] **非対応モデルでのvision使用**
+  - エラー: Model does not support vision
+  - 解決: gpt-4oまたはgpt-4-turboを使用
+
+- [ ] **sys.filesの参照ミス**
+  - エラー: No image file found
+  - 解決: file_upload設定とsys.files参照を確認
+```
+
+## 6. 実装時の注意事項（まとめ）
+
+### 音声認識実装時のチェックポイント
+1. dependenciesセクションに正確なmarketplace_plugin_unique_identifierを記述
+2. provider_typeは必ず"builtin"を使用
+3. file_upload設定でaudioタイプを許可
+4. モデルと機能の組み合わせを確認（ストリーミング、翻訳、フォーマット）
+5. ファイルサイズ制限（25MB）を考慮
+
+### 画像認識実装時のチェックポイント
+1. LLMノードを使用（toolノードではない）
+2. vision.enabled: trueを必ず設定
+3. vision対応モデルを選択（gpt-4o推奨）
+4. OCRの場合はdetail: "high"を使用
+5. 後続処理での整形を考慮したプロンプト設計
+
+### 共通の注意事項
+1. ファイルアップロード設定の確認
+2. sys.filesの正しい参照
+3. エラーハンドリングの実装
+4. 適切な出力形式の指定
+5. 処理フローの設計（前処理→メイン処理→後処理）
+
+## 7. 改善案の適用優先順位
+
+1. **最優先**: コンポーネント別コーディングルールの新規作成
+   - 音声認識ルールファイルの作成
+   - 画像認識ルールファイルの作成
+
+2. **高優先**: 全体コーディングルールへの追記
+   - 特別許可されたマーケットプレイスプラグインのセクション追加
+
+3. **中優先**: 品質チェックリストへの追記
+   - 音声認識ノードチェックセクション追加
+   - 画像認識ノードチェックセクション追加
+
+4. **低優先**: クラッシュ事項チェックリストへの追記
+   - 音声・画像認識特有のクラッシュ事項追加
