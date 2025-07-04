@@ -1,0 +1,220 @@
+app:
+  description: "音声ファイルのURLを受け取り、OpenAI Audio APIを使用して文字起こしを行い、結果を構造化して出力する音声認識ワークフロー"
+  icon: "🎙️"
+  icon_background: "#FFEAD5"
+  mode: advanced-chat
+  name: "音声認識ワークフロー"
+  use_icon_as_answer_icon: false
+
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: lysonober/openai_audio:0.0.4@2a7bc1307f6d4337b597cafe1c75f20e0fabf0dd8132a0a4e04496b3c949c86c
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: true
+      allowed_file_types:
+        - audio
+      allowed_file_extensions:
+        - .MP3
+        - .MP4
+        - .MPEG
+        - .MPGA
+        - .M4A
+        - .WAV
+        - .WEBM
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        workflow_file_upload_limit: 10
+    opening_statement: "音声ファイルをアップロードしてください。OpenAI Audio APIを使用して文字起こしを行います。"
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+      - "音声ファイルを文字起こししてください"
+      - "この音声の内容を教えてください"
+      - "音声を解析してテキストに変換してください"
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: tool
+        id: start-audio-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: audio_transcription_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: tool
+          targetType: template-transform
+        id: audio-template-edge
+        selected: false
+        source: audio_transcription_node
+        sourceHandle: source
+        target: template_transform_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: answer
+        id: template-answer-edge
+        selected: false
+        source: template_transform_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "開始ノード"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 282
+        positionAbsolute:
+          x: 50
+          y: 282
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "OpenAI Audio APIを使用して音声を文字起こし"
+          is_team_authorization: false
+          provider_id: lysonober/openai_audio/openai_audio_stt
+          provider_name: lysonober/openai_audio/openai_audio_stt
+          provider_type: builtin
+          selected: false
+          title: "音声文字起こし"
+          tool_configurations:
+            model: gpt-4o-transcribe
+            output_format: default
+            response_format: text
+            stream: 1
+            timestamp_granularities: none
+            transcription_type: transcribe
+          tool_label: "音声文字起こし"
+          tool_name: openai_audio_stt
+          tool_parameters:
+            file:
+              type: variable
+              value:
+              - sys
+              - files
+              - 0
+            language:
+              type: mixed
+              value: ''
+            prompt:
+              type: mixed
+              value: "音声ファイルを文字起こししてください"
+          type: tool
+        height: 220
+        id: audio_transcription_node
+        position:
+          x: 380
+          y: 282
+        positionAbsolute:
+          x: 380
+          y: 282
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "文字起こし結果を構造化して整形"
+          selected: false
+          template: |
+            音声認識結果：
+            ============================
+            
+            【文字起こしテキスト】
+            {{ transcription_text }}
+            
+            【処理情報】
+            - 使用モデル: gpt-4o-transcribe
+            - 処理日時: {{ "now"|date }}
+            - 音声ファイル: ユーザーアップロードファイル
+            
+            ============================
+          title: "結果整形"
+          type: template-transform
+          variables:
+            - value_selector:
+                - audio_transcription_node
+                - text
+              value_type: string
+              variable: transcription_text
+            - value_selector:
+                - sys
+                - query
+              value_type: string
+              variable: user_query
+        height: 54
+        id: template_transform_node
+        position:
+          x: 710
+          y: 282
+        positionAbsolute:
+          x: 710
+          y: 282
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#template_transform_node.output#}}"
+          desc: "文字起こし結果を出力"
+          selected: false
+          title: "回答"
+          type: answer
+          variables: []
+        height: 107
+        id: answer_node
+        position:
+          x: 1040
+          y: 282
+        positionAbsolute:
+          x: 1040
+          y: 282
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8

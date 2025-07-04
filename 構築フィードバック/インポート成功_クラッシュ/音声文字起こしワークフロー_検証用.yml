@@ -1,0 +1,265 @@
+app:
+  description: 音声ファイルから文字起こしを行い、結果を見やすく整形して出力するワークフロー
+  icon: 🎤
+  icon_background: "#E4F2FF"
+  mode: advanced-chat
+  name: 音声文字起こしワークフロー
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: lysonober/openai_audio:0.0.4@2a7bc1307f6d4337b597cafe1c75f20e0fabf0dd8132a0a4e04496b3c949c86c
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .MP3
+      - .MP4
+      - .MPEG
+      - .MPGA
+      - .M4A
+      - .WAV
+      - .WEBM
+      allowed_file_types:
+      - audio
+      enabled: true
+      fileUploadConfig:
+        audio_file_size_limit: 25
+        workflow_file_upload_limit: 10
+    opening_statement: "音声ファイルをアップロードしてください。文字起こしを行います。"
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ""
+      voice: ""
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: start
+        targetType: custom
+      id: 1735888800001-source-1735888900001-target
+      selected: false
+      source: '1735888800001'
+      sourceHandle: source
+      target: '1735888900001'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: custom
+        targetType: custom
+      id: 1735888900001-source-1735889000001-target
+      selected: false
+      source: '1735888900001'
+      sourceHandle: source
+      target: '1735889000001'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: custom
+        targetType: answer
+      id: 1735889100001-source-1735889200001-target
+      selected: false
+      source: '1735889100001'
+      sourceHandle: source
+      target: '1735889200001'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: custom
+      id: 1735889000001-1735889000002-1735889100001-target
+      selected: false
+      source: '1735889000001'
+      sourceHandle: '1735889000002'
+      target: '1735889100001'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: answer
+      id: 1735889000001-false-1735889300001-target
+      selected: false
+      source: '1735889000001'
+      sourceHandle: 'false'
+      target: '1735889300001'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: ''
+        selected: false
+        title: 開始
+        type: start
+        variables: []
+      height: 54
+      id: '1735888800001'
+      position:
+        x: 80
+        y: 300
+      positionAbsolute:
+        x: 80
+        y: 300
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: ''
+        is_team_authorization: false
+        provider_id: lysonober/openai_audio/openai_audio_stt
+        provider_name: lysonober/openai_audio/openai_audio_stt
+        provider_type: builtin
+        selected: false
+        title: 音声文字起こし
+        tool_configurations:
+          model: whisper-1
+          output_format: default
+          response_format: text
+          stream: 0
+          timestamp_granularities: none
+          transcription_type: transcribe
+        tool_label: 音声文字起こし
+        tool_name: openai_audio_stt
+        tool_parameters:
+          file:
+            type: variable
+            value:
+            - sys
+            - files
+          language:
+            type: mixed
+            value: ''
+          prompt:
+            type: mixed
+            value: 音声ファイルを文字起こししてください
+        type: tool
+      height: 220
+      id: '1735888900001'
+      position:
+        x: 380
+        y: 200
+      positionAbsolute:
+        x: 380
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        conditions:
+        - case_id: '1735889000002'
+          conditions:
+          - comparison_operator: not empty
+            id: 'd7a80c5f-b1e9-481f-b7ba-c57c3dbcdeb8'
+            value: ''
+            variable_selector:
+            - '1735888900001'
+            - text
+          id: '1735889000002'
+          logical_operator: and
+        desc: ''
+        selected: false
+        title: 文字起こし結果チェック
+        type: if-else
+      height: 124
+      id: '1735889000001'
+      position:
+        x: 680
+        y: 250
+      positionAbsolute:
+        x: 680
+        y: 250
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: ''
+        selected: false
+        template: "## 音声文字起こし結果\n\n{{ text_result }}\n\n---\n\n**文字数:** {{ text_result|length }} 文字"
+        title: 結果整形
+        type: template-transform
+        variables:
+        - value_selector:
+          - '1735888900001'
+          - text
+          variable: text_result
+      height: 154
+      id: '1735889100001'
+      position:
+        x: 980
+        y: 235
+      positionAbsolute:
+        x: 980
+        y: 235
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '{{#1735889100001.output#}}'
+        desc: ''
+        selected: false
+        title: 回答
+        type: answer
+        variables: []
+      height: 107
+      id: '1735889200001'
+      position:
+        x: 1280
+        y: 250
+      positionAbsolute:
+        x: 1280
+        y: 250
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: 音声文字起こしに失敗しました。音声ファイルを確認してください。
+        desc: ''
+        selected: false
+        title: エラー回答
+        type: answer
+        variables: []
+      height: 107
+      id: '1735889300001'
+      position:
+        x: 980
+        y: 400
+      positionAbsolute:
+        x: 980
+        y: 400
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244

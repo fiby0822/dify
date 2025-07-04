@@ -1,0 +1,275 @@
+app:
+  description: 画像ファイルをアップロードしてOCR・画像認識を行うテストワークフロー
+  icon: 🖼️
+  icon_background: "#E0F2FE"
+  mode: advanced-chat
+  name: 画像認識OCRテストワークフロー
+  use_icon_as_answer_icon: false
+
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/openai:0.0.26@c1e643ac6a7732f6333a783320b4d3026fa5e31d8e7026375b98d44418d33f26
+
+kind: app
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: true
+      allowed_file_types:
+        - image
+        - document
+      allowed_file_extensions:
+        - .JPG
+        - .JPEG
+        - .PNG
+        - .WEBP
+        - .HEIC
+        - .PDF
+      fileUploadConfig:
+        image_file_size_limit: 10
+        file_size_limit: 15
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 5
+        transfer_methods:
+          - local_file
+          - remote_url
+    opening_statement: 画像ファイルをアップロードしてください。OCR・画像認識を行います。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: start
+        targetType: llm
+      id: start-vision-edge
+      selected: false
+      source: start_node
+      sourceHandle: source
+      target: image_recognition_llm
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: if-else
+      id: vision-check-edge
+      selected: false
+      source: image_recognition_llm
+      sourceHandle: source
+      target: check_recognition_result
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: template-transform
+      id: check-transform-edge
+      selected: false
+      source: check_recognition_result
+      sourceHandle: true
+      target: format_result_template
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: answer
+      id: check-error-edge
+      selected: false
+      source: check_recognition_result
+      sourceHandle: false
+      target: answer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: template-transform
+        targetType: answer
+      id: transform-answer-edge
+      selected: false
+      source: format_result_template
+      sourceHandle: source
+      target: answer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: ''
+        selected: false
+        title: 開始
+        type: start
+        variables: []
+      height: 53
+      id: start_node
+      position:
+        x: 50
+        y: 282
+      positionAbsolute:
+        x: 50
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 画像を分析してOCR・画像認識を実行
+        model:
+          completion_params: {}
+          mode: chat
+          name: gpt-4o
+          provider: openai
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: |
+            画像を詳細に分析し、以下の情報を抽出してください：
+            
+            1. テキスト情報（OCR）
+            - 画像内のすべてのテキストを正確に読み取る
+            - 手書き文字も含めて抽出
+            
+            2. 画像の内容
+            - 含まれる物体や人物
+            - 場所や状況
+            
+            3. 色彩情報
+            - 主要な色
+            - 配色の特徴
+            
+            4. 全体的な印象や用途
+            
+            情報は構造化して出力してください。
+        - id: user-prompt
+          role: user
+          text: アップロードされた画像を分析してください。
+        selected: false
+        structured_output_enabled: false
+        title: 画像認識・OCR処理
+        type: llm
+        variables: []
+        vision:
+          configs:
+            detail: high
+            variable_selector: []
+          enabled: true
+      height: 150
+      id: image_recognition_llm
+      position:
+        x: 350
+        y: 282
+      positionAbsolute:
+        x: 350
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        cases:
+        - case_id: 'true'
+          conditions:
+          - comparison_operator: not empty
+            id: recognition-exists
+            value: ''
+            variable_selector:
+            - image_recognition_llm
+            - text
+          logical_operator: and
+        desc: ''
+        logical_operator: and
+        selected: false
+        title: 認識結果確認
+        type: if-else
+      height: 125
+      id: check_recognition_result
+      position:
+        x: 650
+        y: 282
+      positionAbsolute:
+        x: 650
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: 認識結果を見やすく整形
+        selected: false
+        template: |
+          ## 画像認識・OCR結果
+          
+          {{ image_recognition_llm.text }}
+          
+          ---
+          
+          ✅ 画像の分析が完了しました。
+        title: 結果整形
+        type: template-transform
+        variables:
+        - value_selector:
+          - image_recognition_llm
+          - text
+          variable: image_recognition_llm.text
+      height: 153
+      id: format_result_template
+      position:
+        x: 950
+        y: 202
+      positionAbsolute:
+        x: 950
+        y: 202
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '{% if format_result_template.output %}{{#format_result_template.output#}}{% else %}画像の認識・OCR処理に失敗しました。
+
+          - 対応している画像形式：JPG、JPEG、PNG、WEBP、HEIC、PDF
+
+          - ファイルサイズ上限：10MB（画像）、15MB（PDF）
+
+          再度正しい画像ファイルをアップロードしてください。{% endif %}'
+        desc: ''
+        selected: false
+        title: 回答
+        type: answer
+        variables: []
+      height: 161
+      id: answer_node
+      position:
+        x: 1250
+        y: 282
+      positionAbsolute:
+        x: 1250
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244

@@ -1,0 +1,303 @@
+# Dify YML開発用コーディングルール改善案
+作成日: 2025/01/04
+分析基準: インポートエラー、クラッシュ、動作エラーケースの実例分析
+
+## 1. 最優先で追加すべきルール（実際のエラーから）
+
+### 1.1 template-transformノードの変数参照ルール強化
+**エラー頻度: 非常に高い**
+
+現在のルールに以下を追加:
+```
+■ template-transformノードの変数参照（最重要！）
+【絶対禁止】template内で{{#変数#}}記法を使用
+【必須】以下の使い分けを厳守する：
+  - template内: {{ 変数 }} または {{ 変数|filter }}
+  - YAMLのvalue内: {{#node_id.field#}}
+  
+【エラー例】
+❌ template: "処理結果: {{#result#}}"
+✅ template: "処理結果: {{ result }}"
+
+【Jinja2フィルター記法（スペース厳禁）】
+❌ {{ variable | trim }} → クラッシュ
+✅ {{ variable|trim }}
+
+※チェック方法：`| ` (パイプ+スペース)で検索し、全て削除
+```
+
+### 1.2 value_selector配列インデックスのルール
+**エラー頻度: 高い**
+
+```
+■ value_selectorの配列インデックス
+【必須】配列インデックスは必ず文字列として記述
+❌ - 0        # 整数はエラー
+✅ - '0'      # 文字列として記述
+✅ - sys
+   - files    # インデックス省略も可（推奨）
+```
+
+### 1.3 IF-ELSEノードの比較演算子ルール更新
+**エラー頻度: 高い**
+
+現在の「is not empty」エラーをより明確に：
+```
+■ 比較演算子の正確な値（エラー防止版）
+【絶対禁止】
+- "is not empty" → "not empty"を使用
+- "is empty" → "empty"を使用
+- "is not null" → "not null"を使用
+- "is not" → 存在しない演算子
+
+【有効な演算子のみを使用】
+存在確認: empty, not empty, null, not null, exists, not exists
+文字列: contains, not contains, start with, end with, is, is not
+数値: =, !=, >, <, >=, <= （ASCII文字必須）
+リスト: in, not in, all of
+```
+
+### 1.4 ブール値の文字列化エラー防止
+**エラー頻度: 中**
+
+```
+■ YAMLでのブール値記述
+【重要】IF-ELSEノードのcase_idやsourceHandle
+❌ case_id: true      # YAMLがブール値として解釈
+✅ case_id: 'true'    # 文字列として明示
+✅ case_id: 'success' # より明確な名前を推奨
+
+【推奨】'true'/'false'の代わりに意味のある名前を使用
+- 'has_result', 'file_exists', 'validation_passed' など
+```
+
+## 2. 品質チェックリストへの追加項目
+
+### 2.1 エラー頻度に基づく優先順位付け
+```
+## 🚨 超重要：最頻出エラーチェック（優先度順）
+
+1. template-transformノード
+   - [ ] **Jinja2フィルターで`|`の後にスペースがない**
+   - [ ] **template内で{{#変数#}}を使用していない**
+   
+2. IF-ELSEノード
+   - [ ] **比較演算子に"is not empty"を使用していない**
+   - [ ] **logical_operatorが全てのケースに設定されている**
+   
+3. 変数参照
+   - [ ] **value_selectorの配列インデックスが文字列**
+   - [ ] **ブール値を表すcase_idが文字列として記述**
+```
+
+### 2.2 エラー原因分析セクション追加
+```
+### 実行時エラーの診断ガイド（新規追加）
+
+#### 「Input should be a valid string」エラー
+原因と対策：
+1. value_selector配列内の数値 → 文字列化
+2. IF-ELSEのcase_idでのブール値 → 引用符で囲む
+3. sourceHandleでのブール値 → 文字列化
+
+#### 「Invalid comparison operator」エラー
+原因と対策：
+1. "is not empty" → "not empty"に修正
+2. Unicode文字（≥など） → ASCII文字（>=）に修正
+```
+
+## 3. コンポーネント別ルールの更新
+
+### 3.1 IF_ELSEコンポーネントルールの強化
+```
+■ よくある間違い（エラーの原因）- 2025年1月更新版
+
+1. ★最頻出★ logical_operatorの欠落
+   - 原因率: 40%
+   - 対策: 条件が1つでも必須
+
+2. ★頻出★ 比較演算子の誤記
+   - 原因率: 30%
+   - "is not empty" → "not empty"
+
+3. ★頻出★ case_idのブール値問題
+   - 原因率: 20%
+   - true/false → 'true'/'false'または意味のある名前
+
+4. ★新規★ value_selectorの型エラー
+   - 原因率: 10%
+   - 配列インデックスは文字列として記述
+```
+
+### 3.2 template-transformノードルールの新規作成
+```
+コンポーネント記述ルール: TEMPLATE_TRANSFORM（新規）
+
+■ブロック概要
+データ形式の変換専用ノード。Jinja2テンプレートエンジンを使用。
+
+■最重要ルール（クラッシュ防止）
+1. 変数参照: {{ variable }} （#記号は絶対禁止）
+2. フィルター: {{ variable|filter }} （スペース禁止）
+3. 配列アクセス: {{ data[0] }} または {{ data.0 }}
+
+■使用可能な場面（限定）
+- Google Sheetsデータの整形
+- LLM出力のJSON化
+- 複数変数の結合
+- CSV形式への変換
+
+■エラー防止必須チェック
+- [ ] パイプ後のスペースなし（| trimはNG、|trimはOK）
+- [ ] {{#}}記法を使用していない
+- [ ] value_typeが明示されている
+```
+
+## 4. 全体コーディングルールへの追加提案
+
+### 4.1 「00_最頻出エラートップ5.md」の更新
+```
+## 🚨 エラー第1位：template-transformの変数参照エラー（新規追加）
+
+### エラーメッセージ
+```
+jinja2.exceptions.TemplateSyntaxError: unexpected char '#'
+```
+
+### 原因と対策
+```yaml
+# ❌ 間違い：#記号を使用
+template: "結果: {{#result#}}"
+
+# ✅ 正解：通常のJinja2記法
+template: "結果: {{ result }}"
+```
+
+### フィルターのスペース問題（第1位に昇格）
+```yaml
+# ❌ 間違い：スペースあり = クラッシュ
+{{ data | tojson }}
+
+# ✅ 正解：スペースなし
+{{ data|tojson }}
+```
+```
+
+### 4.2 「01_基本構造とエラー防止.md」への追加
+```
+### 0.8 変数参照の型エラー（新規追加）
+
+#### 配列インデックスの型エラー
+```yaml
+# ❌ 間違い：整数として記述
+value_selector:
+  - sys
+  - files
+  - 0  # エラー: 文字列型が期待される
+
+# ✅ 正解1：文字列として記述
+value_selector:
+  - sys
+  - files
+  - '0'
+
+# ✅ 正解2：インデックス省略（推奨）
+value_selector:
+  - sys
+  - files
+```
+```
+
+## 5. 開発フロー改善提案
+
+### 5.1 エラー防止チェックの自動化
+```bash
+# YML検証スクリプトの追加を推奨
+#!/bin/bash
+
+# 1. Jinja2フィルターのスペースチェック
+echo "Checking for spaces after pipes..."
+grep -n "| \w" "$1" && echo "ERROR: Remove spaces after pipes"
+
+# 2. 無効な比較演算子チェック
+echo "Checking for invalid operators..."
+grep -n '"is not empty"' "$1" && echo "ERROR: Use 'not empty' instead"
+
+# 3. template内の#記号チェック
+echo "Checking for # in templates..."
+grep -n '{{#.*#}}' "$1" && echo "ERROR: Use {{ }} instead of {{# #}}"
+```
+
+### 5.2 開発時チェックリストの優先順位付け
+```
+## 開発時必須チェック（優先度順）
+
+### フェーズ1: 作成時（コーディング中）
+1. template-transform: 変数参照形式
+2. IF-ELSE: logical_operator設定
+3. 比較演算子: 正確な値の使用
+
+### フェーズ2: 作成後（レビュー時）
+1. Jinja2フィルターのスペース削除
+2. value_selector配列の文字列化
+3. ブール値の引用符追加
+
+### フェーズ3: インポート前（最終確認）
+1. YAMLコメントの削除
+2. 必須フィールドの存在確認
+3. 型の整合性確認
+```
+
+## 6. ドキュメント構成の改善提案
+
+### 6.1 エラー別逆引きリファレンスの作成
+```
+## エラーメッセージ別対処法（新規ドキュメント）
+
+### "Input should be a valid string"
+→ 01_基本構造とエラー防止.md #0.8参照
+→ コンポーネント別/IF_ELSE.txt #配列インデックス参照
+
+### "Invalid comparison operator"  
+→ 00_最頻出エラートップ5.md #エラー第2位参照
+→ コンポーネント別/IF_ELSE.txt #比較演算子一覧参照
+
+### "unexpected char '#'"
+→ 00_最頻出エラートップ5.md #エラー第1位参照
+→ コンポーネント別/TEMPLATE_TRANSFORM.txt参照
+```
+
+## 7. 実装優先度
+
+### 高優先度（即座に実装すべき）
+1. template-transformの変数参照ルール
+2. Jinja2フィルターのスペース問題
+3. IF-ELSEの比較演算子リスト更新
+
+### 中優先度（1週間以内）
+1. value_selector配列インデックスルール
+2. ブール値の文字列化ガイドライン
+3. エラー別逆引きリファレンス
+
+### 低優先度（継続的改善）
+1. 自動検証スクリプト
+2. 開発フロー最適化
+3. より詳細なエラー分析
+
+## まとめ
+
+今回のエラー分析から、以下の傾向が明確になりました：
+
+1. **template-transformノードが最大のエラー源**
+   - 変数参照形式の混在
+   - Jinja2記法の誤用
+
+2. **型の不一致エラーが多発**
+   - 文字列と数値/ブール値の混在
+   - YAMLの型推論による予期しない動作
+
+3. **比較演算子の記述ミスが継続**
+   - 既存ルールでカバーしきれていない
+   - より明確な禁止リストが必要
+
+これらの改善を実施することで、エラー発生率を大幅に削減できると考えられます。

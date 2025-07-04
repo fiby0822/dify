@@ -50,28 +50,7 @@ variables:
 - {{ variable|replace("old", "new") }}: 文字列置換
 - {{ variable|default("デフォルト値") }}: デフォルト値設定
 - {{ variable|join(',') }}: 配列を文字列に結合
-
-■使用禁止フィルター（クラッシュの原因）
-以下のフィルターはクラッシュの原因となるため、使用を禁止します：
-
-絶対禁止フィルター：
-- date() - 日付フォーマット関数（now|dateなど）
-- length - 文字列長取得（|lengthの形式）
-
-代替案：
-```yaml
-# ❌ 禁止：dateフィルター
-template: "処理時刻: {{ now|date('Y-m-d H:i:s') }}"
-
-# ✅ 推奨：固定文字列または変数で日時を渡す
-template: "処理時刻: {{ timestamp }}"  # 前処理で生成した値を使用
-
-# ❌ 禁止：lengthフィルター
-template: "文字数: {{ text|length }}"
-
-# ✅ 推奨：前処理で計算
-# codeノードで len(text) を計算してから渡す
-```
+- {{ variable|length }}: 長さを取得
 
 ■使用例
 
@@ -238,26 +217,14 @@ template-transformノード内でdate関数の使用は環境により制限さ�
 
 ❌ 避けるべき記法：
 ```yaml
-# エラー：nowに引用符を付ける
 template: |
   ["更新日時", "{{ 'now' | date('Y/m/d H:i') }}"]
-  ["更新日時", "{{ \"now\"|date }}"]
-  ["更新日時", "{{ \"now\"|date(\"Y-m-d H:i:s\") }}"]
-```
-
-✅ 正解（ただし非推奨）：
-```yaml
-# nowは引用符なし
-{{ now }}  # 現在時刻のタイムスタンプ
-{{ now|date("Y-m-d H:i:s") }}  # フォーマット付き（ただし非推奨）
 ```
 
 ✅ 推奨される代替案：
 1. codeノードで日付を生成
 2. 固定値として設定
 3. LLMノードで日付を含めた出力を生成
-
-注意：Difyのtemplate-transformでは、dateフィルターのサポートが限定的のため、日付処理はcodeノードで実行することを推奨
 
 例（codeノードで日付生成）：
 ```yaml

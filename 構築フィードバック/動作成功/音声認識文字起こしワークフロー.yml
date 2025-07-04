@@ -1,0 +1,228 @@
+app:
+  description: 音声ファイルから文字起こしを行い、その結果を整形して出力するワークフローです。MP3、WAV、M4A等の音声ファイルをアップロードして文字起こしを実行します。
+  icon: 🎙️
+  icon_background: '#FFEAD5'
+  mode: advanced-chat
+  name: 音声認識文字起こしワークフロー
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: lysonober/openai_audio:0.0.4@2a7bc1307f6d4337b597cafe1c75f20e0fabf0dd8132a0a4e04496b3c949c86c
+kind: app
+version: 0.3.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .MP3
+      - .MP4
+      - .MPEG
+      - .MPGA
+      - .M4A
+      - .WAV
+      - .WEBM
+      allowed_file_types:
+      - audio
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: true
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        image_file_size_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: 音声ファイルをアップロードして、文字起こしを実行してください。対応形式：MP3、WAV、M4A、MP4、MPEG、MPGA、WEBM
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions:
+    - 音声ファイルを文字起こしする
+    - 会議録音を文字に変換する
+    - インタビュー音声をテキスト化する
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: start
+        targetType: tool
+      id: start-audio-transcription-edge
+      selected: false
+      source: start_node
+      sourceHandle: source
+      target: audio_transcription_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: template-transform
+      id: audio-transcription-format-edge
+      selected: false
+      source: audio_transcription_node
+      sourceHandle: source
+      target: format_output_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: template-transform
+        targetType: answer
+      id: format-answer-edge
+      selected: false
+      source: format_output_node
+      sourceHandle: source
+      target: answer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: 開始ノード
+        selected: false
+        title: 開始
+        type: start
+        variables: []
+      height: 82
+      id: start_node
+      position:
+        x: 50
+        y: 200
+      positionAbsolute:
+        x: 50
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: 音声ファイルを文字起こしするノード
+        is_team_authorization: false
+        provider_id: lysonober/openai_audio/openai_audio_stt
+        provider_name: lysonober/openai_audio/openai_audio_stt
+        provider_type: builtin
+        selected: false
+        title: 音声文字起こし
+        tool_configurations:
+          model: gpt-4o-transcribe
+          output_format: default
+          response_format: text
+          stream: 1
+          timestamp_granularities: none
+          transcription_type: transcribe
+        tool_label: 音声文字起こし
+        tool_name: openai_audio_stt
+        tool_parameters:
+          file:
+            type: variable
+            value:
+            - sys
+            - files
+          language:
+            type: mixed
+            value: ja
+          prompt:
+            type: mixed
+            value: 音声ファイルを日本語で文字起こししてください
+        type: tool
+      height: 248
+      id: audio_transcription_node
+      position:
+        x: 350
+        y: 200
+      positionAbsolute:
+        x: 350
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: 文字起こし結果を整形するノード
+        selected: false
+        template: '============================================
+
+          音声文字起こし結果
+
+          ============================================
+
+
+          【文字起こしテキスト】
+
+          {{transcription_text|trim}}
+
+
+          ============================================
+
+          '
+        title: 結果整形
+        type: template-transform
+        variables:
+        - value_selector:
+          - audio_transcription_node
+          - text
+          value_type: string
+          variable: transcription_text
+      height: 82
+      id: format_output_node
+      position:
+        x: 650
+        y: 200
+      positionAbsolute:
+        x: 650
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '{{#format_output_node.output#}}'
+        desc: 整形された結果を出力
+        selected: false
+        title: 回答
+        type: answer
+        variables: []
+      height: 133
+      id: answer_node
+      position:
+        x: 950
+        y: 200
+      positionAbsolute:
+        x: 950
+        y: 200
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    viewport:
+      x: -301.6
+      y: 252.8
+      zoom: 0.8

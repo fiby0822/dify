@@ -44,33 +44,6 @@ variable_selectorで指定された変数の値
 ■出力
 条件にマッチしたケースのエッジへ分岐
 
-■case_id命名の重要制限
-⚠️ 重要警告：case_id命名の制限
-以下の値は内部処理で特殊な扱いを受けるため、case_idに使用できません：
-- 'true', 'false'（bool型として解釈される）
-- 'True', 'False'（大文字版も同様）
-- 'default', 'else'（予約語的扱い）
-
-必ず具体的で意味のある名前を使用してください。
-
-推奨される命名パターン：
-```yaml
-# ❌ 間違い：予約語的な値
-- case_id: 'true'
-- case_id: 'false'
-
-# ✅ 正解：意味のある名前
-- case_id: 'success_case'
-- case_id: 'has_data'
-- case_id: 'validation_passed'
-- case_id: 'file_exists'
-```
-
-■sourceHandleの注意事項
-エッジ定義での注意：
-- sourceHandle: 'success_case'  # case_idと完全一致
-- sourceHandle: 'false'         # デフォルトケースは文字列の'false'（予約）
-
 ■比較演算子の種類（正確な値）
 文字列比較（推奨）:
 - "contains": 部分一致（数値範囲判定にも推奨）

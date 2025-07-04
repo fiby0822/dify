@@ -11,7 +11,9 @@
 
 内容：インポート成功_クラッシュ
 対象：
-なし
+/Users/tatsuya/Documents/01_fiby/09_ゼット/構築フィードバック/インポート成功_クラッシュ/画像認識OCRワークフロー_検証用.yml
+/Users/tatsuya/Documents/01_fiby/09_ゼット/構築フィードバック/インポート成功_クラッシュ/音声認識ワークフロー_20250104.yml
+/Users/tatsuya/Documents/01_fiby/09_ゼット/構築フィードバック/インポート成功_クラッシュ/音声文字起こしワークフロー_検証用.yml
 
 内容：インポート成功_動作エラー
 対象：
@@ -24,6 +26,7 @@
 対象：
 /Users/tatsuya/Documents/01_fiby/09_ゼット/ymlサンプル/作業日報OCR-CSV出力ボット.yml
 /Users/tatsuya/Documents/01_fiby/09_ゼット/ymlサンプル/音声認識テスト.yml
+/Users/tatsuya/Documents/01_fiby/09_ゼット/構築フィードバック/動作成功/音声認識文字起こしワークフロー.yml
 
 在庫管理判定ワークフロー_成功例.ymlは下記の依頼文を参考に、生成AIであるClaudeによって開発されたDifyのymlファイルです。
 /Users/tatsuya/Documents/01_fiby/09_ゼット/開発依頼/Dify_YML作成依頼プロンプト_テンプレート.txt

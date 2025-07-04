@@ -1,0 +1,261 @@
+app:
+  description: 音声ファイルをアップロードして文字起こしを行うテストワークフロー
+  icon: 🎤
+  icon_background: "#FFEAD5"
+  mode: advanced-chat
+  name: 音声認識テストワークフロー
+  use_icon_as_answer_icon: false
+
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: lysonober/openai_audio:0.0.4@2a7bc1307f6d4337b597cafe1c75f20e0fabf0dd8132a0a4e04496b3c949c86c
+
+kind: app
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: true
+      allowed_file_types:
+        - audio
+      allowed_file_extensions:
+        - .MP3
+        - .MP4
+        - .MPEG
+        - .MPGA
+        - .M4A
+        - .WAV
+        - .WEBM
+      fileUploadConfig:
+        audio_file_size_limit: 25
+        workflow_file_upload_limit: 10
+    opening_statement: 音声ファイルをアップロードしてください。文字起こしを行います。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+  graph:
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: start
+        targetType: tool
+      id: start-transcription-edge
+      selected: false
+      source: start_node
+      sourceHandle: source
+      target: audio_transcription_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: if-else
+      id: transcription-check-edge
+      selected: false
+      source: audio_transcription_node
+      sourceHandle: source
+      target: check_transcription_result
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: check-llm-edge
+      selected: false
+      source: check_transcription_result
+      sourceHandle: true
+      target: format_result_llm
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: answer
+      id: check-error-edge
+      selected: false
+      source: check_transcription_result
+      sourceHandle: false
+      target: answer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: llm-answer-edge
+      selected: false
+      source: format_result_llm
+      sourceHandle: source
+      target: answer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: ''
+        selected: false
+        title: 開始
+        type: start
+        variables: []
+      height: 53
+      id: start_node
+      position:
+        x: 50
+        y: 282
+      positionAbsolute:
+        x: 50
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: ''
+        is_team_authorization: false
+        provider_id: lysonober/openai_audio/openai_audio_stt
+        provider_name: lysonober/openai_audio/openai_audio_stt
+        provider_type: builtin
+        selected: false
+        title: 音声文字起こし
+        tool_configurations:
+          model: gpt-4o-transcribe
+          output_format: default
+          response_format: text
+          stream: 0
+          timestamp_granularities: none
+          transcription_type: transcribe
+        tool_label: 音声文字起こし
+        tool_name: openai_audio_stt
+        tool_parameters:
+          file:
+            type: variable
+            value:
+            - sys
+            - files
+          language:
+            type: mixed
+            value: ja
+          prompt:
+            type: mixed
+            value: 音声ファイルを正確に文字起こししてください
+        type: tool
+      height: 220
+      id: audio_transcription_node
+      position:
+        x: 350
+        y: 282
+      positionAbsolute:
+        x: 350
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        cases:
+        - case_id: 'true'
+          conditions:
+          - comparison_operator: not empty
+            id: transcription-exists
+            value: ''
+            variable_selector:
+            - audio_transcription_node
+            - text
+          logical_operator: and
+        desc: ''
+        logical_operator: and
+        selected: false
+        title: 文字起こし結果確認
+        type: if-else
+      height: 125
+      id: check_transcription_result
+      position:
+        x: 650
+        y: 282
+      positionAbsolute:
+        x: 650
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 文字起こし結果を整形して出力
+        model:
+          completion_params: {}
+          mode: chat
+          name: gpt-4o-mini
+          provider: openai
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: 音声の文字起こし結果を整形して出力してください。改行や句読点を適切に追加し、読みやすい形式にしてください。
+        - id: user-prompt
+          role: user
+          text: 'こちらが文字起こし結果です：
+
+            {{#audio_transcription_node.text#}}'
+        selected: false
+        title: 結果整形
+        type: llm
+        variables: []
+      height: 97
+      id: format_result_llm
+      position:
+        x: 950
+        y: 202
+      positionAbsolute:
+        x: 950
+        y: 202
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: '{% if format_result_llm.text %}## 音声文字起こし結果
+
+          {{#format_result_llm.text#}}{% else %}音声ファイルの文字起こしに失敗しました。
+
+          - 対応している音声形式：MP3、WAV、M4A、MPEG、MPGA、MP4、WEBM
+
+          - ファイルサイズ上限：25MB
+
+          再度正しい音声ファイルをアップロードしてください。{% endif %}'
+        desc: ''
+        selected: false
+        title: 回答
+        type: answer
+        variables: []
+      height: 161
+      id: answer_node
+      position:
+        x: 1250
+        y: 282
+      positionAbsolute:
+        x: 1250
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244

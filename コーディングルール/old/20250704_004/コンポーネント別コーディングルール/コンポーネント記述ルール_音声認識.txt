@@ -1,0 +1,183 @@
+コンポーネント記述ルール: 音声認識（Audio Transcription）
+
+■ブロック概要
+音声ファイルからテキストへの文字起こしを行うノード。OpenAI Audio APIを使用して音声認識を実行。marketplaceプラグインとして使用。
+
+■必須パラメータ（詳細）
+- id: 意味のある名前（例: "audio_transcription_node"）
+- type: "custom"（外側のtype属性。固定値）
+- data.type: "tool"（データ内のtype属性。固定値）
+- position: x, y座標
+- positionAbsolute: positionと同じ値を設定
+- selected: false（固定値）
+- sourcePosition: "right"（推奨）
+- targetPosition: "left"（推奨）
+- height: 数値（通常220）
+- width: 数値（通常244）
+- data:
+  - title: ノードのタイトル（例: "音声文字起こし"）
+  - provider_id: "lysonober/openai_audio/openai_audio_stt"
+  - provider_type: "builtin"（marketplaceでもbuiltinを使用）
+  - provider_name: "lysonober/openai_audio/openai_audio_stt"
+  - tool_name: "openai_audio_stt"
+  - tool_label: "音声文字起こし"
+  - is_team_authorization: false（固定値）
+  - tool_configurations: 設定値
+  - tool_parameters: パラメータ設定
+
+■依存関係（必須）
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: lysonober/openai_audio:0.0.4@2a7bc1307f6d4337b597cafe1c75f20e0fabf0dd8132a0a4e04496b3c949c86c
+
+■tool_configurationsの設定
+- model: 使用モデル（"gpt-4o-transcribe"、"gpt-4o-mini-transcribe"、"whisper-1"）
+- output_format: 出力形式（"default"、"json_only"、"text_only"）
+- response_format: レスポンス形式（"text"、"json"、"verbose_json"、"srt"、"vtt"）
+- stream: ストリーミング設定（0または1、GPT-4oモデルのみ）
+- timestamp_granularities: タイムスタンプ粒度（"none"、"segment"、"word"、"segment_and_word"）
+- transcription_type: 文字起こしタイプ（"transcribe"、"translate"）
+
+■tool_parametersのパラメータ設定
+- file:
+    type: variable
+    value: [sys, files]  # 音声ファイルの参照
+- language:
+    type: mixed
+    value: ""  # オプション: "ja"、"en"など
+- prompt:
+    type: mixed
+    value: "音声ファイルを文字起こししてください"
+
+■file_upload設定（features内）
+features:
+  file_upload:
+    enabled: true
+    allowed_file_types:
+      - audio
+    allowed_file_extensions:
+      - .MP3
+      - .MP4
+      - .MPEG
+      - .MPGA
+      - .M4A
+      - .WAV
+      - .WEBM
+    fileUploadConfig:
+      audio_file_size_limit: 50  # MB単位
+      workflow_file_upload_limit: 10
+
+■入力
+- sys.files: システムファイルからの音声ファイル
+- ユーザーがアップロードした音声ファイル
+
+■出力
+- text: 文字起こしされたテキスト
+- json: JSONレスポンス（response_formatに依存）
+
+■使用例
+```yaml
+# 依存関係
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: lysonober/openai_audio:0.0.4@2a7bc1307f6d4337b597cafe1c75f20e0fabf0dd8132a0a4e04496b3c949c86c
+
+# ノード定義
+- data:
+    desc: ''
+    is_team_authorization: false
+    provider_id: lysonober/openai_audio/openai_audio_stt
+    provider_name: lysonober/openai_audio/openai_audio_stt
+    provider_type: builtin
+    selected: false
+    title: 音声文字起こし
+    tool_configurations:
+      model: gpt-4o-transcribe
+      output_format: default
+      response_format: text
+      stream: 1
+      timestamp_granularities: none
+      transcription_type: transcribe
+    tool_label: 音声文字起こし
+    tool_name: openai_audio_stt
+    tool_parameters:
+      file:
+        type: variable
+        value:
+        - sys
+        - files
+      language:
+        type: mixed
+        value: ''
+      prompt:
+        type: mixed
+        value: 音声ファイルを文字起こししてください
+    type: tool
+  height: 220
+  id: audio_transcription_node
+  position:
+    x: 380
+    y: 282
+  positionAbsolute:
+    x: 380
+    y: 282
+  selected: false
+  sourcePosition: right
+  targetPosition: left
+  type: custom
+  width: 244
+```
+
+■モデル選択のガイドライン
+1. gpt-4o-transcribe（推奨）
+   - 高品質な文字起こし
+   - ストリーミング対応
+   - 最新モデル
+
+2. gpt-4o-mini-transcribe
+   - 高速処理
+   - ストリーミング対応
+   - コスト効率的
+
+3. whisper-1
+   - レガシーモデル
+   - より多くのフォーマットサポート
+   - 翻訳機能対応
+
+■注意事項
+- marketplace_plugin_unique_identifierは必ず正確に記述
+- provider_typeは"builtin"（"marketplace"ではない）
+- 音声ファイルサイズは25MBまで
+- response_formatでsrt、vttを使用する場合はwhisper-1のみ
+- translate機能はwhisper-1のみサポート
+- ストリーミング（stream: 1）はGPT-4oモデルのみサポート
+
+■よくあるエラー
+1. "Tool not found"エラー
+   - dependenciesセクションの記述漏れ
+   - marketplace_plugin_unique_identifierの誤記
+
+2. "Invalid file format"エラー
+   - サポート外の音声形式
+   - ファイルサイズ超過（25MB以上）
+
+3. "Model not supported"エラー
+   - モデル名の誤記
+   - response_formatとモデルの組み合わせ不正
+
+■ベストプラクティス
+- 用途に応じた適切なモデル選択
+- 日本語音声の場合はpromptで言語を指定
+- language設定で認識精度を向上させる
+- 文字起こし後のテキスト処理を別ノードで実施
+- エラーハンドリングのためのif-elseノード配置
+
+■マーケットプレイス使用の承認
+このプラグインは公式に承認されたマーケットプレイスツールです。
+dependencies での定義が必須ですが、使用が許可されています。
+- 識別子: lysonober/openai_audio:0.0.4@2a7bc1307f6d4337b597cafe1c75f20e0fabf0dd8132a0a4e04496b3c949c86c
+- 注意: provider_typeは"builtin"を使用してください

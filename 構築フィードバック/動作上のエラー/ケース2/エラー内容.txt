@@ -1,1 +1,1 @@
-画像は対応していないとの返答
+1 validation error for RunCondition branch_identify Input should be a valid string [type=string_type, input_value=True, input_type=bool] For further information visit https://errors.pydantic.dev/2.11/v/string_type

@@ -1,0 +1,63 @@
+### ケース4：音声認識テスト エラー原因分析
+
+## エラー内容
+```
+Run failed: 2 validation errors for IfElseNodeData 
+cases.0.logical_operator Field required 
+cases.0.conditions.0.comparison_operator Input should be 'contains', 'not contains', 'start with', 'end with', 'is', 'is not', 'empty', 'not empty', 'in', 'not in', 'all of', '=', '≠', '>', '<', '≥', '≤', 'null', 'not null', 'exists' or 'not exists' 
+[type=literal_error, input_value='is not empty', input_type=str]
+```
+
+## 根本原因
+1. IF-ELSEノードのcases定義で必須フィールド`logical_operator`が欠落している
+2. 比較演算子`is not empty`が無効（正しくは`not empty`）
+
+## 具体的な問題箇所
+```yaml
+- data:
+    cases:
+    - case_id: 'true'
+      conditions:
+      - comparison_operator: is not empty  # 無効な演算子
+        id: file_check_condition
+        value: ''
+        variable_selector:
+        - sys
+        - files
+      # logical_operator: and  # 欠落している必須フィールド
+```
+
+## 正しい記述例
+```yaml
+- data:
+    cases:
+    - case_id: 'true'
+      conditions:
+      - comparison_operator: not empty  # 正しい演算子
+        id: file_check_condition
+        value: ''
+        variable_selector:
+        - sys
+        - files
+      logical_operator: and  # 必須フィールド
+```
+
+## IF-ELSEノードの必須要素
+1. **case_id**: ケース識別子（文字列）
+2. **conditions**: 条件配列
+   - comparison_operator: 有効な演算子のみ使用
+   - id: 一意の条件ID
+   - value: 比較値
+   - variable_selector: 変数参照パス
+3. **logical_operator**: 'and' または 'or'（複数条件時の論理演算子）
+
+## 有効な比較演算子一覧
+- テキスト系: contains, not contains, start with, end with, is, is not
+- 存在系: empty, not empty, exists, not exists, null, not null
+- 数値系: =, ≠, >, <, ≥, ≤
+- 配列系: in, not in, all of
+
+## 予防策
+1. IF-ELSEノードを作成する際は必ず`logical_operator`を含める
+2. 比較演算子は公式ドキュメントの有効値リストを参照
+3. 「is not empty」ではなく「not empty」のように正確な演算子名を使用

@@ -1,4 +1,1 @@
-Run failed: 1 validation error for IfElseNodeData
-cases.0.conditions.0.comparison_operator
-Input should be 'contains', 'not contains', 'start with', 'end with', 'is', 'is not', 'empty', 'not empty', 'in', 'not in', 'all of', '=', '≠', '>', '<', '≥', '≤', 'null', 'not null', 'exists' or 'not exists' [type=literal_error, input_value='is not empty', input_type=str]
-For further information visit https://errors.pydantic.dev/2.11/v/literal_error
+Run failed: 1 validation error for TemplateTransformNodeData variables.1.value_selector.2 Input should be a valid string [type=string_type, input_value=0, input_type=int] For further information visit https://errors.pydantic.dev/2.11/v/string_type

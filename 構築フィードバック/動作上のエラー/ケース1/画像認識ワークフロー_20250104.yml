@@ -1,0 +1,227 @@
+app:
+  description: "画像URLを受け取り、LLMのVision機能を使用して画像内容を分析し、OCRと画像分析の結果を構造化して出力する画像認識ワークフロー"
+  icon: "🖼️"
+  icon_background: "#FFEAD5"
+  mode: advanced-chat
+  name: "画像認識ワークフロー"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: true
+      allowed_file_types:
+        - image
+      allowed_file_extensions:
+        - .JPG
+        - .JPEG
+        - .PNG
+        - .WEBP
+        - .HEIC
+      fileUploadConfig:
+        image_file_size_limit: 10
+        file_size_limit: 15
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 5
+        transfer_methods:
+          - local_file
+          - remote_url
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+  graph:
+    edges:
+      - data:
+          isInLoop: false
+          sourceType: start
+          targetType: llm
+        id: start-image-recognition-edge
+        selected: false
+        source: start_node
+        sourceHandle: source
+        target: image_recognition_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: llm
+          targetType: template-transform
+        id: image-recognition-template-edge
+        selected: false
+        source: image_recognition_node
+        sourceHandle: source
+        target: template_transform_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+      - data:
+          isInLoop: false
+          sourceType: template-transform
+          targetType: answer
+        id: template-answer-edge
+        selected: false
+        source: template_transform_node
+        sourceHandle: source
+        target: answer_node
+        targetHandle: target
+        type: custom
+        zIndex: 0
+    nodes:
+      - data:
+          desc: "画像認識処理の開始"
+          selected: false
+          title: "開始"
+          type: start
+          variables: []
+        height: 54
+        id: start_node
+        position:
+          x: 50
+          y: 200
+        positionAbsolute:
+          x: 50
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          context:
+            enabled: false
+            variable_selector: []
+          variables: []
+          desc: "LLMのVision機能を使用して画像内容を分析"
+          model:
+            completion_params: {}
+            mode: chat
+            name: gpt-4o
+            provider: openai
+          prompt_template:
+            - id: system-prompt-1
+              role: system
+              text: |
+                以下の画像を分析してください：
+                
+                1. 画像内のテキストを全て読み取ってください（OCR）
+                2. 画像の内容を詳細に説明してください
+                3. 主要なオブジェクトや要素を識別してください
+                
+                結果は以下の形式で出力してください：
+                - OCR結果：[読み取ったテキスト]
+                - 画像説明：[詳細な説明]
+                - 主要要素：[識別されたオブジェクト]
+            - id: user-prompt-1
+              role: user
+              text: "アップロードされた画像を分析してください。"
+          structured_output_enabled: false
+          title: "画像認識（Vision）"
+          type: llm
+          variables: []
+          vision:
+            enabled: true
+            configs:
+              detail: high
+              variable_selector: []
+            variable_selector:
+              - sys
+              - files
+              - 0
+              - transfer_method
+              - remote_url
+        height: 150
+        id: image_recognition_node
+        position:
+          x: 350
+          y: 175
+        positionAbsolute:
+          x: 350
+          y: 175
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          desc: "認識結果の整形"
+          selected: false
+          template: |
+            画像認識結果
+            ============
+            
+            使用モデル: GPT-4o (Vision)
+            処理日時: {{ "2025-01-04" }}
+            画像URL: {{ image_url }}
+            
+            認識結果
+            --------
+            {{ recognition_result }}
+          title: "結果整形"
+          type: template-transform
+          variables:
+            - value_selector:
+                - image_recognition_node
+                - text
+              value_type: string
+              variable: recognition_result
+            - value_selector:
+                - sys
+                - files
+                - 0
+              value_type: string
+              variable: image_url
+        height: 54
+        id: template_transform_node
+        position:
+          x: 650
+          y: 200
+        positionAbsolute:
+          x: 650
+          y: 200
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+      - data:
+          answer: "{{#template_transform_node.output#}}"
+          desc: "整形された認識結果を出力"
+          selected: false
+          title: "結果出力"
+          type: answer
+          variables: []
+        height: 107
+        id: answer_node
+        position:
+          x: 950
+          y: 175
+        positionAbsolute:
+          x: 950
+          y: 175
+        selected: false
+        sourcePosition: right
+        targetPosition: left
+        type: custom
+        width: 244
+    viewport:
+      x: 0
+      y: 0
+      zoom: 0.8
