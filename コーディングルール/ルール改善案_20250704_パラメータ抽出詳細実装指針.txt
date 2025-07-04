@@ -1,0 +1,338 @@
+# パラメータ抽出（parameter-extractor）詳細実装指針および改善案
+
+## 1. 深層分析結果
+
+### 1.1 サンプルYMLの詳細分析
+パラメータ抽出テスト.ymlから以下の重要な実装パターンを確認：
+
+1. **複数のパラメータ抽出ノードの連携**
+   - タイトル抽出（string型）
+   - 章のCSV出力（string型、構造化）
+   - 章の個数出力（number型、計算結果）
+
+2. **LLMノードとの密接な連携**
+   - LLMの出力（{{#llm.text#}}）を直接入力として使用
+   - 各抽出ノードが異なる観点でデータを構造化
+
+3. **最終出力での統合**
+   - 複数の抽出結果を組み合わせて表示
+   - 原文も含めた総合的な情報提示
+
+### 1.2 技術的考察
+
+#### パフォーマンスとコストの観点
+- **利点**：LLMを複数回呼び出すより、1回のLLM呼び出し結果を複数のパラメータ抽出で処理する方が効率的
+- **懸念**：各パラメータ抽出ノードもLLMを使用するため、コストは考慮必要
+
+#### エラーハンドリング
+- 抽出失敗時の挙動が不明確
+- required: falseの活用が重要
+
+## 2. 包括的な改善提案
+
+### 2.1 コンポーネント記述ルール_パラメータ抽出.txt への詳細追加
+
+```
+■詳細実装指針
+
+### 1. 使用判断フローチャート
+```
+入力データ
+    ↓
+[LLM出力である？] → No → codeノードを使用
+    ↓ Yes
+[構造化が必要？] → No → そのまま使用
+    ↓ Yes
+[複雑な処理？] → Yes → codeノードを検討
+    ↓ No
+parameter-extractorを使用
+```
+
+### 2. 実装パターン
+
+#### パターン1: 単一項目抽出
+```yaml
+# 例：小説タイトルのみ抽出
+id: title_extraction
+type: parameter-extractor
+data:
+  instruction: "小説のタイトル部分のみを抽出してください"
+  parameters:
+    - name: "title"
+      type: string
+      description: "小説のタイトル"
+      required: true
+```
+
+#### パターン2: 複数項目の構造化
+```yaml
+# 例：営業レポートから複数データ抽出
+id: sales_report_parser
+type: parameter-extractor
+data:
+  instruction: "営業レポートから必要な情報を抽出してください"
+  parameters:
+    - name: "customer_name"
+      type: string
+      description: "顧客名（法人名または個人名）"
+      required: true
+    - name: "amount"
+      type: number
+      description: "取引金額（円、数値のみ）"
+      required: true
+    - name: "products"
+      type: array[string]
+      description: "購入商品リスト"
+      required: false
+```
+
+#### パターン3: データ変換と統一化
+```yaml
+# 例：日付形式の統一化
+id: date_normalizer
+type: parameter-extractor
+data:
+  instruction: "日付をYYYY-MM-DD形式に統一してください"
+  parameters:
+    - name: "normalized_date"
+      type: string
+      description: "YYYY-MM-DD形式の日付"
+      required: true
+```
+
+### 3. エラーハンドリング指針
+
+1. **必須項目の最小化**
+   - required: trueは本当に必要な項目のみ
+   - 抽出失敗時の影響を最小限に
+
+2. **フォールバック戦略**
+   ```yaml
+   # 後続処理でのnullチェック例
+   - type: code
+     data:
+       code: |
+         if not customer_name:
+             customer_name = "不明"
+   ```
+
+3. **検証ノードの配置**
+   - パラメータ抽出後にcodeノードで検証
+   - 不正な値の修正や警告
+
+### 4. パフォーマンス最適化
+
+1. **バッチ処理の活用**
+   - 関連する項目は1つのノードでまとめて抽出
+   - 過度な分割は避ける
+
+2. **モデル選択**
+   - 単純な抽出：gpt-3.5-turbo
+   - 複雑な理解が必要：gpt-4o
+
+3. **キャッシュ戦略**
+   - 同じLLM出力から複数抽出する場合は変数に保存
+
+### 5. テスト指針
+
+1. **エッジケースのテスト**
+   - 想定外の形式の入力
+   - 部分的にしか情報がない場合
+   - 言語が混在する場合
+
+2. **型変換のテスト**
+   - number型：様々な数値表記
+   - boolean型：多様な真偽表現
+   - array[string]：区切り文字のバリエーション
+
+### 6. 他ノードとの連携パターン
+
+#### 前処理パターン
+```
+LLMノード（分析・要約）
+    ↓
+parameter-extractor（構造化）
+    ↓
+codeノード（検証・加工）
+```
+
+#### 並列処理パターン
+```
+       LLMノード
+      ／    ｜    ＼
+抽出A    抽出B    抽出C
+      ＼    ｜    ／
+       統合処理
+```
+
+### 7. アンチパターン
+
+1. **過度な分割**
+   ```yaml
+   # 悪い例：1項目ずつ別ノード
+   - id: extract_name
+   - id: extract_age  
+   - id: extract_email
+   # 良い例：関連項目をまとめて
+   - id: extract_user_info
+   ```
+
+2. **不適切な型指定**
+   ```yaml
+   # 悪い例：郵便番号をnumber型
+   type: number  # 0で始まる場合に問題
+   # 良い例：string型で保持
+   type: string
+   ```
+
+3. **曖昧な説明**
+   ```yaml
+   # 悪い例
+   description: "金額"
+   # 良い例
+   description: "税込み合計金額（円、数値のみ、カンマなし）"
+   ```
+```
+
+### 2.2 品質チェックリスト.md への詳細追加
+
+```markdown
+## パラメータ抽出の品質チェック
+
+### 使用妥当性
+- [ ] LLM出力からの抽出である
+- [ ] 構造化または形式統一化が目的である
+- [ ] codeノードでは実装が複雑になる
+
+### 実装品質
+- [ ] instructionが明確で具体的
+- [ ] パラメータのdescriptionが詳細
+- [ ] 型指定が適切（特にnumber vs string）
+- [ ] required設定が最小限
+- [ ] エラーハンドリングが考慮されている
+
+### パフォーマンス
+- [ ] 関連項目がまとめて抽出されている
+- [ ] 適切なモデルが選択されている
+- [ ] 不要な抽出の繰り返しがない
+```
+
+### 2.3 新規ファイル：パラメータ抽出実装ガイド.md
+
+```markdown
+# パラメータ抽出実装ガイド
+
+## クイックリファレンス
+
+### 使用可能な型
+- string: 文字列
+- number: 数値（整数・小数）
+- boolean: 真偽値
+- array[string]: 文字列配列
+
+### よくある実装例
+
+#### 1. 顧客情報の抽出
+```yaml
+parameters:
+  - name: "company_name"
+    type: string
+    description: "会社名（株式会社等も含む）"
+  - name: "contact_person"
+    type: string
+    description: "担当者名（敬称は除く）"
+  - name: "email"
+    type: string
+    description: "メールアドレス"
+  - name: "phone"
+    type: string
+    description: "電話番号（ハイフンあり）"
+```
+
+#### 2. 商品情報の抽出
+```yaml
+parameters:
+  - name: "product_name"
+    type: string
+    description: "商品名"
+  - name: "price"
+    type: number
+    description: "税抜き価格（円）"
+  - name: "quantity"
+    type: number
+    description: "数量"
+  - name: "categories"
+    type: array[string]
+    description: "商品カテゴリ（複数可）"
+```
+
+#### 3. 日時情報の正規化
+```yaml
+parameters:
+  - name: "date"
+    type: string
+    description: "日付（YYYY-MM-DD形式）"
+  - name: "time"
+    type: string
+    description: "時刻（HH:MM形式、24時間表記）"
+  - name: "is_urgent"
+    type: boolean
+    description: "緊急フラグ"
+```
+
+## トラブルシューティング
+
+### Q: 抽出が失敗する
+A: descriptionをより具体的に。例を含めると効果的。
+
+### Q: 数値が文字列で返ってくる
+A: type: numberを明示的に指定。instructionでも「数値で」と明記。
+
+### Q: 配列が正しく抽出されない
+A: instructionで区切り文字を明示。「カンマ区切りで」など。
+```
+
+## 3. 実装優先順位（改訂版）
+
+1. **即時対応**（既存ファイルの更新）
+   - コンポーネント記述ルール_パラメータ抽出.txt の詳細追加
+   - 品質チェックリスト.md の更新
+   - コードチェック.md への追加
+
+2. **短期対応**（新規ファイル作成）
+   - パラメータ抽出実装ガイド.md の作成
+   - サンプル集の整備
+
+3. **中期対応**（全体整合性）
+   - 02_ワークフロー設計.md の更新
+   - 他のコンポーネントルールとの整合性確認
+
+## 4. 実装による効果測定指標
+
+1. **開発効率**
+   - パラメータ抽出の実装時間短縮
+   - 手戻り作業の削減
+
+2. **品質向上**
+   - 抽出精度の向上
+   - エラー発生率の低下
+
+3. **保守性**
+   - コードの可読性向上
+   - 仕様変更への対応速度
+
+## 5. 今後の展望
+
+1. **ベストプラクティス集の作成**
+   - 業界別の実装例
+   - よくある失敗パターン集
+
+2. **自動検証ツールの開発**
+   - パラメータ定義の妥当性チェック
+   - パフォーマンス予測
+
+3. **コミュニティフィードバック**
+   - 実装例の共有
+   - 改善提案の収集
+
+この詳細な実装指針により、パラメータ抽出の適切な使用が促進され、開発品質の向上が期待できます。
