@@ -1,78 +1,81 @@
-# ケース4: 営業成績評価システム_検証用.yml エラー原因分析
+## ケース4: 音声認識テスト - エラー原因分析
 
-## エラー内容
-- 3 validation errors for ToolNodeData
-- tool_parameters.ranges: Input should be a valid dictionary or instance of ToolInput
-- tool_parameters.renderOption: Input should be a valid dictionary or instance of ToolInput  
-- tool_parameters.valueRenderOption: Input should be a valid dictionary or instance of ToolInput
-
-## エラー発生箇所
-ツールノード（ID: 1733389201002）のパラメータ設定：
-
-```yaml
-tool_parameters:
-  ranges: "営業データ!A1:C10"
-  renderOption: FORMATTED_VALUE
-  valueRenderOption: FORMATTED_VALUE
+### エラー内容
+```
+Run failed: 2 validation errors for IfElseNodeData 
+cases.0.logical_operator Field required [type=missing, input_value={'case_id': 'true', 'cond...or': ['sys', 'files']}]}, input_type=dict] 
+cases.0.conditions.0.comparison_operator Input should be 'contains', 'not contains', 'start with', 'end with', 'is', 'is not', 'empty', 'not empty', 'in', 'not in', 'all of', '=', '≠', '>', '<', '≥', '≤', 'null', 'not null', 'exists' or 'not exists' [type=literal_error, input_value='is not empty', input_type=str]
 ```
 
-## エラー原因
-1. **ツールパラメータの型指定の誤り**：
-   - tool_parametersには`type`と`value`を含む辞書形式が必要
-   - 文字列を直接指定しているため、型エラーが発生
+### エラー原因
+IF-ELSEノードに2つのバリデーションエラーがある：
+1. logical_operatorフィールドが必須だが欠落している
+2. comparison_operatorに無効な値'is not empty'が設定されている
 
-2. **正しいツールパラメータ形式の未使用**：
-   - 他の成功例では以下の形式を使用：
+### 詳細分析
+1. **問題箇所1**: file_check_node（73-83行目）
    ```yaml
-   tool_parameters:
-     ranges:
-       type: mixed
-       value: '["営業データ!A1:C10"]'
+   cases:
+   - case_id: 'true'
+     conditions:
+     - comparison_operator: is not empty  # 誤り
+       id: file_check_condition
+       value: ''
+       variable_selector:
+       - sys
+       - files
+     # logical_operatorが欠落
    ```
 
-3. **ツール名とプロバイダーIDの不一致**：
-   - provider_id: `google`
-   - tool_name: `google_sheets_read_spreadsheet`
-   - 正しくは: provider_id: `omluc/google_sheets/google_sheets`、tool_name: `batch_get`
+2. **正しい構造**（在庫管理判定ワークフローを参考）:
+   ```yaml
+   cases:
+   - case_id: 'true'
+     conditions:
+     - comparison_operator: not empty  # 正しい値
+       id: file_check_condition
+       value: ''
+       variable_selector:
+       - sys
+       - files
+     logical_operator: and  # 必須フィールド
+   ```
 
-4. **Pydantic検証エラー**：
-   - DifyのAPI設計では、tool_parametersの各値はToolInputオブジェクトとして検証される
-   - 単純な文字列値の代わりに、type/value構造を持つオブジェクトが必要
+### 根本原因
+1. **logical_operator欠落**: conditionsが1つしかない場合でも、logical_operatorフィールドは必須
+2. **comparison_operator誤り**: ケース1と同じく、'is not empty'は無効な値
 
-## 成功例との比較
-成功例では：
+### 修正方法
 ```yaml
-tool_parameters:
-  ranges:
-    type: mixed
-    value: '["INVENTORY!A1:C10"]'
-  spreadsheet_id:
-    type: mixed
-    value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+cases:
+- case_id: 'true'
+  conditions:
+  - comparison_operator: not empty  # 'is not empty'から修正
+    id: file_check_condition
+    value: ''
+    variable_selector:
+    - sys
+    - files
+  logical_operator: and  # 追加（conditionsが1つでも必須）
 ```
 
-## 修正案
-```yaml
-tool_parameters:
-  ranges:
-    type: mixed
-    value: '["営業データ!A1:C10"]'
-  spreadsheet_id:
-    type: mixed
-    value: "test_spreadsheet_id"
-  renderOption:
-    type: mixed
-    value: "FORMATTED_VALUE"
-  valueRenderOption:
-    type: mixed
-    value: "FORMATTED_VALUE"
-```
+### 追加の観察事項
+1. **複数のエラーパターン**:
+   - ケース1と同じcomparison_operatorの誤り
+   - さらに必須フィールドの欠落という新たな問題
 
-また、provider_idとtool_nameも修正が必要：
-- provider_id: `omluc/google_sheets/google_sheets`
-- tool_name: `batch_get`
+2. **成功例との比較**:
+   - 成功しているYMLでは、単一条件でも必ず`logical_operator: and`が設定されている
+   - `case_id`と`id`は同じ値を設定する必要がある
 
-## 推奨事項
-1. すべてのtool_parametersは`type`と`value`を含む構造体として定義
-2. provider_idは完全なパス形式（`omluc/google_sheets/google_sheets`）を使用
-3. 配列パラメータは文字列化されたJSON形式で提供
+3. **エラーパターン**:
+   - if-elseノードの必須フィールドを把握していない
+   - テンプレートをコピーした際に、必須フィールドを削除してしまう
+   - 自然な英語表現（"is not empty"）を使用してしまう
+
+### 改善提案
+1. if-elseノードの必須フィールドを明確に文書化する
+2. 単一条件でも`logical_operator`が必須であることを強調する
+3. comparison_operatorの正しい値リストをテンプレートに含める
+4. コードチェックリストにif-elseノードの必須フィールド確認を追加する
+5. `case_id`と`id`の値を一致させる必要があることを明記する

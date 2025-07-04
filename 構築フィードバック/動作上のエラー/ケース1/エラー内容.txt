@@ -1,9 +1,4 @@
-Run failed: Traceback (most recent call last):
-File "/var/sandbox/sandbox-python/tmp/983a7464_c420_4627_84a6_11bd4b1eb919.py", line 48, in
-File "", line 19, in
-File "", line 10, in main
-File "/usr/local/lib/python3.10/site-packages/jinja2/environment.py", line 1291, in render
-self.environment.handle_exception()
-File "/usr/local/lib/python3.10/site-packages/jinja2/environment.py", line 925, in handle_exception
-raise rewrite_traceback_stack(source=source)
-File "
+Run failed: 1 validation error for IfElseNodeData
+cases.0.conditions.0.comparison_operator
+Input should be 'contains', 'not contains', 'start with', 'end with', 'is', 'is not', 'empty', 'not empty', 'in', 'not in', 'all of', '=', '≠', '>', '<', '≥', '≤', 'null', 'not null', 'exists' or 'not exists' [type=literal_error, input_value='is not empty', input_type=str]
+For further information visit https://errors.pydantic.dev/2.11/v/literal_error

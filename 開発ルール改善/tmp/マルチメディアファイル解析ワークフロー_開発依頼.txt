@@ -1,0 +1,63 @@
+# Dify YML作成依頼
+
+## 0. 全体指示・注意事項
+- **version: 0.3.0 を必ず使用すること**
+- **使用ツール**: 音声認識（Audio Transcription）、画像認識（OCR/Vision）、条件分岐、Template Transform
+- **最重要事項**: コンポーネント記述ルール_音声認識.txt、コンポーネント記述ルール_画像認識.txtの新ルールを厳格に適用すること
+
+## 1. ワークフロー概要
+マルチメディアファイル解析ワークフロー：
+音声ファイルまたは画像ファイルをアップロードし、それぞれ適切な認識処理（音声認識/OCR）を行い、結果を統合して出力するワークフロー
+
+## 2. ワークフローの詳細仕様
+1. **開始ノード設定**
+   - ファイル入力（音声または画像）
+   - 処理タイプ選択（audio/image）
+
+2. **IF/ELSEによる分岐処理**
+   - 処理タイプがaudioの場合：音声認識処理へ
+   - 処理タイプがimageの場合：画像認識処理へ
+
+3. **音声認識処理（新ルール適用）**
+   - モデル: gpt-4o-transcribe（高品質・ストリーミング対応）
+   - provider_type: builtin
+   - marketplace依存関係を正確に設定
+   - ストリーミング設定（stream: 1）
+   - ファイルサイズ制限: 50MB
+
+4. **画像認識処理（新ルール適用）**
+   - Vision機能を有効化（enabled: true）
+   - detail設定: high（高精度OCR）
+   - structured_output_enabled: false
+   - OpenAIプラグインの依存関係設定
+
+5. **結果統合処理**
+   - Template Transformノードで結果を統合
+   - 変数参照は {{ 変数名 }} 形式を厳守
+   - 処理タイプ、認識結果、処理時間を含む
+
+6. **最終出力**
+   - 統合された解析結果を出力
+
+## 3. 実装上の注意点
+- **音声認識の新ルール**：
+  - provider_typeはmarketplaceではなくbuiltinを使用
+  - dependenciesブロックでmarketplace_plugin_unique_identifierを正確に記述
+  - gpt-4o-transcribeモデルを使用（ストリーミング対応）
+
+- **画像認識の新ルール**：
+  - Vision設定を必須化（enabled: true）
+  - detail: highでOCR精度を最大化
+  - structured_output_enabledはfalseに設定
+
+- **Template Transformの新ルール**：
+  - 変数参照は {{#変数名#}} ではなく {{ 変数名 }} を使用
+  - スペースを含む正しい形式を厳守
+
+## 4. 品質チェック項目
+開発完了後、以下のチェックを実施：
+- 音声認識のmarketplace依存関係が正しく設定されているか
+- 画像認識のVision設定が有効になっているか
+- Template Transformの変数参照形式が正しいか
+- 各ノードの接続が適切か
+- エラーハンドリングが実装されているか

@@ -1,0 +1,279 @@
+app:
+  name: 音声認識テスト
+  description: 音声ファイルをテキストに変換するテストワークフロー
+  icon: 🎤
+  icon_background: '#4A90E2'
+  mode: advanced-chat
+  use_icon_as_answer_icon: false
+
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: lysonober/openai_audio:0.0.4@2a7bc1307f6d4337b597cafe1c75f20e0fabf0dd8132a0a4e04496b3c949c86c
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: true
+      allowed_file_types:
+        - audio
+      allowed_file_extensions:
+        - .MP3
+        - .MP4
+        - .MPEG
+        - .MPGA
+        - .M4A
+        - .WAV
+        - .WEBM
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        workflow_file_upload_limit: 10
+    opening_statement: 音声ファイルをアップロードしてください。テキストに変換します。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    nodes:
+    - data:
+        desc: ユーザーからの音声ファイルを受け取る
+        selected: false
+        title: 開始
+        type: start
+        variables: []
+      height: 98
+      id: start_node
+      position:
+        x: 50
+        y: 200
+      positionAbsolute:
+        x: 50
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        cases:
+        - case_id: 'true'
+          conditions:
+          - comparison_operator: is not empty
+            id: file_check_condition
+            value: ''
+            variable_selector:
+            - sys
+            - files
+        desc: ファイルがアップロードされたかチェック
+        selected: false
+        title: ファイルチェック
+        type: if-else
+      height: 136
+      id: file_check_node
+      position:
+        x: 330
+        y: 200
+      positionAbsolute:
+        x: 330
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: 音声ファイルをテキストに変換
+        is_team_authorization: false
+        provider_id: lysonober/openai_audio/openai_audio_stt
+        provider_name: lysonober/openai_audio/openai_audio_stt
+        provider_type: builtin
+        selected: false
+        title: 音声文字起こし
+        tool_configurations:
+          model: gpt-4o-transcribe
+          output_format: default
+          response_format: text
+          stream: 1
+          timestamp_granularities: none
+          transcription_type: transcribe
+        tool_label: 音声文字起こし
+        tool_name: openai_audio_stt
+        tool_parameters:
+          file:
+            type: variable
+            value:
+            - sys
+            - files
+          language:
+            type: mixed
+            value: ''
+          prompt:
+            type: mixed
+            value: 音声ファイルを正確に文字起こししてください
+        type: tool
+      height: 220
+      id: audio_transcription_node
+      position:
+        x: 610
+        y: 140
+      positionAbsolute:
+        x: 610
+        y: 140
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: エラーメッセージを表示
+        model:
+          completion_params: {}
+          mode: chat
+          name: gpt-4o-mini
+          provider: openai
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: エラーメッセージを分かりやすく説明してください。
+        - id: user-prompt
+          role: user
+          text: 音声ファイルがアップロードされていません。音声ファイル（MP3、WAV等）をアップロードしてください。
+        selected: false
+        title: エラー表示
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 150
+      id: error_message_node
+      position:
+        x: 610
+        y: 390
+      positionAbsolute:
+        x: 610
+        y: 390
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: "{{#audio_transcription_node.text#}}"
+        desc: 文字起こし結果を表示
+        selected: false
+        title: 成功時の回答
+        type: answer
+        variables: []
+      height: 106
+      id: success_answer_node
+      position:
+        x: 890
+        y: 140
+      positionAbsolute:
+        x: 890
+        y: 140
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: "{{#error_message_node.text#}}"
+        desc: エラーメッセージを表示
+        selected: false
+        title: エラー時の回答
+        type: answer
+        variables: []
+      height: 106
+      id: error_answer_node
+      position:
+        x: 890
+        y: 390
+      positionAbsolute:
+        x: 890
+        y: 390
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: start
+        targetType: if-else
+      id: start-filecheck-edge
+      selected: false
+      source: start_node
+      sourceHandle: source
+      target: file_check_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: tool
+      id: filecheck-audio-edge
+      selected: false
+      source: file_check_node
+      sourceHandle: 'true'
+      target: audio_transcription_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: filecheck-error-edge
+      selected: false
+      source: file_check_node
+      sourceHandle: 'false'
+      target: error_message_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: answer
+      id: audio-success-edge
+      selected: false
+      source: audio_transcription_node
+      sourceHandle: source
+      target: success_answer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: error-answer-edge
+      selected: false
+      source: error_message_node
+      sourceHandle: source
+      target: error_answer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0

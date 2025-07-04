@@ -1,0 +1,344 @@
+version: 0.3.0
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: lysonober/openai_audio:0.0.4@2a7bc1307f6d4337b597cafe1c75f20e0fabf0dd8132a0a4e04496b3c949c86c
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/openai:0.0.26@c1e643ac6a7732f6333a783320b4d3026fa5e31d8e7026375b98d44418d33f26
+features:
+  file_upload:
+    enabled: true
+    allowed_file_types:
+      - audio
+      - image
+      - document
+    allowed_file_extensions:
+      - .MP3
+      - .MP4
+      - .MPEG
+      - .MPGA
+      - .M4A
+      - .WAV
+      - .WEBM
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .WEBP
+      - .HEIC
+      - .PDF
+    fileUploadConfig:
+      audio_file_size_limit: 50
+      image_file_size_limit: 10
+      file_size_limit: 15
+      workflow_file_upload_limit: 10
+    image:
+      enabled: false
+      number_limits: 5
+      transfer_methods:
+        - local_file
+        - remote_url
+nodes:
+- data:
+    desc: ファイルアップロードの受付と処理タイプの選択
+    selected: false
+    title: ファイル入力受付
+    type: start
+    variables:
+    - label: 処理タイプ
+      max_length: 50
+      options:
+      - audio
+      - image
+      required: true
+      type: select
+      variable: processing_type
+  height: 116
+  id: start_node
+  position:
+    x: 80
+    y: 282
+  positionAbsolute:
+    x: 80
+    y: 282
+  selected: false
+  sourcePosition: right
+  targetPosition: left
+  type: custom
+  width: 244
+- data:
+    type: if-else
+    cases:
+      - id: audio_case
+        case_id: audio_case
+        conditions:
+          - id: audio_check_condition
+            variable_selector:
+              - start_node
+              - processing_type
+            comparison_operator: is
+            value: "audio"
+        logical_operator: and
+      - id: image_case
+        case_id: image_case
+        conditions:
+          - id: image_check_condition
+            variable_selector:
+              - start_node
+              - processing_type
+            comparison_operator: is
+            value: "image"
+        logical_operator: and
+    desc: "処理タイプによる分岐"
+    selected: false
+    title: "処理タイプ分岐"
+  height: 154
+  id: processing_type_branch
+  position:
+    x: 380
+    y: 282
+  positionAbsolute:
+    x: 380
+    y: 282
+  selected: false
+  sourcePosition: right
+  targetPosition: left
+  type: custom
+  width: 244
+- data:
+    desc: ''
+    is_team_authorization: false
+    provider_id: lysonober/openai_audio/openai_audio_stt
+    provider_name: lysonober/openai_audio/openai_audio_stt
+    provider_type: builtin
+    selected: false
+    title: 音声文字起こし
+    tool_configurations:
+      model: gpt-4o-transcribe
+      output_format: default
+      response_format: text
+      stream: 1
+      timestamp_granularities: none
+      transcription_type: transcribe
+    tool_label: 音声文字起こし
+    tool_name: openai_audio_stt
+    tool_parameters:
+      file:
+        type: variable
+        value:
+        - sys
+        - files
+      language:
+        type: mixed
+        value: ''
+      prompt:
+        type: mixed
+        value: 音声ファイルを正確に文字起こししてください
+    type: tool
+  height: 220
+  id: audio_transcription_node
+  position:
+    x: 680
+    y: 82
+  positionAbsolute:
+    x: 680
+    y: 82
+  selected: false
+  sourcePosition: right
+  targetPosition: left
+  type: custom
+  width: 244
+- data:
+    context:
+      enabled: false
+      variable_selector: []
+    desc: 画像からテキスト情報を抽出
+    model:
+      completion_params: {}
+      mode: chat
+      name: gpt-4o
+      provider: langgenius/openai/openai
+    prompt_template:
+    - id: system-prompt
+      role: system
+      text: |
+        画像を分析してテキスト情報を抽出してください。
+        以下の内容を含めてください：
+        1. 画像に含まれるテキスト（OCR）
+        2. 画像の内容説明
+        3. 重要な要素や特徴
+    - id: user-prompt
+      role: user
+      text: アップロードされた画像を分析してください。
+    selected: false
+    structured_output_enabled: false
+    title: 画像認識・OCR処理
+    type: llm
+    variables: []
+    vision:
+      configs:
+        detail: high
+        variable_selector: []
+      enabled: true
+  height: 150
+  id: image_recognition_node
+  position:
+    x: 680
+    y: 482
+  positionAbsolute:
+    x: 680
+    y: 482
+  selected: false
+  sourcePosition: right
+  targetPosition: left
+  type: custom
+  width: 244
+- data:
+    type: template-transform
+    template: |
+      処理タイプ：{{ processing_type }}
+      
+      処理結果：
+      {{ audio_result }}{{ image_result }}
+      
+      処理時間：{{ timestamp }}
+    variables:
+      - variable: processing_type
+        value_selector: [start_node, processing_type]
+        value_type: string
+      - variable: audio_result
+        value_selector: [audio_transcription_node, text]
+        value_type: string
+      - variable: image_result
+        value_selector: [image_recognition_node, text]
+        value_type: string
+      - variable: timestamp
+        value_selector: [timestamp_generator, timestamp]
+        value_type: string
+    selected: false
+    title: 結果統合
+  height: 54
+  id: result_integration
+  position:
+    x: 1280
+    y: 282
+  positionAbsolute:
+    x: 1280
+    y: 282
+  selected: false
+  sourcePosition: right
+  targetPosition: left
+  type: custom
+  width: 244
+- data:
+    code: |
+      from datetime import datetime
+      current_time = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+      return {"timestamp": current_time}
+    code_language: python3
+    outputs:
+      timestamp:
+        type: string
+    selected: false
+    title: タイムスタンプ生成
+    type: code
+    variables: []
+  height: 54
+  id: timestamp_generator
+  position:
+    x: 980
+    y: 282
+  positionAbsolute:
+    x: 980
+    y: 282
+  selected: false
+  sourcePosition: right
+  targetPosition: left
+  type: custom
+  width: 244
+- data:
+    answer: '{{#result_integration.output#}}'
+    desc: ''
+    selected: false
+    title: 解析結果出力
+    type: answer
+    variables: []
+  height: 107
+  id: final_answer
+  position:
+    x: 1580
+    y: 282
+  positionAbsolute:
+    x: 1580
+    y: 282
+  selected: false
+  sourcePosition: right
+  targetPosition: left
+  type: custom
+  width: 244
+edges:
+- data:
+    isInLoop: false
+    sourceType: start
+    targetType: if-else
+  id: edge_start_to_branch
+  source: start_node
+  sourceHandle: source
+  target: processing_type_branch
+  type: custom
+- data:
+    isInLoop: false
+    sourceType: if-else
+    targetType: tool
+  id: edge_branch_to_audio
+  source: processing_type_branch
+  sourceHandle: audio_case
+  target: audio_transcription_node
+  type: custom
+- data:
+    isInLoop: false
+    sourceType: if-else
+    targetType: llm
+  id: edge_branch_to_image
+  source: processing_type_branch
+  sourceHandle: image_case
+  target: image_recognition_node
+  type: custom
+- data:
+    isInLoop: false
+    sourceType: tool
+    targetType: code
+  id: edge_audio_to_timestamp
+  source: audio_transcription_node
+  sourceHandle: source
+  target: timestamp_generator
+  type: custom
+- data:
+    isInLoop: false
+    sourceType: llm
+    targetType: code
+  id: edge_image_to_timestamp
+  source: image_recognition_node
+  sourceHandle: source
+  target: timestamp_generator
+  type: custom
+- data:
+    isInLoop: false
+    sourceType: code
+    targetType: template-transform
+  id: edge_timestamp_to_integration
+  source: timestamp_generator
+  sourceHandle: source
+  target: result_integration
+  type: custom
+- data:
+    isInLoop: false
+    sourceType: template-transform
+    targetType: answer
+  id: edge_integration_to_answer
+  source: result_integration
+  sourceHandle: source
+  target: final_answer
+  type: custom

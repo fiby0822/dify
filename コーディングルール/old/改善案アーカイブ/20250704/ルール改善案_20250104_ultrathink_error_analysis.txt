@@ -1,0 +1,190 @@
+# コーディングルール改善案（ultrathink検証によるエラー分析結果反映版）
+作成日: 2025/01/04
+分析対象: 動作エラーケース1〜4の詳細分析結果
+
+## 1. IF-ELSEノードに関する改善提案
+
+### 1.1 comparison_operatorの値に関する明確化（★最重要★）
+
+**現状の問題:**
+- 「is not empty」という自然な英語表現を使用してエラーになるケースが多発（ケース1、4）
+- 正しい値は「not empty」（"is"を含まない）
+
+**改善案:**
+コンポーネント記述ルール_IF_ELSE.txtに以下を追加：
+
+```
+### ⚠️ comparison_operatorの値に関する超重要な注意事項 ⚠️
+
+「空でない」ことをチェックする場合：
+❌ 誤り: comparison_operator: "is not empty"
+✅ 正解: comparison_operator: "not empty"
+
+「空である」ことをチェックする場合：
+❌ 誤り: comparison_operator: "is empty"  
+✅ 正解: comparison_operator: "empty"
+
+【覚え方】
+"is"や"is not"は使わない！"empty"/"not empty"のみを使用する
+
+【その他の紛らわしい値】
+- "is"と"is not"は独立した演算子（完全一致判定用）
+- "empty"/"not empty"も独立した演算子（空判定用）
+- これらを組み合わせることはできない
+```
+
+### 1.2 case_idとidの一致に関する明記
+
+**現状の問題:**
+- case_idとidが一致していないケースがある
+
+**改善案:**
+以下の記述を追加：
+
+```
+### case_idとidの必須一致ルール
+
+各caseには以下の2つのフィールドを同じ値で設定する必要があります：
+
+```yaml
+cases:
+  - case_id: 'my_case'  # 必須
+    id: 'my_case'       # 必須（case_idと同じ値）
+    conditions: [...]
+    logical_operator: and
+```
+
+⚠️ case_idとidの値が異なるとエラーになる可能性があります
+```
+
+## 2. LLMノードのvision設定に関する改善提案
+
+### 2.1 variable_selectorの必須設定（★重要★）
+
+**現状の問題:**
+- vision設定でvariable_selectorが空配列のままになっているケースが多発（ケース2、3）
+- 画像ファイルへの参照が設定されていないため、「画像は対応していない」エラーが発生
+
+**改善案:**
+全体コーディングルールに以下を追加：
+
+```
+### 画像認識（vision）使用時の必須設定
+
+画像認識を使用する場合、以下の設定が必須です：
+
+```yaml
+vision:
+  enabled: true  # 必須
+  configs:
+    detail: "high"  # または "low"
+    variable_selector:  # ⚠️ 空配列は禁止！必ず画像ファイルを参照
+      - sys        # システムアップロードの場合
+      - files
+    # または
+    variable_selector:
+      - start      # startノードで定義した変数の場合
+      - file_variable
+```
+
+❌ エラーになる例：
+```yaml
+vision:
+  enabled: true
+  configs:
+    detail: "high"
+    variable_selector: []  # 空配列はエラー！
+```
+
+⚠️ variable_selectorが空配列の場合、必ず「画像は対応していない」エラーになります
+```
+
+### 2.2 画像処理ワークフローのテンプレート改善
+
+**改善案:**
+画像処理を含むワークフローのテンプレートに、正しいvision設定の例を必ず含める：
+
+```yaml
+# 画像OCR処理のLLMノード例
+- data:
+    type: llm
+    title: "画像認識処理"
+    desc: "アップロードされた画像を解析"
+    # ... 他の設定 ...
+    vision:
+      enabled: true
+      configs:
+        detail: "high"
+        variable_selector:  # ⚠️ 必ず画像ファイルへの参照を設定
+          - sys
+          - files
+```
+
+## 3. 品質チェックリストへの追加項目
+
+### 3.1 IF-ELSEノードチェック項目の強化
+
+品質チェックリスト.mdに以下を追加：
+
+```markdown
+### IF-ELSEノード専用チェック項目
+
+- [ ] comparison_operatorに"is empty"や"is not empty"を使用していないか？
+  - 正：`empty`, `not empty`
+  - 誤：`is empty`, `is not empty`
+- [ ] 各caseのcase_idとidが完全に一致しているか？
+- [ ] 単一条件でもlogical_operatorが設定されているか？
+```
+
+### 3.2 画像処理チェック項目の追加
+
+```markdown
+### 画像処理（vision）チェック項目
+
+- [ ] vision.enabledがtrueの場合、variable_selectorが空配列になっていないか？
+- [ ] variable_selectorが画像ファイルを正しく参照しているか？
+  - システムアップロード: `[sys, files]`
+  - ノード変数: `[node_id, variable_name]`
+```
+
+## 4. エラーパターン集の作成（新規提案）
+
+よくあるエラーパターンをまとめた文書の作成を提案：
+
+```
+### よくあるエラーパターンと対策
+
+1. **comparison_operator: "is not empty"エラー**
+   - 症状：Input should be... 'not empty'...エラー
+   - 原因："is"を含めてしまっている
+   - 対策："not empty"に修正（"is"を削除）
+
+2. **logical_operator Field requiredエラー**
+   - 症状：cases.0.logical_operator Field required
+   - 原因：logical_operatorの記述漏れ
+   - 対策：条件が1つでも必ずlogical_operator: andを追加
+
+3. **ビジョン変数は必須ですエラー**
+   - 症状：画像認識処理でビジョン変数は必須ですとのワーニング
+   - 原因：vision.configs.variable_selectorが空配列
+   - 対策：画像ファイルへの参照パスを設定
+
+4. **画像は対応していないエラー**
+   - 症状：画像をアップロードしても「画像は対応していない」と返答
+   - 原因：vision設定の不備（特にvariable_selector）
+   - 対策：vision設定を正しく構成し、画像ファイルを参照
+```
+
+## 5. コンポーネント記述ルールの統合提案
+
+現在、画像認識と音声認識のコンポーネント記述ルールが別ファイルになっているが、
+TEMPLATE_TRANSFORMルールにIF_ELSEルールのような詳細な記述例を追加することを提案。
+
+## 6. 実装優先度
+
+1. **最優先**: comparison_operatorの「is not empty」問題の文書化
+2. **高優先**: vision設定のvariable_selector必須化の明記
+3. **中優先**: 品質チェックリストへの項目追加
+4. **低優先**: エラーパターン集の作成
+
+これらの改善により、今回発生したエラーの再発を効果的に防止できると考えられます。

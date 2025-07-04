@@ -1,0 +1,329 @@
+app:
+  name: 画像OCRテスト
+  description: 画像ファイルをOCR処理してCSV形式で出力するテストワークフロー
+  icon: 📷
+  icon_background: '#3498DB'
+  mode: advanced-chat
+  use_icon_as_answer_icon: false
+
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/openai:0.0.26@c1e643ac6a7732f6333a783320b4d3026fa5e31d8e7026375b98d44418d33f26
+
+kind: app
+
+version: 0.3.0
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: true
+      allowed_file_types:
+        - image
+        - document
+      allowed_file_extensions:
+        - .JPG
+        - .JPEG
+        - .PNG
+        - .WEBP
+        - .HEIC
+        - .PDF
+      fileUploadConfig:
+        image_file_size_limit: 10
+        file_size_limit: 15
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 5
+        transfer_methods:
+          - local_file
+          - remote_url
+    opening_statement: 画像ファイルをアップロードしてください。OCR処理を行い、CSV形式で出力します。
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    nodes:
+    - data:
+        desc: ユーザーからの画像ファイルを受け取る
+        selected: false
+        title: 開始
+        type: start
+        variables: []
+      height: 98
+      id: start_node
+      position:
+        x: 50
+        y: 200
+      positionAbsolute:
+        x: 50
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        cases:
+        - case_id: 'true'
+          conditions:
+          - comparison_operator: is not empty
+            id: file_check_condition
+            value: ''
+            variable_selector:
+            - sys
+            - files
+          logical_operator: and
+        desc: ファイルがアップロードされたかチェック
+        selected: false
+        title: ファイルチェック
+        type: if-else
+      height: 136
+      id: file_check_node
+      position:
+        x: 330
+        y: 200
+      positionAbsolute:
+        x: 330
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: 画像からOCRでテキスト情報を抽出し、CSV形式で出力
+        model:
+          completion_params:
+            max_tokens: 1000
+            temperature: 0.2
+          mode: chat
+          name: gpt-4o
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: |
+            手書きまたは印刷された文書を読み取り、CSV形式で出力してください。
+            画像のヘッダー行をそのまま使用し、各項目を1行ずつ出力。
+            説明は不要、CSVデータのみ出力。
+        - id: user-prompt
+          role: user
+          text: アップロードされた画像を読み取り、CSV形式で出力してください。
+        selected: false
+        structured_output_enabled: false
+        title: OCR画像解析・CSV出力
+        type: llm
+        variables: []
+        vision:
+          configs:
+            detail: high
+            variable_selector: []
+          enabled: true
+      height: 150
+      id: ocr_analysis_node
+      position:
+        x: 610
+        y: 140
+      positionAbsolute:
+        x: 610
+        y: 140
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: エラーメッセージを表示
+        model:
+          completion_params: {}
+          mode: chat
+          name: gpt-4o-mini
+          provider: openai
+        prompt_template:
+        - id: system-prompt
+          role: system
+          text: エラーメッセージを分かりやすく説明してください。
+        - id: user-prompt
+          role: user
+          text: 画像ファイルがアップロードされていません。画像ファイル（JPG、PNG、PDF等）をアップロードしてください。
+        selected: false
+        structured_output_enabled: false
+        title: エラー表示
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 150
+      id: error_message_node
+      position:
+        x: 610
+        y: 390
+      positionAbsolute:
+        x: 610
+        y: 390
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        desc: CSV形式の結果を整形して表示
+        selected: false
+        template: |
+          ## OCR処理結果（CSV形式）
+
+          {{ ocr_result }}
+        title: 結果整形
+        type: template-transform
+        variables:
+        - value_selector:
+          - ocr_analysis_node
+          - text
+          variable: ocr_result
+      height: 126
+      id: result_formatter_node
+      position:
+        x: 890
+        y: 140
+      positionAbsolute:
+        x: 890
+        y: 140
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: "{{#result_formatter_node.output#}}"
+        desc: CSV形式の結果を表示
+        selected: false
+        title: 成功時の回答
+        type: answer
+        variables: []
+      height: 106
+      id: success_answer_node
+      position:
+        x: 1170
+        y: 140
+      positionAbsolute:
+        x: 1170
+        y: 140
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    - data:
+        answer: "{{#error_message_node.text#}}"
+        desc: エラーメッセージを表示
+        selected: false
+        title: エラー時の回答
+        type: answer
+        variables: []
+      height: 106
+      id: error_answer_node
+      position:
+        x: 890
+        y: 390
+      positionAbsolute:
+        x: 890
+        y: 390
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 244
+    edges:
+    - data:
+        isInLoop: false
+        sourceType: start
+        targetType: if-else
+      id: start-filecheck-edge
+      selected: false
+      source: start_node
+      sourceHandle: source
+      target: file_check_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: filecheck-ocr-edge
+      selected: false
+      source: file_check_node
+      sourceHandle: 'true'
+      target: ocr_analysis_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: filecheck-error-edge
+      selected: false
+      source: file_check_node
+      sourceHandle: 'false'
+      target: error_message_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: template-transform
+      id: ocr-formatter-edge
+      selected: false
+      source: ocr_analysis_node
+      sourceHandle: source
+      target: result_formatter_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: template-transform
+        targetType: answer
+      id: formatter-success-edge
+      selected: false
+      source: result_formatter_node
+      sourceHandle: source
+      target: success_answer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: error-answer-edge
+      selected: false
+      source: error_message_node
+      sourceHandle: source
+      target: error_answer_node
+      targetHandle: target
+      type: custom
+      zIndex: 0

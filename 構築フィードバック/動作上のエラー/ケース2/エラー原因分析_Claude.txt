@@ -1,57 +1,54 @@
-# ケース2: 営業データ分析レポート自動作成システム_2025.yml エラー原因分析
+## ケース2: 手書き備品リストOCR処理ワークフロー - エラー原因分析
 
-## エラー内容
-- TypeError: 'builtin_function_or_method' object is not iterable
-- Jinja2テンプレートエラー（line 10）
-
-## エラー発生箇所
-template-transformノード（ID: data_transform_node）の以下のテンプレート:
-
+### エラー内容
 ```
-取得した営業データ（CSV形式）：
-{% for row in sheet_data[0].values %}
-{{ row | join(',') }}
-{% endfor %}
+画像は対応していないとの返答
 ```
 
-## エラー原因
-1. **変数参照の誤り**：
-   - ケース1と同じエラー
-   - `sheet_data[0].values` はGoogle Sheets batch_get APIの正しい参照方法ではない
-   - 正しくは `sheet_data[0]["valueRanges"][0]["values"]` を使用すべき
+### エラー原因
+YMLファイル自体は正常に読み込まれているが、実行時に画像処理が正しく動作していない。
 
-2. **API応答構造の理解不足**：
-   - Google Sheets batch_get APIは以下の構造を返す：
-     ```json
-     [{
-       "valueRanges": [{
-         "range": "INPUT!A1:D10",
-         "values": [[...], [...], ...]
-       }]
-     }]
-     ```
+### 詳細分析
+1. **YMLファイルの構造**: 構文エラーはなく、正しく構成されている
 
-3. **変数参照記法の混在**：
-   - 一部で`{{#node_1733389201002.result#}}`形式を使用
-   - 他の箇所では`sheet_data`という変数名を使用
-   - 統一性が欠如しており、混乱を招いている
+2. **問題の可能性**:
+   - LLMノード（ocr_analysis_node）のvision設定は正しく有効化されている（165行目）
+   - ただし、ファイルアップロード機能の設定とvision機能の連携に問題がある可能性
 
-## 成功例との比較
-成功例では正確なパスでデータを取得：
-```
-{% set rows = sheet_data[0]["valueRanges"][0]["values"] %}
-```
+3. **比較結果**:
+   - 正常動作する「在庫管理判定ワークフロー」にはvision機能を使用するノードがない
+   - このケースではvision機能を使用しているが、画像ファイルの受け渡しが正しく行われていない可能性
 
-## 修正案
-```
-取得した営業データ（CSV形式）：
-{% set rows = sheet_data[0]["valueRanges"][0]["values"] %}
-{% for row in rows %}
-{{ row | join(',') }}
-{% endfor %}
+### 根本原因の推測
+1. 画像ファイルの変数参照が正しく設定されていない
+2. vision.configs.variable_selectorが空配列になっている（164行目）
+3. 画像ファイルを指定する変数セレクターが必要だが、設定されていない
+
+### 修正方法案
+```yaml
+vision:
+  configs:
+    detail: high
+    variable_selector:  # ここに画像ファイルの参照を追加
+    - sys
+    - files
+  enabled: true
 ```
 
-## 推奨事項
-1. 変数参照記法を`{{#ノードID.output#}}`形式に統一
-2. Google Sheets APIのレスポンス構造を正しく理解し、ドキュメント化
-3. テンプレート内でのエラーハンドリングを追加
+### 追加の観察事項
+1. **visionノードの設定問題**:
+   - `variable_selector`が空配列 `[]` になっている（164行目）
+   - 画像ファイルへの参照が設定されていないため、LLMが画像を認識できない
+
+2. **正しい画像参照の設定**:
+   - システム変数から画像ファイルを参照する必要がある
+   - `[sys, files]` または適切なノードからの出力を参照する
+
+3. **エラーパターン**:
+   - vision機能は有効化されているが、画像ファイルの参照が欠落している
+   - 空配列のままvision設定を残してしまうケース
+
+### 改善提案
+1. vision設定を使用する際は、必ず`variable_selector`に画像ファイルへの参照を設定する
+2. 画像処理ノードのテンプレートに、正しい`variable_selector`の設定例を含める
+3. vision設定の`variable_selector`が空配列の場合は警告を出すルールを追加する

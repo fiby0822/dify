@@ -1,65 +1,60 @@
-# ケース3: 営業実績分類システム_検証用.yml エラー原因分析
+## ケース3: 音声画像認識検証ワークフロー - エラー原因分析
 
-## エラー内容
-- TypeError: 'builtin_function_or_method' object is not iterable
-- Jinja2テンプレートエラー（line 14）
-
-## エラー発生箇所
-template-transformノード（ID: transform_to_csv）の以下のテンプレート:
-
+### エラー内容
 ```
-営業データ（CSV形式）：
-{% if sheet_data and sheet_data[0] and sheet_data[0].values %}
-{% for row in sheet_data[0].values %}
-{{ row | join(',') }}
-{% endfor %}
-{% else %}
-データが見つかりません
-{% endif %}
+[画像認識処理] ビジョン変数は必須です　とのワーニング
 ```
 
-## エラー原因
-1. **変数参照の誤り**：
-   - ケース1, 2と同じエラーパターン
-   - `sheet_data[0].values` という参照方法が間違っている
-   - 条件分岐で一部エラーをカバーしようとしているが、根本的な参照方法が誤り
+### エラー原因
+画像認識処理ノード（image_recognition_node）のvision設定で、画像ファイルを参照する変数が指定されていない。
 
-2. **API応答構造の理解不足**：
-   - Google Sheets batch_get APIの応答は以下の形式:
-     ```
-     [{
-       "valueRanges": [{
-         "range": "INPUT!A1:B100",
-         "values": [[...], [...], ...]
-       }]
-     }]
-     ```
-   - `values` は直接のプロパティではなく、`valueRanges[0]` の下にある
+### 詳細分析
+1. **問題箇所**: image_recognition_node（363-369行目）
+   ```yaml
+   vision:
+     configs:
+       detail: high
+       variable_selector: []  # 空配列になっている
+     enabled: true
+   ```
 
-3. **その他の問題点**：
-   - prepare_sheet_data（行475-500）での変数参照で`| default('')`がフィルターとして認識されていない可能性
-   - 変数参照の不統一（`sheet_data`と`{{#transform_to_csv.output#}}`の混在）
+2. **必要な設定**:
+   - variable_selectorに画像ファイルへの参照パスを指定する必要がある
+   - startノードで定義されているfile変数を参照すべき
 
-## 成功例との比較
-成功例では正しい階層でアクセス：
-```
-{% set rows = sheet_data[0]["valueRanges"][0]["values"] %}
-```
+3. **比較結果**:
+   - このワークフローは音声と画像の両方を処理するが、画像認識ノードで画像ファイルの参照が欠落
+   - vision機能は有効化されているが、処理対象の画像が指定されていない
 
-## 修正案
-```
-営業データ（CSV形式）：
-{% if sheet_data and sheet_data[0] and sheet_data[0]["valueRanges"] and sheet_data[0]["valueRanges"][0]["values"] %}
-{% set rows = sheet_data[0]["valueRanges"][0]["values"] %}
-{% for row in rows %}
-{{ row | join(',') }}
-{% endfor %}
-{% else %}
-データが見つかりません
-{% endif %}
+### 根本原因
+- vision.configs.variable_selectorが空配列のまま
+- 画像ファイルを指定する変数セレクターが必須だが、設定されていない
+
+### 修正方法
+```yaml
+vision:
+  configs:
+    detail: high
+    variable_selector:
+    - start
+    - file  # startノードで定義されたfile変数を参照
+  enabled: true
 ```
 
-## 推奨事項
-1. テンプレート内でのピリオド記法（`object.property`）の使用を避け、ブラケット記法（`object["property"]`）を使用
-2. エラーハンドリングの条件も正しいパスで記述
-3. defaultフィルターの適切な使用方法の確認
+### 追加の観察事項
+1. **ケース2との共通点**:
+   - 両方とも`variable_selector`が空配列 `[]` になっている
+   - vision機能を使用する際の必須設定が欠落している
+
+2. **ワークフロー設計の問題**:
+   - ファイルタイプを判定して音声/画像を振り分けるフローだが、画像処理部分の設定が不完全
+   - if-elseノードで正しく画像を判定しても、その後の画像認識ノードで参照が設定されていない
+
+3. **エラーパターン**:
+   - vision設定のテンプレートをコピーした際に、`variable_selector`を設定し忘れる
+   - 必須パラメータの設定漏れ
+
+### 改善提案
+1. vision設定を含むノードのテンプレートに、`variable_selector`の設定例を必ず含める
+2. 画像処理を行うワークフローでは、画像ファイルの参照パスを明確に文書化する
+3. vision設定のバリデーションルールを強化し、`variable_selector`が空の場合はエラーとする

@@ -1,50 +1,61 @@
-# ケース1: 営業日報集計システム_GoogleSheets検証用.yml エラー原因分析
+## ケース1: 画像OCRテスト - エラー原因分析
 
-## エラー内容
-- TypeError: 'builtin_function_or_method' object is not iterable
-- Jinja2テンプレートエラー（line 10）
-
-## エラー発生箇所
-template-transformノード（ID: transform_data_node）の以下のテンプレート:
-
+### エラー内容
 ```
-取得データ（CSV形式）：
-{% for row in sheet_data[0].values %}
-{{ row | join(',') }}
-{% endfor %}
+Run failed: 1 validation error for IfElseNodeData
+cases.0.conditions.0.comparison_operator
+Input should be 'contains', 'not contains', 'start with', 'end with', 'is', 'is not', 'empty', 'not empty', 'in', 'not in', 'all of', '=', '≠', '>', '<', '≥', '≤', 'null', 'not null', 'exists' or 'not exists' [type=literal_error, input_value='is not empty', input_type=str]
 ```
 
-## エラー原因
-1. **変数参照の誤り**：
-   - 変数定義では `variable: sheet_data` としているが、これは配列オブジェクト
-   - `sheet_data[0].values` でアクセスしようとしているが、batch_getノードからの出力は `json` という形式
-   - 正しい参照方法は成功例に示されている通り、`sheet_data[0]["valueRanges"][0]["values"]` の形式
+### エラー原因
+IF-ELSEノードの条件設定で、`comparison_operator`に'is not empty'という値が設定されているが、これは許可されていない値である。
 
-2. **データ構造の不適切な参照**：
-   - Google Sheets batch_getの戻り値は複雑な入れ子構造
-   - "valueRanges" というキーの中に実際のデータが含まれる
+### 詳細分析
+1. **問題箇所**: file_check_node（84行目）
+   ```yaml
+   comparison_operator: is not empty  # 誤り
+   ```
 
-3. **その他の問題点**：
-   - LLM promptでの変数参照が`{{ sheet_data }}`となっているが、これは`{{#transform_data_node.output#}}`であるべき
-   - 変数参照記法の不統一（`{{ variable }}`と`{{#node.output#}}`の混在）
+2. **正しい値**: 
+   ```yaml
+   comparison_operator: not empty  # 正解
+   ```
 
-## 成功例との比較
-成功例（在庫管理判定ワークフロー_成功例.yml）では:
+3. **比較結果**:
+   - エラーyml: 'is not empty'（スペース区切りで3つの単語）
+   - 正常動作yml: 'not empty'（スペース区切りで2つの単語）
+
+### 根本原因
+- comparison_operatorの値として、'is'と'not empty'を混同している
+- 'is'と'is not'は独立した演算子であり、'empty'/'not empty'も独立した演算子
+- これらを組み合わせて'is not empty'とすることはできない
+
+### 修正方法
+```yaml
+conditions:
+- comparison_operator: not empty  # 'is not empty'から修正
+  id: file_check_condition
+  value: ''
+  variable_selector:
+  - sys
+  - files
 ```
-{% set rows = sheet_data[0]["valueRanges"][0]["values"] %}
-```
-と正しくデータを取得している。
 
-## 修正案
-```
-取得データ（CSV形式）：
-{% set rows = sheet_data[0]["valueRanges"][0]["values"] %}
-{% for row in rows %}
-{{ row | join(',') }}
-{% endfor %}
-```
+### 追加の観察事項
+1. **logical_operatorの設定**:
+   - このYMLファイルでは`logical_operator: and`が正しく設定されている（単一条件でも必須）
 
-## 推奨事項
-1. 変数参照は`{{#ノードID.output#}}`形式に統一
-2. Google Sheetsのレスポンス構造を正しく理解し、適切なパスでアクセス
-3. データ存在チェックの追加（`{% if sheet_data and sheet_data[0]["valueRanges"] %}`）
+2. **成功例との比較**:
+   - 成功しているYMLファイルでは、comparison_operatorは以下のような値を使用：
+     - `contains`：部分一致判定
+     - `is`：完全一致判定  
+     - `not empty`：空でないことの判定（"is"を含まない）
+
+3. **エラーパターン**:
+   - 自然な英語表現（"is not empty"）を使用してしまうケース
+   - システムが要求する固定キーワード（"not empty"）との相違
+
+### 改善提案
+1. comparison_operatorの値は、Difyの仕様書に記載されている正確な値を使用する
+2. 特に "empty", "not empty" は "is" を含めない点を強調する必要がある
+3. コーディングルールにcomparison_operatorの正確な値リストを明記する
