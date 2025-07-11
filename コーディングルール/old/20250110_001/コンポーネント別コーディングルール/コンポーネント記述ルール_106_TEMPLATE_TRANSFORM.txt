@@ -1,0 +1,324 @@
+コンポーネント記述ルール: TEMPLATE-TRANSFORM
+
+■ブロック概要
+データ形式の変換やテンプレート処理を行うノード。Jinja2テンプレートエンジンを使用。
+主にGoogle Sheets操作時のデータ整形やLLM出力の形式変換に使用。
+
+■最重要ルール（これを守らないとクラッシュ）
+1. template内では必ず{{ 変数 }}記法を使用（{{#変数#}}は絶対禁止）
+2. 変数はvariablesセクションで事前定義が必須
+3. 外側のtype: "custom"、内側のdata.type: "template-transform"
+4. **Jinja2フィルターのパイプ記号（|）とフィルター名の間にスペースを入れない**
+   - ❌ NG: `{{ variable | filter }}`
+   - ✅ OK: `{{ variable|filter }}`
+
+■必須パラメータ
+- id: ノードID（意味のある名前。例: "format_data", "json_converter"）
+- type: "custom"（外側）
+- position: x, y座標
+- positionAbsolute: positionと同じ値を設定
+- sourcePosition: "right"（推奨）
+- targetPosition: "left"（推奨）
+- height: 数値（通常54）
+- width: 数値（通常244）
+- data:
+  - type: "template-transform"（内側）
+  - template: Jinja2テンプレート文字列
+  - variables: 変数定義の配列
+  - selected: false
+  - title: ノードタイトル
+
+■オプションパラメータ
+- desc: ノードの説明
+
+■変数定義の形式
+variables:
+  - value_selector: [参照元ノード, フィールド名]
+    value_type: string/array[object]/object等
+    variable: テンプレート内で使用する変数名
+
+■入力と出力
+- 入力: variables配列で定義した変数を通じて、他ノードからのデータを受け取る
+- 出力: output（テンプレート処理後の文字列）
+
+■Jinja2フィルター
+よく使用されるフィルター（重要：スペースなし）：
+- {{ variable|trim }}: 前後の空白を削除
+- {{ variable|tojson }}: JSON形式に変換（jsonではなくtojson）
+- {{ variable|upper }}: 大文字に変換
+- {{ variable|lower }}: 小文字に変換
+- {{ variable|replace("old", "new") }}: 文字列置換
+- {{ variable|default("デフォルト値") }}: デフォルト値設定
+- {{ variable|join(',') }}: 配列を文字列に結合
+
+■使用禁止フィルター（クラッシュの原因）
+以下のフィルターはクラッシュの原因となるため、使用を禁止します：
+
+絶対禁止フィルター：
+- date() - 日付フォーマット関数（now|dateなど）
+- length - 文字列長取得（|lengthの形式）
+
+代替案：
+```yaml
+# ❌ 禁止：dateフィルター
+template: "処理時刻: {{ now|date('Y-m-d H:i:s') }}"
+
+# ✅ 推奨：固定文字列または変数で日時を渡す
+template: "処理時刻: {{ timestamp }}"  # 前処理で生成した値を使用
+
+# ❌ 禁止：lengthフィルター
+template: "文字数: {{ text|length }}"
+
+# ✅ 推奨：前処理で計算
+# codeノードで len(text) を計算してから渡す
+```
+
+■使用例
+
+### 基本的な変数埋め込み
+```yaml
+- data:
+    type: template-transform
+    template: "こんにちは、{{ user_name }}さん！"
+    variables:
+      - variable: user_name
+        value_selector: [start_node, name]
+        value_type: string
+    selected: false
+    title: "挨拶メッセージ生成"
+```
+
+### Google Sheets書き込み用JSON生成
+```yaml
+- data:
+    type: template-transform
+    template: |
+      [{
+        "range": "OUTPUT!A1:B2",
+        "values": [
+          ["タイトル", "内容"],
+          ["分析結果", {{ analysis_result|trim|tojson }}]
+        ]
+      }]
+    variables:
+      - value_selector:
+          - llm_node
+          - text
+        value_type: string
+        variable: analysis_result
+    selected: false
+    title: データ整形
+```
+
+### 複数変数の使用
+```yaml
+- data:
+    type: template-transform
+    template: |
+      ユーザー: {{ user_input }}
+      処理結果: {{ result }}
+      タイムスタンプ: {{ timestamp }}
+    variables:
+      - variable: user_input
+        value_selector: [sys, query]
+        value_type: string
+      - variable: result
+        value_selector: [processing_node, output]
+        value_type: string
+      - variable: timestamp
+        value_selector: [time_node, current_time]
+        value_type: string
+    title: "結果レポート生成"
+    type: template-transform
+```
+
+■重要：変数参照記法の使い分け（最優先事項）
+
+### 1. Jinja2テンプレート内での変数参照
+template-transformノードのtemplateフィールド内では、標準的なJinja2記法を使用します：
+
+✅ 正しい記法：
+- 変数出力：{{ 変数名 }}
+- フィルタ付き：{{ 変数名|trim|tojson }}
+- 条件文：{% if 変数名 %}
+- コメント：{# コメント内容 #}
+
+❌ 誤った記法：
+- {{#変数名#}}  ← Difyの記法をテンプレート内で使用（エラー）
+- {{#変数名|trim|tojson#}}  ← エラー
+- {{ 変数名 | trim | tojson }}  ← スペースが原因でエラー
+
+### 2. その他の場所での変数参照
+YAMLの他の場所（例：tool_parametersのvalue）では、Difyの記法を使用：
+- {{#node_id.output#}}
+- {{#sys.query#}}
+
+### 3. 具体例
+```yaml
+# template-transformノード内（Jinja2記法）
+template: |
+  ユーザー入力：{{ sys_query }}
+  データ：{{ batch_get_data }}
+  
+# tool_parametersなど（Dify記法）
+tool_parameters:
+  data:
+    type: mixed
+    value: '{{#transform_node.output#}}'
+```
+
+■よくあるエラーと対策
+1. {{#変数#}}記法の使用 → {{ 変数 }}に修正
+2. 変数未定義エラー → variablesセクションで定義
+3. インデックスエラー → 配列要素は[0]等で明示的に指定
+4. フィルターエラー → |tojson（スペースなし、jsonではない）を使用
+5. date関数の使用 → codeノードで日付生成を推奨
+6. **フィルターのスペース** → {{ variable | filter }}を{{ variable|filter }}に修正
+7. **変数名の不一致** → variablesで定義した名前とtemplate内の名前を完全一致させる
+
+■変数マッピングの詳細ルール
+1. **variablesで定義した変数名は、template内でも必ず同じ名前で参照する**
+2. **variablesのvalue_selectorまたはvariableで指定した内容は、必ずtemplate内の変数名と一致させる**
+
+例：
+```yaml
+variables:
+  - value_selector:
+      - llm_node
+      - text
+    variable: analysis_result  # この名前がtemplate内での参照名
+
+template: |
+  {{ analysis_result }}  # variablesで定義した名前を使用
+```
+
+よくある間違い：
+```yaml
+# ❌ 間違い
+variables:
+  - variable: "{{#llm_node.text#}}"  # ここで{{#}}を使うのは間違い
+    
+# ❌ 間違い
+variables:
+  - value_selector: [llm_node, text]
+    variable: result
+template: |
+  {{ analysis }}  # 変数名が一致していない
+```
+
+■エラーハンドリングパターン
+
+### Google Sheetsデータ参照時
+```yaml
+template: |
+  {% if sheet_data and sheet_data[0] and sheet_data[0].values %}
+    {% for row in sheet_data[0].values %}
+      {{ row|join(',') }}
+    {% endfor %}
+  {% else %}
+    データが見つかりません
+  {% endif %}
+```
+
+### LLM出力の参照時
+```yaml
+template: |
+  {% set result = analysis_result|default('') %}
+  {% if result %}
+    {{ result|trim }}
+  {% else %}
+    分析結果が取得できませんでした
+  {% endif %}
+```
+
+■制限事項と注意点
+
+### 日付処理に関する注意事項
+template-transformノード内でdate関数の使用は環境により制限される場合があります。
+
+❌ 避けるべき記法：
+```yaml
+# エラー：nowに引用符を付ける
+template: |
+  ["更新日時", "{{ 'now' | date('Y/m/d H:i') }}"]
+  ["更新日時", "{{ \"now\"|date }}"]
+  ["更新日時", "{{ \"now\"|date(\"Y-m-d H:i:s\") }}"]
+```
+
+✅ 正解（ただし非推奨）：
+```yaml
+# nowは引用符なし
+{{ now }}  # 現在時刻のタイムスタンプ
+{{ now|date("Y-m-d H:i:s") }}  # フォーマット付き（ただし非推奨）
+```
+
+✅ 推奨される代替案：
+1. codeノードで日付を生成
+2. 固定値として設定
+3. LLMノードで日付を含めた出力を生成
+
+注意：Difyのtemplate-transformでは、dateフィルターのサポートが限定的のため、日付処理はcodeノードで実行することを推奨
+
+例（codeノードで日付生成）：
+```yaml
+code: |
+  from datetime import datetime
+  current_time = datetime.now().strftime("%Y/%m/%d %H:%M")
+  return {"timestamp": current_time}
+```
+
+### その他の制限事項
+- 複雑な処理はcodeノードの使用を推奨
+- 大量データの処理には不向き（メモリ制限）
+- 数値計算や条件分岐はcodeノードを使用
+
+■推奨される使用場面
+- Google Sheetsへの書き込みデータ整形
+- CSV形式への変換
+- JSON配列の構築
+- 複数変数の結合
+- LLM出力の形式変換
+
+■使用を避けるべき場面
+- 複雑なロジック処理（codeノードを使用）
+- 大量データの処理（メモリ制限あり）
+- 数値計算や条件分岐（codeノードを使用）
+
+■Google Sheets連携での使用パターン
+1. **データ取得後の整形**
+   - batch_getの結果をテンプレートで処理
+   - JSONデータの特定要素を抽出
+
+2. **データ更新用JSON作成**
+   ```yaml
+   template: |
+     [
+       {
+         "range": "OUTPUT!A1:B1",
+         "values": [["text", {{ variable|trim|tojson }}]]
+       }
+     ]
+   ```
+
+3. **フィルター関数の活用**
+   - trim: 空白除去
+   - tojson: JSON形式への変換（エスケープ処理込み）
+   - その他Jinja2フィルターが使用可能
+
+■ベストプラクティス
+1. **可読性を重視**
+   - 複数行テンプレートは|を使用してインデント
+   - 適切な改行とインデントを使用
+
+2. **エラーハンドリング**
+   - defaultフィルターで未定義変数に対応
+   - 変数の存在確認を事前に実施
+
+3. **再利用性**
+   - 汎用的なテンプレートを作成
+   - 変数名を明確にする
+
+4. **JSON生成時の注意**
+   - tojsonフィルターでエスケープ処理を行う
+   - 手動でのエスケープは避ける
+   - JSON形式の正確性を確保

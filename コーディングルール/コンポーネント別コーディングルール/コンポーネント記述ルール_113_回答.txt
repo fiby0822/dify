@@ -1,0 +1,93 @@
+コンポーネント記述ルール: 回答
+
+■ブロック概要
+ワークフローの最終出力を表示するノード。処理結果をユーザーに返す役割を持つ。すべてのワークフローは必ずanswerノードまたはendノードで終了する必要がある。
+
+■必須パラメータ（詳細）
+- id: 意味のある名前（例: "answer_node", "final_output"）
+- type: "custom"（外側のtype属性。固定値）
+- data.type: "answer"（データ内のtype属性。固定値）
+- position: x, y座標（通常x:950以降）
+- positionAbsolute: positionと同じ値を設定
+- selected: false（固定値）
+- sourcePosition: "right"（推奨）
+- targetPosition: "left"（推奨）
+- height: 107（標準値）
+- width: 244（標準値）
+- data:
+  - type: "answer"（固定値）
+  - title: "回答"または"Answer"（推奨）
+  - desc: ""（推奨：説明、空文字列可）
+  - selected: false（固定値）
+  - answer: 出力内容（文字列または変数参照）
+  - variables: []（必須：空配列）
+
+
+■オプションパラメータ
+なし
+
+■入力
+他のノードからの出力を変数参照形式で受け取る：
+- {{#node_id.variable_name#}}形式での参照
+
+
+■出力
+ユーザーへの最終的な回答
+
+■使用例（完全版）
+
+### 完全なノード構造の例
+```yaml
+# 単一変数の出力
+- id: "answer_node"
+  type: "custom"              # 必須：外側のtype属性は"custom"固定
+  height: 107                 # 必須：answerノードの標準高さ
+  width: 244                  # 必須：標準幅
+  position:                   # 必須：ノードの位置
+    x: 950
+    y: 200
+  positionAbsolute:           # 必須：絶対位置（positionと同じ値）
+    x: 950
+    y: 200
+  selected: false             # 必須：false固定
+  sourcePosition: right       # 必須：接続元の位置
+  targetPosition: left        # 必須：接続先の位置
+  data:                       # 必須：ノードの実データ
+    type: answer              # 必須：data内のtype
+    title: "回答"             # 必須：表示名
+    desc: ""                  # 推奨：説明（空文字列可）
+    selected: false           # 必須：false固定
+    answer: "{{#llm_node.text#}}"  # 必須：出力内容
+    variables: []             # 必須：空配列
+
+# 複数変数を組み合わせた出力
+id: final_output
+type: answer
+position:
+  x: 1250
+  y: 200
+data:
+  answer: |
+    ## 分析結果
+    {{#analysis_node.result#}}
+    
+    ## 詳細情報
+    {{#detail_node.text#}}
+    
+    ## 推奨アクション
+    {{#recommendation_node.action#}}
+```
+
+
+■注意事項
+- answerノードは通常1つだが、条件分岐により複数存在することも可能
+- 変数参照の形式を正確に記述（{{#node_id.variable#}}）
+- 改行を含む場合は'|'を使用してYAMLのマルチライン記法を使用
+- 参照する変数が実際に存在することを確認
+
+■ベストプラクティス
+- 最終出力は明確で分かりやすい形式に整形
+- 必要に応じて複数ノードの結果を統合
+- マークダウン形式での整形を活用
+- エラー時の代替メッセージも考慮
+- ユーザーが次に取るべきアクションを明確に提示

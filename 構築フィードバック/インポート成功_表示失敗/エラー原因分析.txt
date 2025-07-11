@@ -1,0 +1,73 @@
+# インポート成功_表示失敗のエラー原因分析
+
+## 状況
+- YMLファイルはインポートに成功したが、ワークフローエディタ上でノードのタイトルが表示されない
+- ノードの枠は表示されているが、中身が空白になっている
+
+## 主要なエラー原因
+
+### 1. ノード構造の不適合
+**問題点**: ノードの外側のtype属性が正しく設定されていない
+- 誤: `type: "start"`, `type: "llm"` など（ノードタイプを直接指定）
+- 正: `type: "custom"` （全てのノードで固定値）
+
+### 2. 必須属性の欠如
+以下の必須属性が設定されていない：
+- `height`: ノードの高さ（数値）
+- `width`: ノードの幅（通常244）
+- `positionAbsolute`: 絶対位置（positionと同じ値を設定）
+- `sourcePosition`: 接続元の位置（通常"right"）
+- `targetPosition`: 接続先の位置（通常"left"）
+- `selected`: 選択状態（false固定）
+
+### 3. エッジ構造の不適合
+- `sourceHandle`と`targetHandle`が未設定
+- 正しくは：`sourceHandle: "source"`, `targetHandle: "target"`
+
+### 4. viewport設定の欠如
+graphセクションに`viewport`設定がない（推奨項目だが、表示に影響する可能性）
+
+## 具体的な修正例
+
+### 誤った構造（現在）
+```yaml
+- id: "start"
+  type: "start"  # NG: ノードタイプを直接指定
+  position:
+    x: 100
+    y: 300
+  data:
+    title: "開始"
+    type: "start"
+    variables: []
+```
+
+### 正しい構造
+```yaml
+- id: "start"
+  type: "custom"  # OK: 固定値"custom"
+  height: 54
+  width: 244
+  position:
+    x: 100
+    y: 300
+  positionAbsolute:
+    x: 100
+    y: 300
+  selected: false
+  sourcePosition: right
+  targetPosition: left
+  data:
+    title: "開始"
+    type: "start"
+    desc: ""
+    selected: false
+    variables: []
+```
+
+## 影響範囲
+- 全てのノード（start、llm、code、template-transform、answer）に同様の問題がある
+- エッジの構造も修正が必要
+
+## 結論
+コーディングルールで定義されているノード構造と、実際に生成されたYMLの構造に大きな乖離があり、これが表示失敗の原因となっている。

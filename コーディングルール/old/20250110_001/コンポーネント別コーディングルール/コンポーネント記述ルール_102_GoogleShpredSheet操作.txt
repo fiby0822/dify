@@ -1,0 +1,446 @@
+コンポーネント記述ルール: Google Sheets操作
+
+■重要な許可事項
+Google Sheets操作に限り、以下のmarketplaceプラグインの使用が許可されています：
+- omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+
+この許可は他のmarketplaceプラグインには適用されません。
+
+■ブロック概要
+Google Sheetsとの連携を実現するtoolノード。データの読み取り（batch_get）と書き込み（batch_update）を提供。
+
+■エッジ設定の詳細
+
+Google Sheetsツールを含むエッジには、以下のdata設定を含めます：
+
+```yaml
+edges:
+  - data:
+      isInLoop: false       # 必須（推奨）
+      isInIteration: false  # 既存ファイルでは存在する場合あり（非推奨）
+      sourceType: tool      # 接続元のノードタイプ
+      targetType: template-transform  # 接続先のノードタイプ
+```
+
+注意：
+- 新規作成時はisInLoopのみを使用
+- 既存ファイルでisInIterationが含まれる場合も動作に問題なし
+- 将来的にはisInLoopに統一される予定
+
+■template-transformノードとの連携パターン（推奨）
+
+動作確認済みの構成パターン：
+
+1. **データ取得から変換**
+   batch_get → template-transform（取得データの変換）
+   
+2. **データ整形から書き込み**
+   template-transform（ユーザー入力のJSON変換） → batch_update
+   
+3. **書き込み結果の整形**
+   batch_update → template-transform（反映結果の変換）
+
+この連携により、データの形式変換を適切に行い、エラーを防止できます。
+
+■依存関係（必須）
+【重要】Google Sheetsツールは特別に許可されたマーケットプレイスツールです。
+以下の設定を必ず含めてください：
+
+dependencies:
+- current_identifier: null
+  type: marketplace  # Google Sheetsのみ例外的に許可
+  value:
+    marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+
+注意事項：
+- この識別子は完全一致である必要があります
+- バージョンを含む全文字列をコピーして使用してください
+- 他のmarketplaceツールの使用は引き続き禁止です
+
+■batch_get（データ取得）
+
+### 必須パラメータ
+- spreadsheet_id: スプレッドシートID（44文字）
+- ranges: 取得範囲の配列（文字列形式必須）
+
+### 正しい記述例
+```yaml
+tool_parameters:
+  ranges:
+    type: mixed
+    value: '["INPUT!A1:C10"]'  # 全体を引用符で囲む
+  spreadsheet_id:
+    type: mixed
+    value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+```
+
+### よくある間違い
+```yaml
+# NG：引用符なし（YAMLパースエラー）
+ranges:
+  type: mixed
+  value: ["INPUT!A1:C10"]
+```
+
+■batch_update（データ書き込み）
+
+### 必須パラメータ
+- spreadsheet_id: スプレッドシートID
+- data: 書き込みデータ（JSON配列形式）
+
+### データ形式
+```json
+[
+  {
+    "range": "OUTPUT!A1:B2",
+    "values": [
+      ["ヘッダー1", "ヘッダー2"],
+      ["データ1", "データ2"]
+    ]
+  }
+]
+```
+
+### LLM出力の使用（重要）
+LLMの出力を直接batch_updateのdataに使用するとクラッシュの原因となります。
+必ずtemplate-transformノードで整形してください。
+
+#### NG例：
+```yaml
+data:
+  type: mixed
+  value: '[{"range": "OUTPUT!A1:B5", "values": {{#llm_analyzer.text#}}}]'
+```
+
+#### 推奨パターン：
+1. LLMノードで構造化されたデータを生成
+2. template-transformノードでJSON形式に整形
+3. batch_updateノードで書き込み
+
+■エラー防止チェックリスト
+- [ ] provider_typeが'builtin'に設定されている（'marketplace'は無効）
+- [ ] provider_idが完全な形式（omluc/google_sheets/google_sheets）か
+- [ ] provider_nameが設定されているか
+- [ ] tool_configurationsセクションが存在するか（必須）
+- [ ] is_team_authorization: trueが設定されている（チーム全体での認証、推奨）
+- [ ] 変数参照で.dataを使用していないか（.json/.output/.textを使用）
+- [ ] dependenciesにGoogle Sheetsツールが定義されている
+- [ ] rangesパラメータが引用符で囲まれている
+- [ ] dataパラメータがJSON配列形式
+- [ ] LLM出力を直接使用していない
+- [ ] 各行のカラム数が一致している
+- [ ] 空のセルも""として明示的に指定
+- [ ] output_schema: nullが設定されている（推奨）
+- [ ] selected: falseに統一されている（推奨）
+
+■provider_typeの設定（重要）
+
+【状況別推奨設定】
+
+1. omluc/google_sheets:0.0.2 を使用する場合
+   - provider_type: builtinを使用（marketplaceではない）
+   - 理由：このプラグインは特殊な処理により、builtinとして扱われる
+
+2. その他のGoogle Sheetsツールを使用する場合
+   - provider_type: builtinを使用
+   - 通常の組み込みツールとして処理
+
+【重要】どちらの場合も provider_type: marketplace は使用禁止。
+
+【有効な値一覧】
+- builtin: 組み込みツール（推奨）
+- plugin: プラグイン
+- workflow: ワークフロー
+- api: API
+- app: アプリケーション
+- dataset-retrieval: データセット検索
+
+※'marketplace'は無効な値です。使用するとエラーになります。
+
+■tool_configurationsセクション（必須）
+
+Google Sheetsツールノードには必ずtool_configurationsを設定してください：
+
+### batch_get用の設定
+```yaml
+tool_configurations:  # 必須フィールド
+  date_time_render_option: FORMATTED_STRING
+  major_dimension: null
+  value_render_option: null
+```
+
+### batch_update用の設定
+```yaml
+tool_configurations:  # 必須フィールド
+  include_values_in_response: null
+  response_date_time_render_option: null
+  response_value_render_option: null
+  value_input_option: USER_ENTERED  # 推奨
+```
+
+【重要】このセクションが欠落するとエラーになります。
+batch_getとbatch_updateで異なる設定項目があることに注意してください。
+
+■paramSchemasセクション（オプション）
+
+paramSchemasを含める場合、tool_parametersと整合性を保つ必要があります：
+
+```yaml
+paramSchemas:  # オプション：含める場合は完全に定義
+  - name: spreadsheet_id
+    type: string
+    required: true
+    label:
+      en_US: Spreadsheet ID
+      ja_JP: Spreadsheet ID
+    human_description:
+      en_US: The ID of the Google Sheet (found in the URL)
+      ja_JP: The ID of the Google Sheet (found in the URL)
+    llm_description: The ID of the Google Sheet, which can be found in the sheet's URL
+  - name: ranges
+    type: mixed
+    required: true
+    label:
+      en_US: Ranges
+      ja_JP: Ranges
+    human_description:
+      en_US: The ranges to retrieve data from
+      ja_JP: The ranges to retrieve data from
+    llm_description: The ranges to retrieve data from
+```
+
+注意事項：
+- paramSchemasの各パラメータのnameとtool_parametersのキーが一致すること
+- requiredフィールドの設定に注意
+- 実行には影響しないが、含める場合は正確に記述
+
+■ノードの初期値設定（オプション）
+
+```yaml
+params:  # 初期値設定（オプション）
+  spreadsheet_id: ''
+  ranges: ''
+```
+
+■完全な実装例
+
+```yaml
+# 依存関係
+dependencies:
+- current_identifier: null
+  type: marketplace  # Google Sheetsのみ許可
+  value:
+    marketplace_plugin_unique_identifier: omluc/google_sheets:0.0.2@17f06eaa1d905595e1a76460e7249707a722142353d551cf14aed3d8517c134f
+
+# データ読み取りノード（完全版・動作確認済み）
+- data:
+    type: tool
+    provider_id: omluc/google_sheets/google_sheets  # 3段階の形式
+    provider_name: omluc/google_sheets/google_sheets  # provider_idと同じ
+    provider_type: builtin  # marketplaceではなくbuiltin
+    tool_label: Batch Get  # または Google Sheets
+    tool_name: batch_get
+    tool_description: Retrieve data from multiple ranges in a Google Sheet
+    is_team_authorization: true  # チーム全体での認証（推奨）
+    output_schema: null  # 明示的に設定（推奨）
+    paramSchemas:  # オプション：含める場合は完全に定義
+      - name: spreadsheet_id
+        type: string
+        required: true
+        label:
+          en_US: Spreadsheet ID
+          ja_JP: Spreadsheet ID
+        human_description:
+          en_US: The ID of the Google Sheet (found in the URL)
+          ja_JP: The ID of the Google Sheet (found in the URL)
+        llm_description: The ID of the Google Sheet, which can be found in the sheet's URL
+      - name: ranges
+        type: mixed
+        required: true
+        label:
+          en_US: Ranges
+          ja_JP: Ranges
+        human_description:
+          en_US: The ranges to retrieve data from
+          ja_JP: The ranges to retrieve data from
+        llm_description: The ranges to retrieve data from
+    params:  # 初期値設定（オプション）
+      spreadsheet_id: ''
+      ranges: ''
+    tool_configurations:  # 必須フィールド
+      date_time_render_option: FORMATTED_STRING
+      major_dimension: null
+      value_render_option: null
+    tool_parameters:
+      ranges:
+        type: mixed
+        value: '["INPUT!A1:C3"]'
+      spreadsheet_id:
+        type: mixed
+        value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+    selected: false  # 全ノードでfalseに統一（推奨）
+    title: データの取得fromシート
+    desc: ''
+
+# データ書き込みノード（完全版・動作確認済み）
+- data:
+    type: tool
+    provider_id: omluc/google_sheets/google_sheets  # 3段階の形式
+    provider_name: omluc/google_sheets/google_sheets  # provider_idと同じ
+    provider_type: builtin  # marketplaceではなくbuiltin
+    tool_label: Batch Update  # または Google Sheets
+    tool_name: batch_update
+    tool_description: Updates multiple ranges in a Google Sheet with specified values
+    is_team_authorization: true  # チーム全体での認証（推奨）
+    output_schema: null  # 明示的に設定（推奨）
+    paramSchemas:  # オプション：含める場合は完全に定義
+      - name: spreadsheet_id
+        type: string
+        required: true
+        label:
+          en_US: Spreadsheet ID
+          ja_JP: Spreadsheet ID
+        human_description:
+          en_US: The ID of the Google Sheet (found in the URL)
+          ja_JP: The ID of the Google Sheet (found in the URL)
+        llm_description: The ID of the Google Sheet, which can be found in the sheet's URL
+      - name: data
+        type: mixed
+        required: true
+        label:
+          en_US: Data
+          ja_JP: Data
+        human_description:
+          en_US: List of value ranges to update
+          ja_JP: List of value ranges to update
+        llm_description: A list of value ranges to update. Each value range should contain a 'range' and 'values' field.
+    params:  # 初期値設定（オプション）
+      spreadsheet_id: ''
+      data: ''
+    tool_configurations:  # 必須フィールド（batch_update用）
+      include_values_in_response: null
+      response_date_time_render_option: null
+      response_value_render_option: null
+      value_input_option: USER_ENTERED
+    tool_parameters:
+      data:
+        type: mixed
+        value: '{{#transform_json_for_sheets.output#}}'  # template-transformノードからの出力
+      spreadsheet_id:
+        type: mixed
+        value: "1dd5IPZBYY5ZtImb48SLnO8c9b4Z8w5YUr1gWF0STqSQ"
+    selected: false  # 全ノードでfalseに統一（推奨）
+    title: データの書き込みtoシート
+    desc: ''
+```
+
+■toolノードの出力参照
+
+toolノードの出力を参照する際の正しい形式：
+- テキスト出力: {{#node_id.text#}}
+- JSON出力: {{#node_id.json#}}
+- 一般的な出力: {{#node_id.output#}}
+
+※ {{#node_id.data#}}は無効な形式です。使用しないでください。
+
+正しい参照方法：
+```yaml
+- variable: sheet_data
+  value_selector: [google_sheets_read, json]  # または output
+  value_type: array[object]
+```
+
+間違った参照方法（エラーになる）：
+```yaml
+- variable: sheet_data
+  value_selector: [google_sheets_read, data]  # dataは無効
+```
+
+■日付処理に関する注意事項
+
+### template-transformでのdate関数使用制限
+template-transformノード内でdate関数の使用は環境により制限される場合があります。
+
+❌ 避けるべき記法：
+```yaml
+template: |
+  ["更新日時", "{{ 'now' | date('Y/m/d H:i') }}"]
+```
+
+✅ 推奨される代替案：
+1. codeノードで日付を生成
+2. 固定値として設定
+3. LLMノードで日付を含めた出力を生成
+
+例：
+```yaml
+# codeノードで日付生成
+code: |
+  from datetime import datetime
+  current_time = datetime.now().strftime("%Y/%m/%d %H:%M")
+  return {"timestamp": current_time}
+```
+
+### template-transformの活用パターン
+
+```yaml
+# パターン1：Google Sheets書き込み用データの整形
+template: |
+  [{
+    "range": "OUTPUT!A1:B5",
+    "values": [
+      ["項目", "値"],
+      ["分析結果", {{ analysis_result | tojson }}],
+      ["更新日時", "2025/01/14 15:30"]  # 固定値として設定
+    ]
+  }]
+
+# パターン2：LLM入力用のデータ整形
+template: |
+  取得データ（CSV形式）：
+  {% for row in sheet_data[0].values %}
+  {{ row | join(',') }}
+  {% endfor %}
+```
+
+### batch_updateツールのdata参数での推奨事項
+
+```yaml
+# batch_updateツールのdata参数では、以下の形式を推奨
+tool_parameters:
+  data:
+    type: mixed
+    value: '{{#transform_node.output#}}'  # 事前にtemplate-transformで整形済みデータを参照
+```
+
+■トラブルシューティング
+
+### エラー：provider_type Input should be...
+原因：provider_typeに無効な値を設定
+対策：provider_type: builtinに変更
+
+### エラー：tool_configurations Field required
+原因：tool_configurationsセクションの欠落
+対策：以下を追加
+```yaml
+tool_configurations:
+  date_time_render_option: FORMATTED_STRING
+  major_dimension: null
+  value_render_option: null
+```
+
+### エラー：Variable #node_id.data# not found
+原因：無効な変数参照形式（.data）の使用
+対策：.json、.output、.textのいずれかに変更
+
+### エラー：Unable to parse data
+原因：rangesパラメータの引用符不足またはJSON形式エラー
+対策：全体を引用符で囲み、JSON形式を確認
+
+### エラー：Invalid spreadsheet ID
+原因：スプレッドシートIDの形式不正
+対策：44文字の正しいIDを確認
+
+### エラー：Authentication failed
+原因：依存関係設定の不備
+対策：dependencies設定を確認

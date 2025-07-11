@@ -1,0 +1,255 @@
+コンポーネント記述ルール: パラメータ抽出
+
+■ブロック概要
+非構造化テキストから構造化データ（パラメータ）を抽出するノード。LLMを使用して、指定されたスキーマに従ってデータを抽出・構造化する。
+
+**重要**: パラメータ抽出は以下の条件でのみ使用を許可します：
+1. LLMからの出力から目的を持って変数を抽出したい場合
+2. LLMの出力のゆらぎを吸収し、後続処理に明確な形式で値を渡したい場合
+
+それ以外の場合は、LLMノードでのJSON出力指定またはcodeノードの使用を推奨します。
+
+■必須パラメータ
+- id: 意味のある名前（例: "param_extract_node", "data_parser"）
+- type: "parameter-extractor"（固定）
+- position:
+  - x: 任意の値
+  - y: 任意の値
+- data:
+  - model: モデル設定
+    - provider: プロバイダー名（例: "openai"）
+    - name: モデル名（例: "gpt-4o"）
+    - mode: 動作モード（"chat"）
+  - parameters: 抽出するパラメータの定義
+    - name: パラメータ名
+    - type: データ型（string/number/boolean/array[string]）
+    - description: パラメータの説明
+    - required: 必須フラグ
+
+
+■オプションパラメータ
+- reasoning_mode: 推論モードの有効化（true/false、デフォルトfalse）
+- instruction: 抽出時の追加指示
+
+■入力
+- query: 抽出対象のテキストデータ（変数参照）
+
+
+■出力
+定義したパラメータに従って抽出された構造化データ
+
+■使用例
+```yaml
+id: order_extraction_node
+type: parameter-extractor
+position:
+  x: 450
+  y: 200
+data:
+  model:
+    provider: openai
+    name: gpt-4o
+    mode: chat
+  parameters:
+    - name: "customer_name"
+      type: string
+      description: "顧客名"
+      required: true
+    - name: "order_date"
+      type: string
+      description: "注文日（YYYY-MM-DD形式）"
+      required: true
+    - name: "items"
+      type: array[string]
+      description: "注文商品リスト"
+      required: true
+    - name: "total_amount"
+      type: number
+      description: "合計金額"
+      required: true
+    - name: "is_urgent"
+      type: boolean
+      description: "緊急配送フラグ"
+      required: false
+  reasoning_mode: false
+  query:
+    variable_selector:
+      - llm_node
+      - text
+```
+
+
+■使用判断フローチャート
+```
+入力データ
+    ↓
+[LLM出力である？] → No → codeノードを使用
+    ↓ Yes
+[構造化が必要？] → No → そのまま使用
+    ↓ Yes
+[複雑な処理？] → Yes → codeノードを検討
+    ↓ No
+parameter-extractorを使用
+```
+
+■使用許可条件
+1. LLM出力からの構造化データ抽出
+   - 小説のタイトル、章立てなどの文学的要素
+   - 営業データ（顧客名、金額、日付）
+   - 製品情報（品名、価格、在庫数）
+
+2. データ形式の統一化
+   - 数値：「1,000円」→ 1000（number型）
+   - 日付：「2024年1月1日」→ "2024-01-01"（string型）
+   - Boolean：「はい」→ true
+
+■使用禁止条件
+- 単純な文字列分割や正規表現で処理可能な場合
+- 入力が既にJSON等の構造化データの場合
+- 複雑なビジネスロジックを含む場合
+
+■実装パターン
+
+### パターン1: 単一項目抽出
+```yaml
+# 例：小説タイトルのみ抽出
+id: title_extraction
+type: parameter-extractor
+data:
+  instruction: "小説のタイトル部分のみを抽出してください"
+  parameters:
+    - name: "title"
+      type: string
+      description: "小説のタイトル"
+      required: true
+```
+
+### パターン2: 複数項目の構造化
+```yaml
+# 例：営業レポートから複数データ抽出
+id: sales_report_parser
+type: parameter-extractor
+data:
+  instruction: "営業レポートから必要な情報を抽出してください"
+  parameters:
+    - name: "customer_name"
+      type: string
+      description: "顧客名（法人名または個人名）"
+      required: true
+    - name: "amount"
+      type: number
+      description: "取引金額（円、数値のみ）"
+      required: true
+    - name: "products"
+      type: array[string]
+      description: "購入商品リスト"
+      required: false
+```
+
+### パターン3: データ変換と統一化
+```yaml
+# 例：日付形式の統一化
+id: date_normalizer
+type: parameter-extractor
+data:
+  instruction: "日付をYYYY-MM-DD形式に統一してください"
+  parameters:
+    - name: "normalized_date"
+      type: string
+      description: "YYYY-MM-DD形式の日付"
+      required: true
+```
+
+■エラーハンドリング指針
+
+1. **必須項目の最小化**
+   - required: trueは本当に必要な項目のみ
+   - 抽出失敗時の影響を最小限に
+
+2. **フォールバック戦略**
+   ```yaml
+   # 後続処理でのnullチェック例
+   - type: code
+     data:
+       code: |
+         if not customer_name:
+             customer_name = "不明"
+   ```
+
+3. **検証ノードの配置**
+   - パラメータ抽出後にcodeノードで検証
+   - 不正な値の修正や警告
+
+■パフォーマンス最適化
+
+1. **バッチ処理の活用**
+   - 関連する項目は1つのノードでまとめて抽出
+   - 過度な分割は避ける
+
+2. **モデル選択**
+   - 単純な抽出：gpt-3.5-turbo
+   - 複雑な理解が必要：gpt-4o
+
+3. **キャッシュ戦略**
+   - 同じLLM出力から複数抽出する場合は変数に保存
+
+■他ノードとの連携パターン
+
+### 前処理パターン
+```
+LLMノード（分析・要約）
+    ↓
+parameter-extractor（構造化）
+    ↓
+codeノード（検証・加工）
+```
+
+### 並列処理パターン
+```
+       LLMノード
+      ／    ｜    ＼
+抽出A    抽出B    抽出C
+      ＼    ｜    ／
+       統合処理
+```
+
+■アンチパターン
+
+1. **過度な分割**
+   ```yaml
+   # 悪い例：1項目ずつ別ノード
+   - id: extract_name
+   - id: extract_age  
+   - id: extract_email
+   # 良い例：関連項目をまとめて
+   - id: extract_user_info
+   ```
+
+2. **不適切な型指定**
+   ```yaml
+   # 悪い例：郵便番号をnumber型
+   type: number  # 0で始まる場合に問題
+   # 良い例：string型で保持
+   type: string
+   ```
+
+3. **曖昧な説明**
+   ```yaml
+   # 悪い例
+   description: "金額"
+   # 良い例
+   description: "税込み合計金額（円、数値のみ、カンマなし）"
+   ```
+
+■注意事項
+- パラメータ名はsnake_caseで統一
+- 説明文は抽出精度に影響するため、明確に記述
+- 抽出結果の検証は必須
+
+■ベストプラクティス
+- 明確な説明文を記載
+- 必須項目は最小限に
+- 抽出精度向上のための前処理を実施
+- 複雑なスキーマは避け、シンプルに保つ
+- 検証は後続のcodeノードで実施することを推奨
+- エッジケースのテストを必ず実施

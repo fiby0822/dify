@@ -1,0 +1,142 @@
+# Dify YMLコーディングルール改善案
+作成日: 2025-01-10
+
+## 1. 判明した課題
+
+### 1.1 ノード構造の記述が不完全
+- 現在のルールではノードの必須属性（height、width等）の記述が不十分
+- 外側のtype属性が"custom"固定であることが明確に記載されていない
+- ノードのdata属性内の構造説明が不足
+
+### 1.2 エッジ構造の説明不足
+- sourceHandleとtargetHandleの必須性が明記されていない
+- IF-ELSEノードの特殊なsourceHandle設定の説明が不足
+
+### 1.3 実装例の不足
+- 完全なノード構造の実装例がない
+- 各ノードタイプごとの具体的な記述例が不足
+
+## 2. 改善提案
+
+### 2.1 全体コーディングルールへの追加事項
+
+#### A. ノード構造の完全な定義（最重要）
+以下を**必須セクション**として追加：
+
+```yaml
+# ノードの完全な構造（全ノード共通）
+nodes:
+  - id: "unique_node_id"        # 必須：英数字とアンダースコアのみ使用
+    type: "custom"              # 必須：必ず"custom"（固定値）
+    height: 100                 # 必須：ノードの高さ（ノードタイプ別の推奨値あり）
+    width: 244                  # 必須：ノードの幅（通常244固定）
+    position:                   # 必須：ノードの位置
+      x: 50                     # x座標（50単位で整列推奨）
+      y: 200                    # y座標
+    positionAbsolute:           # 必須：絶対位置（positionと同じ値）
+      x: 50
+      y: 200
+    selected: false             # 必須：false固定
+    sourcePosition: right       # 必須：接続元の位置（通常"right"）
+    targetPosition: left        # 必須：接続先の位置（通常"left"）
+    data:                       # 必須：ノードの実データ
+      type: "実際のノードタイプ" # 必須：start、llm、code等
+      title: "表示名"           # 必須：UIに表示される名前
+      desc: ""                  # 推奨：説明（空文字列可）
+      selected: false           # 必須：false固定
+      # 以下、ノードタイプ別の設定
+```
+
+#### B. ノードタイプ別の高さ（height）設定値
+```
+- startノード: 54
+- llmノード: 98（基本）〜 変動（プロンプトサイズによる）
+- answerノード: 107
+- if-elseノード: 154（2条件）〜 250（多条件）
+- template-transformノード: 82
+- codeノード: 100〜変動（コード量による）
+- toolノード: 248（音声認識等の複雑なツール）
+```
+
+#### C. エッジ構造の完全な定義
+```yaml
+edges:
+  - id: "unique_edge_id"        # 必須：ユニークなID
+    type: "custom"              # 必須：固定値"custom"
+    source: "source_node_id"    # 必須：接続元ノードID
+    sourceHandle: "source"      # 必須：通常"source"（IF-ELSEは例外）
+    target: "target_node_id"    # 必須：接続先ノードID
+    targetHandle: "target"      # 必須：固定値"target"
+    selected: false             # 必須：false固定
+    zIndex: 0                   # 必須：描画順序（0推奨）
+    data:                       # 必須：エッジのメタデータ
+      isInLoop: false          # 必須：ループ内かどうか（通常false）
+      sourceType: "ノードタイプ" # 必須：接続元のノードタイプ
+      targetType: "ノードタイプ" # 必須：接続先のノードタイプ
+```
+
+### 2.2 品質チェックリストへの追加項目
+
+#### インポート前の必須確認項目（新規追加）
+- [ ] 全てのノードのtypeが"custom"に設定されているか
+- [ ] 全てのノードにheight、width、positionAbsolute、sourcePosition、targetPositionが設定されているか
+- [ ] 全てのエッジにsourceHandle、targetHandleが設定されているか
+- [ ] graphセクションにviewport設定があるか（推奨）
+
+### 2.3 コンポーネント別コーディングルールの改善
+
+#### 各コンポーネントファイルに以下の完全な例を追加
+
+**例：開始ノード（start）の完全な記述**
+```yaml
+- id: "start_node"
+  type: "custom"
+  height: 54
+  width: 244
+  position:
+    x: 50
+    y: 200
+  positionAbsolute:
+    x: 50
+    y: 200
+  selected: false
+  sourcePosition: right
+  targetPosition: left
+  data:
+    type: start
+    title: "開始"
+    desc: "ワークフローの開始点"
+    selected: false
+    variables: []  # advanced-chatモードでは空配列
+```
+
+### 2.4 エラー事例集への追加
+
+#### 新規エラーパターン：インポート成功_表示失敗
+**症状**: YMLファイルはインポートできるが、ノードの中身が表示されない
+**原因**: ノードの外側のtype属性が"custom"でない、必須属性の欠如
+**解決方法**: 上記の完全なノード構造に従って記述する
+
+### 2.5 新規ドキュメントの作成提案
+
+#### 「Dify YMLノード・エッジ構造リファレンス」
+- 全ノードタイプの完全な構造例
+- 全エッジパターンの完全な構造例
+- よくある間違いと正しい記述の対比
+- viewport設定を含む完全なgraphセクションの例
+
+## 3. 優先実装事項
+
+1. **最優先**: 全体コーディングルールにノード・エッジの完全な構造定義を追加
+2. **高優先**: 各コンポーネント別ルールに完全な実装例を追加
+3. **中優先**: 品質チェックリストに新規確認項目を追加
+4. **推奨**: 新規リファレンスドキュメントの作成
+
+## 4. 期待される効果
+
+- インポート失敗・表示失敗のエラーを大幅に削減
+- 開発者がより正確なYMLファイルを生成可能に
+- デバッグ時間の短縮
+- 品質の向上と安定性の確保
+
+以上

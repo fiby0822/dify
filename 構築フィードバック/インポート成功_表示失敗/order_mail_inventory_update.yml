@@ -1,0 +1,266 @@
+app:
+  name: "受発注メール要約→在庫更新リスト生成ボット"
+  description: "受発注メールから発注情報を抽出し、在庫更新リストを生成するボット"
+  icon: "📧"
+  icon_background: "#4A90E2"
+  mode: "advanced-chat"
+  use_icon_as_answer_icon: false
+
+dependencies: []
+
+kind: "app"
+
+version: "0.3.0"
+
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      enabled: true
+      max_size: 10
+      allowed_types:
+        - "txt"
+        - "pdf"
+    opening_statement: "受発注メールの内容を入力してください。発注情報を抽出して在庫更新リストを生成します。"
+    suggested_questions:
+      - "サンプルメールで試してみる"
+      - "CSVフォーマットで出力する"
+      - "変更点のサマリーを表示する"
+    retriever_resource:
+      enabled: false
+  graph:
+    nodes:
+      - id: "start"
+        type: "start"
+        position:
+          x: 100
+          y: 300
+        data:
+          title: "開始"
+          type: "start"
+          variables: []
+      
+      - id: "llm_mail_parser"
+        type: "llm"
+        position:
+          x: 400
+          y: 300
+        data:
+          title: "メール解析"
+          type: "llm"
+          model:
+            provider: "openai"
+            name: "gpt-4-turbo-preview"
+            mode: "chat"
+            completion_params:
+              temperature: 0.3
+              max_tokens: 2000
+          prompt_template:
+            - id: "system"
+              role: "system"
+              text: |
+                あなたは受発注メールから発注情報を正確に抽出する専門家です。
+                
+                以下の商品マスタを参照して、メールから発注情報を抽出してください：
+                
+                【商品マスタ】
+                SKU,品名,単位,カテゴリ
+                A001,M8六角ボルトSUS304,本,ボルト
+                A002,M10六角ボルトSUS304,本,ボルト
+                B001,ワッシャーM8,枚,ワッシャー
+                B002,ワッシャーM10,枚,ワッシャー
+                C001,スプリングワッシャーM8,枚,ワッシャー
+                D001,六角ナットM8,個,ナット
+                D002,六角ナットM10,個,ナット
+                E001,アルミ板材1000×2000×3t,枚,板材
+                E002,SUS304板材1000×2000×2t,枚,板材
+                F001,丸鋼SS400φ20×4000,本,棒材
+                
+                【納期表現パターン】
+                即納→当日
+                翌日・明日→翌営業日
+                ○日後→○営業日後
+                来週→5営業日後
+                今週中→3営業日後
+                至急・ASAP→翌営業日
+                
+                必ず以下の形式でJSON出力してください：
+                {
+                  "orders": [
+                    {
+                      "sku": "SKUコード",
+                      "product_name": "品名",
+                      "quantity": 数量,
+                      "unit": "単位",
+                      "delivery_date": "標準化された納期"
+                    }
+                  ],
+                  "summary": "発注内容の要約",
+                  "notes": "備考・特記事項"
+                }
+            - id: "user"
+              role: "user"
+              text: "{{#sys.query#}}"
+          memory:
+            enabled: false
+          structured_output_enabled: false
+          vision:
+            enabled: false
+          outputs:
+            text: "発注情報JSON"
+      
+      - id: "code_json_to_csv"
+        type: "code"
+        position:
+          x: 700
+          y: 300
+        data:
+          title: "JSON→CSV変換"
+          type: "code"
+          variables:
+            - variable: "json_data"
+              value_selector:
+                - "llm_mail_parser"
+                - "text"
+          code: |
+            import json
+            from datetime import datetime
+            
+            # JSON文字列をパース
+            try:
+                data = json.loads(json_data)
+            except:
+                return {"csv_data": "エラー: JSONの解析に失敗しました", "summary": "", "notes": ""}
+            
+            # 在庫データ（サンプル）
+            inventory = {
+                "A001": {"current": 5000, "updated": 5000},
+                "A002": {"current": 3000, "updated": 3000},
+                "B001": {"current": 10000, "updated": 10000},
+                "B002": {"current": 8000, "updated": 8000},
+                "C001": {"current": 7000, "updated": 7000},
+                "D001": {"current": 6000, "updated": 6000},
+                "D002": {"current": 4000, "updated": 4000},
+                "E001": {"current": 50, "updated": 50},
+                "E002": {"current": 30, "updated": 30},
+                "F001": {"current": 100, "updated": 100}
+            }
+            
+            # CSV行を生成
+            csv_lines = []
+            for order in data.get("orders", []):
+                sku = order.get("sku", "")
+                if sku in inventory:
+                    inventory[sku]["updated"] += order.get("quantity", 0)
+                csv_line = f"{sku},{order.get('product_name', '')},{order.get('quantity', '')},{order.get('unit', '')},{order.get('delivery_date', '')},{inventory.get(sku, {}).get('current', '')},{inventory.get(sku, {}).get('updated', '')}"
+                csv_lines.append(csv_line)
+            
+            return {
+                "csv_data": "\n".join(csv_lines),
+                "summary": data.get("summary", ""),
+                "notes": data.get("notes", ""),
+                "current_time": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            }
+          outputs:
+            csv_data: "CSV形式の発注データ"
+            summary: "発注内容の要約"
+            notes: "備考"
+            current_time: "現在時刻"
+      
+      - id: "template_transform_inventory"
+        type: "template-transform"
+        position:
+          x: 1000
+          y: 300
+        data:
+          title: "在庫更新リスト生成"
+          type: "template-transform"
+          variables:
+            - variable: "csv_data"
+              value_selector:
+                - "code_json_to_csv"
+                - "csv_data"
+            - variable: "summary"
+              value_selector:
+                - "code_json_to_csv"
+                - "summary"
+            - variable: "notes"
+              value_selector:
+                - "code_json_to_csv"
+                - "notes"
+            - variable: "current_time"
+              value_selector:
+                - "code_json_to_csv"
+                - "current_time"
+          template: |
+            ## 在庫更新リスト
+
+            発注日時: {{ current_time }}
+
+            ### 発注内容サマリー
+            {{ summary }}
+
+            ### 発注明細（CSV形式）
+            ```csv
+            SKU,品名,発注数量,単位,納期,更新前在庫,更新後在庫
+            {{ csv_data }}
+            ```
+
+            ### 備考・特記事項
+            {{ notes }}
+
+            ### 変更点サマリー
+            - 発注データを正常に処理しました
+            - 在庫数量を更新しました
+            - 発注確認リストを生成しました
+
+            ### 次のアクション
+            1. 在庫CSVファイルをダウンロード
+            2. 基幹システムへの反映
+            3. 仕入先への発注書送付
+          outputs:
+            output: "在庫更新リスト"
+      
+      - id: "answer"
+        type: "answer"
+        position:
+          x: 1300
+          y: 300
+        data:
+          title: "結果出力"
+          type: "answer"
+          answer: "{{#template_transform_inventory.output#}}"
+    
+    edges:
+      - id: "edge_1"
+        source: "start"
+        target: "llm_mail_parser"
+        data:
+          sourceType: "start"
+          targetType: "llm"
+          isInLoop: false
+      
+      - id: "edge_2"
+        source: "llm_mail_parser"
+        target: "code_json_to_csv"
+        data:
+          sourceType: "llm"
+          targetType: "code"
+          isInLoop: false
+      
+      - id: "edge_3"
+        source: "code_json_to_csv"
+        target: "template_transform_inventory"
+        data:
+          sourceType: "code"
+          targetType: "template-transform"
+          isInLoop: false
+      
+      - id: "edge_4"
+        source: "template_transform_inventory"
+        target: "answer"
+        data:
+          sourceType: "template-transform"
+          targetType: "answer"
+          isInLoop: false

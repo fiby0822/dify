@@ -3,32 +3,22 @@
 
 ------------状況------------
 内容：インポート失敗_表示失敗
-対象：なし
+対象：/Users/tatsuya/Documents/01_fiby/09_ゼット/構築フィードバック/インポート成功_表示失敗/order_mail_inventory_update.yml
+/Users/tatsuya/Documents/01_fiby/09_ゼット/構築フィードバック/インポート成功_表示失敗/失敗時の状態2.png
 
 内容：インポート失敗
-対象：
-なし
+対象：なし
 
 内容：インポート成功_クラッシュ
-対象：
-/Users/tatsuya/Documents/01_fiby/09_ゼット/構築フィードバック/インポート成功_クラッシュ/画像認識OCRワークフロー_検証用.yml
-/Users/tatsuya/Documents/01_fiby/09_ゼット/構築フィードバック/インポート成功_クラッシュ/音声認識ワークフロー_20250104.yml
-/Users/tatsuya/Documents/01_fiby/09_ゼット/構築フィードバック/インポート成功_クラッシュ/音声文字起こしワークフロー_検証用.yml
+対象：なし
 
 内容：インポート成功_動作エラー
-対象：
-/Users/tatsuya/Documents/01_fiby/09_ゼット/構築フィードバック/動作上のエラー/ケース1
-/Users/tatsuya/Documents/01_fiby/09_ゼット/構築フィードバック/動作上のエラー/ケース2
-/Users/tatsuya/Documents/01_fiby/09_ゼット/構築フィードバック/動作上のエラー/ケース3
-/Users/tatsuya/Documents/01_fiby/09_ゼット/構築フィードバック/動作上のエラー/ケース4
+対象：なし
 
 内容：インポート成功_正常実行可能
-対象：
-/Users/tatsuya/Documents/01_fiby/09_ゼット/ymlサンプル/作業日報OCR-CSV出力ボット.yml
-/Users/tatsuya/Documents/01_fiby/09_ゼット/ymlサンプル/音声認識テスト.yml
-/Users/tatsuya/Documents/01_fiby/09_ゼット/構築フィードバック/動作成功/音声認識文字起こしワークフロー.yml
+対象：/Users/tatsuya/Documents/01_fiby/09_ゼット/構築フィードバック/動作成功
 
-在庫管理判定ワークフロー_成功例.ymlは下記の依頼文を参考に、生成AIであるClaudeによって開発されたDifyのymlファイルです。
+上記のワークフローは全て下記テンプレートの依頼文を用いて、生成AIであるClaudeによって開発されたDifyのymlファイルです。
 /Users/tatsuya/Documents/01_fiby/09_ゼット/開発依頼/Dify_YML作成依頼プロンプト_テンプレート.txt
 ----------------------
 

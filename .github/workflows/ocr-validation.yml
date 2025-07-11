@@ -1,0 +1,238 @@
+name: OCR Validation
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  ocr-validation:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install OCR dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y tesseract-ocr tesseract-ocr-jpn tesseract-ocr-eng
+        pip install pytesseract pillow opencv-python-headless numpy
+    
+    - name: Create test images directory
+      run: mkdir -p test-images
+    
+    - name: Generate test images
+      run: |
+        cat > generate_test_images.py << 'EOF'
+        from PIL import Image, ImageDraw, ImageFont
+        import os
+        
+        # Create test images directory
+        os.makedirs('test-images', exist_ok=True)
+        
+        # Test Case 1: Simple text
+        img1 = Image.new('RGB', (400, 100), color='white')
+        draw1 = ImageDraw.Draw(img1)
+        draw1.text((10, 30), "Hello World OCR Test", fill='black')
+        img1.save('test-images/simple_text.png')
+        
+        # Test Case 2: Numbers and symbols
+        img2 = Image.new('RGB', (400, 100), color='white')
+        draw2 = ImageDraw.Draw(img2)
+        draw2.text((10, 30), "1234567890 @#$%", fill='black')
+        img2.save('test-images/numbers_symbols.png')
+        
+        # Test Case 3: Multi-line text
+        img3 = Image.new('RGB', (400, 200), color='white')
+        draw3 = ImageDraw.Draw(img3)
+        draw3.text((10, 30), "Line 1: OCR Testing\nLine 2: Multiple Lines\nLine 3: Recognition", fill='black')
+        img3.save('test-images/multiline_text.png')
+        
+        print("Test images generated successfully")
+        EOF
+        
+        python generate_test_images.py
+    
+    - name: Run OCR validation tests
+      run: |
+        cat > ocr_validation.py << 'EOF'
+        import pytesseract
+        from PIL import Image
+        import cv2
+        import numpy as np
+        import os
+        import json
+        
+        def preprocess_image(image_path):
+            """画像の前処理"""
+            img = cv2.imread(image_path)
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+            return thresh
+        
+        def run_ocr_test(image_path, expected_keywords):
+            """OCRテストを実行"""
+            print(f"\nTesting: {image_path}")
+            
+            # 前処理なしでOCR実行
+            img = Image.open(image_path)
+            text_raw = pytesseract.image_to_string(img, lang='eng+jpn')
+            print(f"Raw OCR result: {text_raw.strip()}")
+            
+            # 前処理ありでOCR実行
+            preprocessed = preprocess_image(image_path)
+            text_processed = pytesseract.image_to_string(preprocessed, lang='eng+jpn')
+            print(f"Preprocessed OCR result: {text_processed.strip()}")
+            
+            # 精度評価
+            success = all(keyword.lower() in text_processed.lower() for keyword in expected_keywords)
+            
+            return {
+                'image': image_path,
+                'raw_text': text_raw.strip(),
+                'processed_text': text_processed.strip(),
+                'expected_keywords': expected_keywords,
+                'success': success
+            }
+        
+        # テストケース定義
+        test_cases = [
+            ('test-images/simple_text.png', ['hello', 'world', 'ocr', 'test']),
+            ('test-images/numbers_symbols.png', ['1234567890']),
+            ('test-images/multiline_text.png', ['line', 'ocr', 'testing', 'multiple', 'recognition'])
+        ]
+        
+        # テスト実行
+        results = []
+        all_passed = True
+        
+        for image_path, expected_keywords in test_cases:
+            if os.path.exists(image_path):
+                result = run_ocr_test(image_path, expected_keywords)
+                results.append(result)
+                if not result['success']:
+                    all_passed = False
+            else:
+                print(f"Warning: {image_path} not found")
+                all_passed = False
+        
+        # 結果サマリー
+        print("\n=== OCR Validation Summary ===")
+        print(f"Total tests: {len(results)}")
+        print(f"Passed: {sum(1 for r in results if r['success'])}")
+        print(f"Failed: {sum(1 for r in results if not r['success'])}")
+        
+        # 詳細結果をJSONファイルに保存
+        with open('ocr_results.json', 'w', encoding='utf-8') as f:
+            json.dump(results, f, ensure_ascii=False, indent=2)
+        
+        # テスト失敗時は例外を発生
+        if not all_passed:
+            raise Exception("Some OCR tests failed")
+        
+        print("\nAll OCR tests passed!")
+        EOF
+        
+        python ocr_validation.py
+    
+    - name: Upload OCR results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: ocr-results
+        path: |
+          ocr_results.json
+          test-images/
+    
+    - name: Performance benchmark
+      run: |
+        cat > ocr_benchmark.py << 'EOF'
+        import pytesseract
+        from PIL import Image
+        import time
+        import os
+        
+        def benchmark_ocr(image_path, iterations=5):
+            """OCRのパフォーマンスを測定"""
+            times = []
+            
+            for i in range(iterations):
+                start = time.time()
+                img = Image.open(image_path)
+                text = pytesseract.image_to_string(img, lang='eng')
+                end = time.time()
+                times.append(end - start)
+            
+            avg_time = sum(times) / len(times)
+            return avg_time
+        
+        print("=== OCR Performance Benchmark ===")
+        
+        test_images = [f for f in os.listdir('test-images') if f.endswith('.png')]
+        
+        for image in test_images:
+            image_path = os.path.join('test-images', image)
+            avg_time = benchmark_ocr(image_path)
+            print(f"{image}: {avg_time:.3f} seconds (average of 5 runs)")
+        EOF
+        
+        python ocr_benchmark.py
+    
+    - name: Generate validation report
+      if: always()
+      run: |
+        cat > generate_report.py << 'EOF'
+        import json
+        import datetime
+        
+        # OCR結果を読み込み
+        try:
+            with open('ocr_results.json', 'r', encoding='utf-8') as f:
+                results = json.load(f)
+        except:
+            results = []
+        
+        # レポート生成
+        report = f"""
+        # OCR Validation Report
+        
+        Generated at: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+        
+        ## Summary
+        - Total tests: {len(results)}
+        - Passed: {sum(1 for r in results if r['success'])}
+        - Failed: {sum(1 for r in results if not r['success'])}
+        
+        ## Test Results
+        """
+        
+        for result in results:
+            status = "✅ PASS" if result['success'] else "❌ FAIL"
+            report += f"\n### {result['image']} - {status}\n"
+            report += f"- Expected keywords: {', '.join(result['expected_keywords'])}\n"
+            report += f"- Raw OCR output: {result['raw_text'][:100]}...\n"
+            report += f"- Processed OCR output: {result['processed_text'][:100]}...\n"
+        
+        # レポートを保存
+        with open('ocr_validation_report.md', 'w', encoding='utf-8') as f:
+            f.write(report)
+        
+        print("Validation report generated: ocr_validation_report.md")
+        EOF
+        
+        python generate_report.py
+    
+    - name: Upload validation report
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: ocr-validation-report
+        path: ocr_validation_report.md
